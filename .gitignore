@@ -1,0 +1,29 @@
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local config
+.venv/
+venv/
+env/
+.env
+.vscode/
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Generated metric/topology images
+static/metrics/*.png
+!static/metrics/.gitkeep
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Local commit helper notes
+commit_plan.txt
