@@ -460,18 +460,13 @@ def metrics_current_ring():
             _autoload_once()
             trials = parse_int_field(payload, "trials", 5)
             lookups = parse_int_field(payload, "lookups", 100)
-            max_nodes = ring.active_node_count
-            # Generate sweep data for dynamic charts (up to max_nodes or 50)
-            sweep_max = min(max_nodes, 50)
-            if sweep_max < 1:
-                sweep_max = 10
 
             with plot_lock:
                 # Get current ring metrics
                 result = run_current_ring_metrics(ring, trial_count=trials, lookups_per_trial=lookups, output_path=METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_current.png"))
-                # Generate sweep for better charts
+                # Always generate 50 points for charts
                 sweep_result = run_lookup_metrics(
-                    max_node_count=sweep_max,
+                    max_node_count=50,
                     trial_count=trials,
                     lookups_per_size=lookups,
                     resource_count=len(ring.resources) or 1000,
@@ -481,7 +476,7 @@ def metrics_current_ring():
                 )
 
         point = result["points"][0]
-        # Use sweep data for charts (multiple points)
+        # Use sweep data for charts (50 points)
         charts = save_metric_charts_from_points(sweep_result["points"])
         return jsonify({
             "ok": True,

@@ -468,7 +468,7 @@ function singleLookupMetricFromResult(result, metric) {
 // Hiển thị bảng số liệu metrics mà không có các thẻ thống kê
 function renderMetricsSummary(point, currentNodes, rows = []) {
   const displayedNodes = Number(point.nodes ?? currentNodes);
-  const maxRows = 15;
+  const maxRows = 50;
   const limitedRows = rows.slice(0, maxRows);
   const hasMore = rows.length > maxRows;
 

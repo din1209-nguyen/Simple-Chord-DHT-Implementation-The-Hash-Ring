@@ -98,7 +98,7 @@
               <button id="addNodeBtn" type="button">Join Node</button>
               <div id="selectedNodeActions" class="selected-actions" hidden>
                 <button id="restartNodeBtn" type="button" class="secondary">Restart</button>
-                <button id="killBtn" type="button" class="danger">Stop</button>
+                <button id="killBtn" type="button" class="danger">Kill</button>
               </div>
               <span class="failed-count">Failed: <input id="failedNodesInput" type="text" readonly value="0" /></span>
             </div>
@@ -210,9 +210,6 @@
           <img id="metricsHopsChart" class="chart" alt="Lookup hops chart" />
           <img id="metricsLatencyChart" class="chart" alt="Lookup latency chart" />
           <img id="metricsOverheadChart" class="chart" alt="Message overhead chart" />
-        </div>
-        <div class="topology-actions" style="margin-top:10px;">
-          <button id="metricsBtn" type="button" class="secondary">Run Metrics</button>
         </div>
       </section>
     </main>
