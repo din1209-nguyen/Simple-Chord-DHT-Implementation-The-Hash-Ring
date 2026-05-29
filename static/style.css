@@ -251,6 +251,8 @@ body {
   gap: 8px;
   align-items: flex-end;
   flex-wrap: wrap;
+  margin-top: 10px;
+  margin-bottom: 16px;
 }
 
 .lookup-row label {
@@ -2518,4 +2520,29 @@ th {
   font-size: 0.82rem;
   padding: 20px;
   text-align: center;
+}
+
+/* Found = No → highlight red */
+.lookup-found--no {
+  border-color: #fca5a5 !important;
+  background: #fff1f2 !important;
+}
+
+.lookup-found--no .trace-label {
+  color: #991b1b;
+}
+
+.lookup-found--no strong {
+  color: #dc2626 !important;
+}
+
+/* Last log item when not found → red */
+.trace-log-item--miss {
+  border-color: #fca5a5 !important;
+  background: #fff1f2 !important;
+  color: #7f1d1d;
+}
+
+.trace-log-item--miss .trace-log-num {
+  background: #dc2626;
 }

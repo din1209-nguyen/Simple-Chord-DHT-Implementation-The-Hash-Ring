@@ -608,7 +608,8 @@ function renderMetricTrace(point) {
       <div class="trace-card"><span class="trace-label">Failed</span><strong>${formatNumber(point.failed_lookups ?? "")}</strong></div>
       <div class="trace-card"><span class="trace-label">Msg Overhead</span><strong>${formatNumber(point.message_overhead ?? "")}</strong></div>
       <div class="trace-card"><span class="trace-label">Msgs/Lookup</span><strong>${formatNumber(point.messages_per_lookup ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Trace Hops</span><strong>${path.length}</strong></div>
+      <div class="trace-card"><span class="trace-label">Trace Hops</span><strong>${escapeHtml(trace.hops ?? "--")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Route nodes</span><strong>${path.length}</strong></div>
       <div class="trace-card"><span class="trace-label">Requested Key</span><strong>${formatNumber(trace.key)}</strong></div>
       <div class="trace-card"><span class="trace-label">Owner</span><strong>${formatNumber(trace.owner_id)}</strong></div>
     </div>
@@ -1124,8 +1125,15 @@ function renderLookupResult(result) {
     return `<span class="route-node">${n}${arrow}</span>`;
   }).join("");
 
+  const foundClass = result.found ? "" : " lookup-found--no";
   const logsHTML = Array.isArray(result.logs) && result.logs.length
-    ? result.logs.map((l, i) => `<li class="trace-log-item"><span class="trace-log-num">${i + 1}</span>${escapeHtml(l)}</li>`).join("")
+    ? result.logs.map((l, i) => {
+        const isLast = i === result.logs.length - 1;
+        const cls = isLast && !result.found
+          ? "trace-log-item trace-log-item--miss"
+          : "trace-log-item";
+        return `<li class="${cls}"><span class="trace-log-num">${i + 1}</span>${escapeHtml(l)}</li>`;
+      }).join("")
     : "<li class=\"trace-empty\">No hop logs.</li>";
 
   const replicaText =
@@ -1137,10 +1145,10 @@ function renderLookupResult(result) {
     <div class="trace-cards">
       <div class="trace-card"><span class="trace-label">Owner</span><strong>${formatNumber(result.owner_id)}</strong></div>
       <div class="trace-card"><span class="trace-label">Requested Key</span><strong>${formatNumber(result.key)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Found</span><strong>${result.found ? "Yes" : "No"}</strong></div>
+      <div class="trace-card${foundClass}"><span class="trace-label">Found</span><strong>${result.found ? "Yes" : "No"}</strong></div>
       <div class="trace-card"><span class="trace-label">Replica Nodes</span><strong>${escapeHtml(replicaText)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Hops</span><strong>${path.length}</strong></div>
-      <div class="trace-card"><span class="trace-label">Latency (ms)</span><strong>${formatNumber(result.latency_ms ?? "--")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Hops</span><strong>${escapeHtml(result.hops)}</strong></div>
+      <div class="trace-card"><span class="trace-label">Route nodes</span><strong>${path.length}</strong></div>
     </div>
     <div class="trace-section">
       <h4 class="trace-section-title">
@@ -1664,11 +1672,32 @@ function hideAppLoading() {}
 function showAppLoading() {}
 
 loadState()
-  .then(() => {
+  .then(async () => {
     clearGeneratedArtifacts();
-    return generateTopology(true, false);
+    await generateTopology(true, false);
+
+    // Prefer loading persisted metrics (if any) to avoid re-running benchmark on every refresh.
+    try {
+      const last = await api("/api/metrics/last");
+      const saved = last?.metrics;
+      if (saved && Array.isArray(saved.sweep_points)) {
+        renderHopsChartSweep(saved.sweep_points);
+        setMetricChartsReady(
+          {
+            hops: saved.charts?.hops || null,
+            latency: saved.charts?.latency || null,
+            overhead: saved.charts?.overhead || null,
+          },
+          artifactGeneration,
+        );
+        return;
+      }
+    } catch {
+      // fall back to fresh run below
+    }
+
+    await runMetrics(true);
   })
-  .then(() => runMetrics(true))
   .catch((error) => {
     showToast(error.message);
   });

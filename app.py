@@ -68,7 +68,7 @@ def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
     # Persist dữ liệu đủ để khôi phục lại topology + resources.
     # Finger table / successor / predecessor sẽ được dựng lại bởi stabilize().
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "saved_at": time.time(),
         "config": {
             "m": ring.m,
@@ -80,10 +80,17 @@ def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
             for node in ring.nodes.values()
         ],
         "resources": sorted(list(ring.resources.keys())),
+        "metrics": globals().get("last_metrics_payload"),
     }
 
 
 def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
+    global last_metrics_payload
+
+    # Restore last metrics payload if present
+    metrics_payload = payload.get("metrics")
+    last_metrics_payload = metrics_payload if isinstance(metrics_payload, dict) else None
+
     config = payload.get("config") or {}
     m = int(config.get("m", 16))
     seed = int(config.get("seed", 61))
@@ -158,6 +165,9 @@ def _load_ring_state() -> ChordRing | None:
 ring = ChordRing(m=16, seed=61, replication_count=3)
 ring_startup_completed = False
 startup_lock = Lock()
+
+# Best-effort persisted metrics payload (saved into state.json)
+last_metrics_payload: dict[str, Any] | None = None
 
 
 # ---------------- helpers ----------------
@@ -518,15 +528,41 @@ def metrics_current_ring():
             charts = save_metric_charts_from_points(sweep_result["points"])
 
         # Return sweep data including node_counts for the HTTP messages table
-        return jsonify({
+        response_payload = {
             "ok": True,
             "message": "Metrics completed successfully.",
             "sweep_points": sweep_result["points"],
             "node_counts": [int(p["nodes"]) for p in sweep_result["points"]],
             "charts": charts,
-        })
+        }
+
+        # Persist last metrics payload into state.json for next startup
+        global last_metrics_payload
+        last_metrics_payload = {
+            "saved_at": time.time(),
+            "trials": trials,
+            "lookups": lookups,
+            "active_nodes": active_nodes,
+            "sweep_points": response_payload["sweep_points"],
+            "charts": response_payload["charts"],
+        }
+        with coordinator_lock:
+            _autoload_once()
+            _save_ring_state(ring)
+
+        return jsonify(response_payload)
     except Exception as exc:
         return json_error(str(exc))
+
+
+@app.get("/api/metrics/last")
+def metrics_last():
+    """Return last persisted metrics payload if available."""
+    with coordinator_lock:
+        _autoload_once()
+        if last_metrics_payload is None:
+            return jsonify({"ok": False, "message": "No saved metrics yet."})
+        return jsonify({"ok": True, "metrics": last_metrics_payload})
 
 
 @app.post("/api/metrics/sweep")
