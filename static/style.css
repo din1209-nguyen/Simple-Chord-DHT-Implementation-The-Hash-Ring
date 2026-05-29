@@ -250,17 +250,17 @@ body {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .lookup-row label {
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: 160px;
 }
 
 .lookup-row button {
   flex: 0 0 auto;
-  min-height: 30px;
-  align-self: flex-end;
+  min-width: 80px;
 }
 
 h2,
@@ -899,10 +899,21 @@ button.neighbor-card:hover:not(:disabled) {
   display: none;
 }
 
-.panel.metrics-panel {
+.metrics-controls {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  gap: 8px;
+  align-items: flex-end;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.metrics-controls label {
+  flex: 0 0 auto;
+  min-width: 80px;
+}
+
+.metrics-controls button {
+  flex: 0 0 auto;
 }
 
 .metrics-content {
@@ -1012,6 +1023,15 @@ button.neighbor-card:hover:not(:disabled) {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
+}
+
+.metrics-table-note {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  border-top: 1px solid var(--line);
+  background: #f8fafc;
 }
 
 .metrics-table {
@@ -1128,7 +1148,7 @@ button.neighbor-card:hover:not(:disabled) {
   max-width: none;
   max-height: none;
   width: 100%;
-  height: clamp(260px, 34vh, 380px);
+  height: clamp(280px, 40vh, 420px);
   min-height: 0;
   object-fit: contain;
   border: 1px solid var(--line);
@@ -1241,6 +1261,14 @@ button.neighbor-card:hover:not(:disabled) {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.resource-actions-row + .resource-actions-row {
+  margin-top: 0;
+}
+
+.resource-actions-row--search {
+  flex-wrap: wrap;
 }
 
 .resource-actions-row input {
@@ -1807,7 +1835,7 @@ th {
   align-items: center;
   justify-content: center;
   flex: 1 1 auto;
-  min-height: clamp(420px, 58vh, 700px);
+  min-height: clamp(320px, 48vh, 560px);
   margin-top: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -1865,7 +1893,7 @@ th {
   display: block;
   width: 100%;
   height: 100%;
-  max-height: clamp(420px, 58vh, 700px);
+  max-height: clamp(320px, 48vh, 560px);
   object-fit: contain;
 }
 

@@ -468,7 +468,11 @@ function singleLookupMetricFromResult(result, metric) {
 // Hiển thị bảng số liệu metrics mà không có các thẻ thống kê
 function renderMetricsSummary(point, currentNodes, rows = []) {
   const displayedNodes = Number(point.nodes ?? currentNodes);
-  const tableRows = rows
+  const maxRows = 15;
+  const limitedRows = rows.slice(0, maxRows);
+  const hasMore = rows.length > maxRows;
+
+  const tableRows = limitedRows
     .map((row) => normalizeMetricPoint(row))
     .map(
       (row) => `
@@ -485,26 +489,28 @@ function renderMetricsSummary(point, currentNodes, rows = []) {
       `,
     )
     .join("");
+
   return `
     <div class="metrics-benchmark">
-      <h3>Current HTTP Deployment Measurement (N = ${escapeHtml(currentNodes)})</h3>
+      <h3>Current Ring: N = ${escapeHtml(currentNodes)}</h3>
       <div class="metrics-table-wrap">
         <table class="metrics-table">
           <thead>
             <tr>
               <th>N</th>
-              <th>Average Hops</th>
+              <th>Avg Hops</th>
               <th>log2(N)</th>
-              <th>Latency ms</th>
+              <th>Latency</th>
               <th>Lookups</th>
-              <th>Success / Failed</th>
-              <th>Message Overhead</th>
-              <th>Messages / Lookup</th>
+              <th>Succ/Fail</th>
+              <th>Overhead</th>
+              <th>Msg/Lkp</th>
             </tr>
           </thead>
           <tbody>${tableRows}</tbody>
         </table>
       </div>
+      ${hasMore ? `<div class="metrics-table-note">Showing ${maxRows} of ${rows.length} rows</div>` : ""}
     </div>
   `;
 }
@@ -1193,9 +1199,8 @@ async function deleteResource(button = null) {
 // Chạy benchmark đúng số node hiện tại và hiển thị bảng số liệu cùng ảnh biểu đồ matplotlib
 async function runMetrics(silent = false) {
   const requestGeneration = artifactGeneration;
-  setBusy(els.metricsBtn, true, silent ? "Auto..." : "Running...");
-  els.metricsOutput.textContent = silent ? "Updating average hops..." : "Running metrics...";
-  setMetricChartsLoading("Generating metrics charts...");
+  setBusy(els.metricsBtn, true, "Running...");
+  setMetricChartsLoading("Generating charts...");
   try {
     const data = await api("/api/metrics", {
       lookups: Number(els.metricLookupsInput.value),
@@ -1203,6 +1208,7 @@ async function runMetrics(silent = false) {
     });
     const currentNodes = Number(data.current_nodes ?? currentActiveNodeCount);
     const metricRows = Array.isArray(data.metrics) ? data.metrics : [];
+    const sweepRows = Array.isArray(data.sweep_points) ? data.sweep_points : [];
     if (requestGeneration !== artifactGeneration) {
       return;
     }
@@ -1216,19 +1222,19 @@ async function runMetrics(silent = false) {
     const point = normalizeMetricPoint(pointSource);
     currentActiveNodeCount = currentNodes;
     els.statusNodes.textContent = currentNodes;
-    els.metricsOutput.innerHTML = renderMetricsSummary(point, currentNodes, metricRows);
-    setMetricChartsReady(data.chart_urls || {
-      hops: data.chart_url,
-      latency: data.chart_url,
-      overhead: data.chart_url,
-    }, requestGeneration);
+
+    // Use sweep_points for table display (up to 15 rows)
+    els.metricsOutput.innerHTML = renderMetricsSummary(point, currentNodes, sweepRows);
+
+    // Use charts from API response
+    setMetricChartsReady(data.charts || {}, requestGeneration);
     if (!silent) {
       showToast(data.message);
     }
   } catch (error) {
     els.metricsOutput.textContent = error.message;
     if (els.metricsChartPlaceholder) {
-      els.metricsChartPlaceholder.textContent = "Metrics chart is unavailable.";
+      els.metricsChartPlaceholder.textContent = "Charts unavailable.";
       els.metricsChartPlaceholder.hidden = false;
     }
     if (!silent) {

@@ -175,28 +175,77 @@ def parse_int_field(payload: dict[str, Any], field: str, default: int | None = N
     return int(raw_value)
 
 
-def save_metric_charts(point: dict[str, Any]) -> dict[str, str]:
+def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, str]:
+    """Generate charts from multiple data points for dynamic chart display."""
     METRICS_CHART_BASE.parent.mkdir(parents=True, exist_ok=True)
-    charts = {
-        "hops": (
-            [point["average_hops"], point["log2_nodes"]],
-            ["Average hops", "log2(N)"],
-            "Lookup Hops",
-        ),
-        "latency": ([point["average_latency_ms"]], ["Latency (ms)"], "Lookup Latency"),
-        "overhead": ([point["message_overhead"]], ["Messages"], "Message Overhead"),
-    }
     urls: dict[str, str] = {}
-    for suffix, (values, labels, title) in charts.items():
-        path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_{suffix}.png")
-        plt.figure(figsize=(5.5, 3.2), dpi=130)
-        plt.bar(labels, values, color="#0f766e")
-        plt.title(title)
-        plt.tight_layout()
-        plt.savefig(path)
-        plt.close()
-        urls[suffix] = f"/static/metrics/{path.name}?ts={time.time_ns()}"
+
+    node_counts = [int(p["nodes"]) for p in points]
+    average_hops = [float(p["average_hops"]) for p in points]
+    log_values = [float(p["log2_nodes"]) for p in points]
+    average_latencies = [float(p["average_latency_ms"]) for p in points]
+    messages_per_lookup = [float(p["messages_per_lookup"]) for p in points]
+
+    # X ticks
+    x_ticks = node_counts
+    if len(node_counts) > 15:
+        step = max(1, len(node_counts) // 10)
+        x_ticks = node_counts[::step]
+        if x_ticks[-1] != node_counts[-1]:
+            x_ticks.append(node_counts[-1])
+
+    # Hops chart
+    hops_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_hops.png")
+    plt.figure(figsize=(5.5, 3.2), dpi=130)
+    plt.plot(node_counts, average_hops, marker="o", linewidth=2, color="#0f766e", label="Average hops")
+    plt.plot(node_counts, log_values, marker="s", linestyle="--", color="#f59e0b", label="log2(N)")
+    plt.title("Lookup Hops")
+    plt.xlabel("Number of Nodes")
+    plt.ylabel("Hops")
+    plt.xticks(x_ticks)
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=8)
+    plt.tight_layout()
+    plt.savefig(hops_path)
+    plt.close()
+    urls["hops"] = f"/static/metrics/{hops_path.name}?ts={time.time_ns()}"
+
+    # Latency chart
+    latency_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_latency.png")
+    plt.figure(figsize=(5.5, 3.2), dpi=130)
+    plt.plot(node_counts, average_latencies, marker="^", linewidth=2, color="#2563eb", label="Avg latency (ms)")
+    plt.title("Lookup Latency")
+    plt.xlabel("Number of Nodes")
+    plt.ylabel("Latency (ms)")
+    plt.xticks(x_ticks)
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=8)
+    plt.tight_layout()
+    plt.savefig(latency_path)
+    plt.close()
+    urls["latency"] = f"/static/metrics/{latency_path.name}?ts={time.time_ns()}"
+
+    # Overhead chart
+    overhead_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_overhead.png")
+    plt.figure(figsize=(5.5, 3.2), dpi=130)
+    plt.plot(node_counts, messages_per_lookup, marker="D", linewidth=2, color="#b45309", label="Messages / Lookup")
+    plt.title("Message Overhead")
+    plt.xlabel("Number of Nodes")
+    plt.ylabel("Messages / Lookup")
+    plt.xticks(x_ticks)
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=8)
+    plt.tight_layout()
+    plt.savefig(overhead_path)
+    plt.close()
+    urls["overhead"] = f"/static/metrics/{overhead_path.name}?ts={time.time_ns()}"
+
     return urls
+
+
+def save_metric_charts(point: dict[str, Any]) -> dict[str, str]:
+    """Generate single-point charts (legacy)."""
+    return save_metric_charts_from_points([point])
 
 
 def _autoload_once() -> None:
@@ -411,12 +460,36 @@ def metrics_current_ring():
             _autoload_once()
             trials = parse_int_field(payload, "trials", 5)
             lookups = parse_int_field(payload, "lookups", 100)
+            max_nodes = ring.active_node_count
+            # Generate sweep data for dynamic charts (up to max_nodes or 50)
+            sweep_max = min(max_nodes, 50)
+            if sweep_max < 1:
+                sweep_max = 10
+
             with plot_lock:
+                # Get current ring metrics
                 result = run_current_ring_metrics(ring, trial_count=trials, lookups_per_trial=lookups, output_path=METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_current.png"))
+                # Generate sweep for better charts
+                sweep_result = run_lookup_metrics(
+                    max_node_count=sweep_max,
+                    trial_count=trials,
+                    lookups_per_size=lookups,
+                    resource_count=len(ring.resources) or 1000,
+                    m=ring.m,
+                    seed=ring.seed,
+                    output_path=METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep.png"),
+                )
 
         point = result["points"][0]
-        charts = save_metric_charts(point)
-        return jsonify({"ok": True, "message": result.get("message", "Metrics done."), "points": result["points"], "charts": charts})
+        # Use sweep data for charts (multiple points)
+        charts = save_metric_charts_from_points(sweep_result["points"])
+        return jsonify({
+            "ok": True,
+            "message": result.get("message", "Metrics done."),
+            "points": result["points"],
+            "sweep_points": sweep_result["points"],
+            "charts": charts
+        })
     except Exception as exc:
         return json_error(str(exc))
 

@@ -193,7 +193,7 @@
 
       <section class="panel wide metrics-panel">
         <h2>Metrics</h2>
-        <div class="form-grid two" style="max-width:400px;margin-bottom:10px;">
+        <div class="metrics-controls">
           <label>
             Lookups
             <input id="metricLookupsInput" type="number" min="1" value="100" />
@@ -202,8 +202,9 @@
             Trials
             <input id="metricTrialsInput" type="number" min="1" value="5" />
           </label>
+          <button id="metricsBtn" type="button" class="secondary">Run Metrics</button>
         </div>
-        <div id="metricsOutput" class="artifact-output" style="margin-bottom:10px;"></div>
+        <div id="metricsOutput" class="artifact-output"></div>
         <div class="metrics-chart-shell">
           <div class="chart-placeholder" hidden>Run metrics to generate charts.</div>
           <img id="metricsHopsChart" class="chart" alt="Lookup hops chart" />
