@@ -5,12 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "simple-chord-dht"
 version = "1.0.0"
-description = "Simple Chord DHT hash ring simulation for Topic 61"
+description = "Multi-process Chord DHT deployment for Topic 61"
 requires-python = ">=3.10"
 dependencies = [
   "Flask>=3.0,<4.0",
   "matplotlib>=3.8,<4.0",
   "networkx>=3.2,<4.0",
+  "psutil>=5.9,<6.0",
 ]
 
 [project.optional-dependencies]

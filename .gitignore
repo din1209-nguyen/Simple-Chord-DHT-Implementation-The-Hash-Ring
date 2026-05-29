@@ -21,9 +21,14 @@ dist/
 static/metrics/*.png
 !static/metrics/.gitkeep
 
-# OS/editor noise
-.DS_Store
-Thumbs.db
+# Data persistence for simulator
+/data/state.json
+
+# Logs
+*.log
 
 # Local commit helper notes
 commit_plan.txt
+
+# Office temp files
+~$*.docx
