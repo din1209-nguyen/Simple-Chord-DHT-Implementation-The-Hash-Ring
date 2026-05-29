@@ -25,12 +25,13 @@ const els = {
   metricTrialsInput: document.querySelector("#metricTrialsInput"),
   metricsBtn: document.querySelector("#metricsBtn"),
   metricsOutput: document.querySelector("#metricsOutput"),
+  metricsSweepCharts: document.querySelector("#metricsSweepCharts"),
+  metricsSweepChartsPlaceholder: document.querySelector("#metricsSweepCharts .chart-placeholder"),
   metricsCharts: [
     document.querySelector("#metricsHopsChart"),
     document.querySelector("#metricsLatencyChart"),
     document.querySelector("#metricsOverheadChart"),
   ],
-  metricsChartPlaceholder: document.querySelector(".metrics-chart-shell .chart-placeholder"),
   topologyBtn: null,
   topologyExpandBtn: document.querySelector("#topologyExpandBtn"),
   topologyCloseBtn: document.querySelector("#topologyCloseBtn"),
@@ -492,7 +493,7 @@ function renderMetricsSummary(point, currentNodes, rows = []) {
 
   return `
     <div class="metrics-benchmark">
-      <h3>Current Ring: N = ${escapeHtml(currentNodes)}</h3>
+      <h3>Lookup Performance Statistics</h3>
       <div class="metrics-table-wrap">
         <table class="metrics-table">
           <thead>
@@ -500,11 +501,11 @@ function renderMetricsSummary(point, currentNodes, rows = []) {
               <th>N</th>
               <th>Avg Hops</th>
               <th>log2(N)</th>
-              <th>Latency</th>
+              <th>Latency (ms)</th>
               <th>Lookups</th>
-              <th>Succ/Fail</th>
-              <th>Overhead</th>
-              <th>Msg/Lkp</th>
+              <th>Success/Fail</th>
+              <th>Message Cost</th>
+              <th>Msgs/Lookup</th>
             </tr>
           </thead>
           <tbody>${tableRows}</tbody>
@@ -557,6 +558,9 @@ function clearGeneratedArtifacts() {
   setImageLoading(els.topologyChart, els.topologyPlaceholder, "Generate topology graph to render the current network.");
   els.topologyOutput.textContent = "";
   els.topologyFrame.classList.remove("is-ready", "loading");
+  if (els.metricsSweepCharts) {
+    els.metricsSweepCharts.hidden = true;
+  }
 }
 
 // Gắn ảnh artifact đúng phiên bản để tránh kết quả request cũ ghi đè UI
@@ -612,14 +616,20 @@ function renderTopologyArtifact(topology, generation = artifactGeneration) {
 
 // Đặt các biểu đồ metric về trạng thái chờ khi đang chạy lookup đo lường
 function setMetricChartsLoading(loadingText) {
-  if (els.metricsChartPlaceholder) {
-    els.metricsChartPlaceholder.textContent = loadingText;
-    els.metricsChartPlaceholder.hidden = false;
+  if (els.metricsSweepChartsPlaceholder) {
+    els.metricsSweepChartsPlaceholder.textContent = loadingText;
+    els.metricsSweepChartsPlaceholder.hidden = false;
+  }
+  if (els.metricsSweepCharts) {
+    els.metricsSweepCharts.hidden = false;
+  }
+  if (!Array.isArray(els.metricsCharts) || els.metricsCharts.length === 0) {
+    return;
   }
   els.metricsCharts.forEach((image) => {
-    if (!image) {
-      return;
-    }
+    if (!image) return;
+    image.onload = null;
+    image.onerror = null;
     image.removeAttribute("src");
     image.style.display = "none";
   });
@@ -632,35 +642,42 @@ function setMetricChartsReady(chartUrls, generation = artifactGeneration) {
     chartUrls?.latency,
     chartUrls?.overhead,
   ];
-  let loadedCount = 0;
-  let failed = false;
+
+  if (els.metricsSweepChartsPlaceholder) {
+    els.metricsSweepChartsPlaceholder.hidden = true;
+  }
+
+  if (els.metricsSweepCharts) {
+    els.metricsSweepCharts.hidden = false;
+  }
+
+  if (!Array.isArray(els.metricsCharts) || els.metricsCharts.length === 0) {
+    return;
+  }
+
   els.metricsCharts.forEach((image, index) => {
-    if (!image || !urls[index]) {
+    if (!image) return;
+    const url = urls[index];
+
+    if (!url) {
+      image.removeAttribute("src");
+      image.style.display = "none";
       return;
     }
+
+    // Attach handlers BEFORE setting src to handle fast cached loads
     image.onload = () => {
-      if (generation !== artifactGeneration) {
-        return;
-      }
-      loadedCount += 1;
-      if (loadedCount === urls.filter(Boolean).length && els.metricsChartPlaceholder && !failed) {
-        els.metricsChartPlaceholder.hidden = true;
-      }
+      if (generation !== artifactGeneration) return;
       image.style.display = "block";
     };
     image.onerror = () => {
-      if (generation !== artifactGeneration) {
-        return;
-      }
-      failed = true;
-      if (els.metricsChartPlaceholder) {
-        els.metricsChartPlaceholder.textContent = "Metrics chart is unavailable.";
-        els.metricsChartPlaceholder.hidden = false;
-      }
+      if (generation !== artifactGeneration) return;
       image.style.display = "none";
     };
+
+    // Set src last so the handlers are ready for any load outcome
     if (generation === artifactGeneration) {
-      image.src = urls[index];
+      image.src = url;
     }
   });
 }
@@ -1206,36 +1223,38 @@ async function runMetrics(silent = false) {
       lookups: Number(els.metricLookupsInput.value),
       trials: Number(els.metricTrialsInput.value),
     });
-    const currentNodes = Number(data.current_nodes ?? currentActiveNodeCount);
-    const metricRows = Array.isArray(data.metrics) ? data.metrics : [];
+
     const sweepRows = Array.isArray(data.sweep_points) ? data.sweep_points : [];
+
+    // /api/metrics only returns sweep data; keep currentNodes stable.
+    const currentNodes = Number(currentActiveNodeCount);
+    const point = { nodes: currentNodes };
+
     if (requestGeneration !== artifactGeneration) {
       return;
     }
-    const currentGrowthPoint = metricRows.find((row) => Number(row.nodes) === currentNodes);
-    const currentMetric = data.current_metric || {};
-    const pointSource = {
-      ...(currentGrowthPoint || {}),
-      ...currentMetric,
-      max_lookup_trace: currentMetric.max_lookup_trace || (currentGrowthPoint && currentGrowthPoint.max_lookup_trace),
-    };
-    const point = normalizeMetricPoint(pointSource);
-    currentActiveNodeCount = currentNodes;
-    els.statusNodes.textContent = currentNodes;
 
-    // Use sweep_points for table display (up to 15 rows)
+    // Render the sweep table (50 rows)
     els.metricsOutput.innerHTML = renderMetricsSummary(point, currentNodes, sweepRows);
 
-    // Use charts from API response
-    setMetricChartsReady(data.charts || {}, requestGeneration);
+    // Render sweep charts (hops/latency/overhead)
+    setMetricChartsReady(
+      {
+        hops: data.charts?.hops || null,
+        latency: data.charts?.latency || null,
+        overhead: data.charts?.overhead || null,
+      },
+      requestGeneration,
+    );
+
     if (!silent) {
       showToast(data.message);
     }
   } catch (error) {
     els.metricsOutput.textContent = error.message;
-    if (els.metricsChartPlaceholder) {
-      els.metricsChartPlaceholder.textContent = "Charts unavailable.";
-      els.metricsChartPlaceholder.hidden = false;
+    if (els.metricsSweepChartsPlaceholder) {
+      els.metricsSweepChartsPlaceholder.textContent = "Charts unavailable.";
+      els.metricsSweepChartsPlaceholder.hidden = false;
     }
     if (!silent) {
       showToast(error.message);

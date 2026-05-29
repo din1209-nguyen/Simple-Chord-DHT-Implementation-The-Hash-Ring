@@ -1074,7 +1074,7 @@
         "index": 14,
         "start": 17405,
         "interval_end": 25597,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 15,
@@ -5770,7 +5770,7 @@
         "index": 12,
         "start": 16663,
         "interval_end": 18711,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 13,
@@ -5800,16 +5800,6 @@
     "resource_count": 161,
     "resources": [
       {
-        "resource_id": "resource-0013",
-        "key": 13585,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0017",
         "key": 12798,
         "owner_id": 12855,
@@ -5827,16 +5817,6 @@
           12855,
           14615,
           14756
-        ]
-      },
-      {
-        "resource_id": "resource-0104",
-        "key": 13265,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -5880,16 +5860,6 @@
         ]
       },
       {
-        "resource_id": "resource-0287",
-        "key": 13398,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0300",
         "key": 12191,
         "owner_id": 12461,
@@ -5897,46 +5867,6 @@
           12855,
           14615,
           14756
-        ]
-      },
-      {
-        "resource_id": "resource-0354",
-        "key": 14073,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0370",
-        "key": 13187,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0380",
-        "key": 14192,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0392",
-        "key": 14556,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -5970,56 +5900,6 @@
         ]
       },
       {
-        "resource_id": "resource-0465",
-        "key": 13883,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0483",
-        "key": 13170,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0493",
-        "key": 13712,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0536",
-        "key": 14551,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0554",
-        "key": 13901,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0561",
         "key": 12507,
         "owner_id": 12855,
@@ -6040,16 +5920,6 @@
         ]
       },
       {
-        "resource_id": "resource-0613",
-        "key": 12867,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0630",
         "key": 12583,
         "owner_id": 12855,
@@ -6060,16 +5930,6 @@
         ]
       },
       {
-        "resource_id": "resource-0660",
-        "key": 13612,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0695",
         "key": 12635,
         "owner_id": 12855,
@@ -6077,16 +5937,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0697",
-        "key": 14092,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -6110,36 +5960,6 @@
         ]
       },
       {
-        "resource_id": "resource-0707",
-        "key": 12920,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0721",
-        "key": 14432,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0741",
-        "key": 13971,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0758",
         "key": 12425,
         "owner_id": 12461,
@@ -6147,16 +5967,6 @@
           12855,
           14615,
           14756
-        ]
-      },
-      {
-        "resource_id": "resource-0765",
-        "key": 13301,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -6220,56 +6030,6 @@
         ]
       },
       {
-        "resource_id": "resource-0911",
-        "key": 13426,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0938",
-        "key": 14243,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0952",
-        "key": 14157,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0969",
-        "key": 14540,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0972",
-        "key": 14012,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0974",
         "key": 12847,
         "owner_id": 12855,
@@ -6277,26 +6037,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0976",
-        "key": 13738,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0977",
-        "key": 13202,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -7408,6 +7148,266 @@
           12855,
           14615
         ]
+      },
+      {
+        "resource_id": "resource-0013",
+        "key": 13585,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0104",
+        "key": 13265,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0287",
+        "key": 13398,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0354",
+        "key": 14073,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0370",
+        "key": 13187,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0380",
+        "key": 14192,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0392",
+        "key": 14556,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0465",
+        "key": 13883,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0483",
+        "key": 13170,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0493",
+        "key": 13712,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0536",
+        "key": 14551,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0554",
+        "key": 13901,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0613",
+        "key": 12867,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0660",
+        "key": 13612,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0697",
+        "key": 14092,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0707",
+        "key": 12920,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0721",
+        "key": 14432,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0741",
+        "key": 13971,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0765",
+        "key": 13301,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0911",
+        "key": 13426,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0938",
+        "key": 14243,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0952",
+        "key": 14157,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0969",
+        "key": 14540,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0972",
+        "key": 14012,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0976",
+        "key": 13738,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0977",
+        "key": 13202,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
       }
     ]
   },
@@ -7423,7 +7423,7 @@
   {
     "node_id": 18284,
     "active": true,
-    "predecessor": 17673,
+    "predecessor": 16173,
     "successor": 18652,
     "finger_table": [
       {
@@ -7523,28 +7523,8 @@
         "node_id": 51502
       }
     ],
-    "resource_count": 54,
+    "resource_count": 80,
     "resources": [
-      {
-        "resource_id": "resource-0040",
-        "key": 14795,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0071",
-        "key": 16228,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
       {
         "resource_id": "resource-0073",
         "key": 18108,
@@ -7553,66 +7533,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0095",
-        "key": 16781,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0097",
-        "key": 16746,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0165",
-        "key": 15988,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0208",
-        "key": 17434,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0209",
-        "key": 15555,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0225",
-        "key": 15024,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -7626,66 +7546,6 @@
         ]
       },
       {
-        "resource_id": "resource-0239",
-        "key": 15354,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0268",
-        "key": 15946,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0275",
-        "key": 16721,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0284",
-        "key": 17428,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0332",
-        "key": 17225,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0336",
-        "key": 16069,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0375",
         "key": 17895,
         "owner_id": 18284,
@@ -7693,156 +7553,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0377",
-        "key": 15510,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0381",
-        "key": 15970,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0387",
-        "key": 16967,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0409",
-        "key": 14870,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0411",
-        "key": 17429,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0424",
-        "key": 16817,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0433",
-        "key": 15930,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0490",
-        "key": 17315,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0494",
-        "key": 15387,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0511",
-        "key": 16819,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0516",
-        "key": 15552,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0569",
-        "key": 16812,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0587",
-        "key": 17303,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0689",
-        "key": 15116,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0690",
-        "key": 14635,
-        "owner_id": 14756,
-        "replica_node_ids": [
-          16173,
-          17673,
-          18284
         ]
       },
       {
@@ -7856,26 +7566,6 @@
         ]
       },
       {
-        "resource_id": "resource-0706",
-        "key": 17194,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0736",
-        "key": 16046,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0750",
         "key": 17793,
         "owner_id": 18284,
@@ -7883,46 +7573,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0771",
-        "key": 17490,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0780",
-        "key": 16652,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0819",
-        "key": 15526,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0836",
-        "key": 15819,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -7936,16 +7586,6 @@
         ]
       },
       {
-        "resource_id": "resource-0850",
-        "key": 17007,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0869",
         "key": 18267,
         "owner_id": 18284,
@@ -7956,13 +7596,673 @@
         ]
       },
       {
+        "resource_id": "resource-0071",
+        "key": 16228,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0095",
+        "key": 16781,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0097",
+        "key": 16746,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0208",
+        "key": 17434,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0275",
+        "key": 16721,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0284",
+        "key": 17428,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0332",
+        "key": 17225,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0387",
+        "key": 16967,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0411",
+        "key": 17429,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0424",
+        "key": 16817,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0490",
+        "key": 17315,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0511",
+        "key": 16819,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0569",
+        "key": 16812,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0587",
+        "key": 17303,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0706",
+        "key": 17194,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0771",
+        "key": 17490,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0780",
+        "key": 16652,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0850",
+        "key": 17007,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0941",
+        "key": 16541,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0946",
+        "key": 16873,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0963",
+        "key": 17149,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0986",
+        "key": 16953,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0013",
+        "key": 13585,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0104",
+        "key": 13265,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0287",
+        "key": 13398,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0354",
+        "key": 14073,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0370",
+        "key": 13187,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0380",
+        "key": 14192,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0392",
+        "key": 14556,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0465",
+        "key": 13883,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0483",
+        "key": 13170,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0493",
+        "key": 13712,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0536",
+        "key": 14551,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0554",
+        "key": 13901,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0613",
+        "key": 12867,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0660",
+        "key": 13612,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0697",
+        "key": 14092,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0707",
+        "key": 12920,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0721",
+        "key": 14432,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0741",
+        "key": 13971,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0765",
+        "key": 13301,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0911",
+        "key": 13426,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0938",
+        "key": 14243,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0952",
+        "key": 14157,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0969",
+        "key": 14540,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0972",
+        "key": 14012,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0976",
+        "key": 13738,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0977",
+        "key": 13202,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0690",
+        "key": 14635,
+        "owner_id": 14756,
+        "replica_node_ids": [
+          16173,
+          18284,
+          18652
+        ]
+      },
+      {
+        "resource_id": "resource-0040",
+        "key": 14795,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0165",
+        "key": 15988,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0209",
+        "key": 15555,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0225",
+        "key": 15024,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0239",
+        "key": 15354,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0268",
+        "key": 15946,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0336",
+        "key": 16069,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0377",
+        "key": 15510,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0381",
+        "key": 15970,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0409",
+        "key": 14870,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0433",
+        "key": 15930,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0494",
+        "key": 15387,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0516",
+        "key": 15552,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0689",
+        "key": 15116,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0736",
+        "key": 16046,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0819",
+        "key": 15526,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0836",
+        "key": 15819,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
         "resource_id": "resource-0876",
         "key": 15091,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
@@ -7970,9 +8270,9 @@
         "key": 15727,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
@@ -7980,45 +8280,15 @@
         "key": 16098,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
         "resource_id": "resource-0928",
         "key": 15244,
         "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0941",
-        "key": 16541,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0946",
-        "key": 16873,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0963",
-        "key": 17149,
-        "owner_id": 17673,
         "replica_node_ids": [
           18284,
           18652,
@@ -8030,25 +8300,15 @@
         "key": 15674,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
         "resource_id": "resource-0979",
         "key": 15466,
         "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0986",
-        "key": 16953,
-        "owner_id": 17673,
         "replica_node_ids": [
           18284,
           18652,
@@ -8060,9 +8320,9 @@
         "key": 15312,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       }
     ]
@@ -16343,7 +16603,7 @@
         "index": 16,
         "start": 17035,
         "interval_end": 49803,
-        "node_id": 17673
+        "node_id": 18284
       }
     ],
     "resource_count": 71,
@@ -17850,7 +18110,7 @@
         "node_id": 51502
       }
     ],
-    "resource_count": 59,
+    "resource_count": 60,
     "resources": [
       {
         "resource_id": "resource-0020",
@@ -17873,26 +18133,6 @@
         ]
       },
       {
-        "resource_id": "resource-0040",
-        "key": 14795,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0071",
-        "key": 16228,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0073",
         "key": 18108,
         "owner_id": 18284,
@@ -17900,56 +18140,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0095",
-        "key": 16781,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0097",
-        "key": 16746,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0165",
-        "key": 15988,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0208",
-        "key": 17434,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0209",
-        "key": 15555,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -17963,16 +18153,6 @@
         ]
       },
       {
-        "resource_id": "resource-0225",
-        "key": 15024,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0228",
         "key": 17683,
         "owner_id": 18284,
@@ -17980,66 +18160,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0239",
-        "key": 15354,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0268",
-        "key": 15946,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0275",
-        "key": 16721,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0284",
-        "key": 17428,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0332",
-        "key": 17225,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0336",
-        "key": 16069,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -18053,46 +18173,6 @@
         ]
       },
       {
-        "resource_id": "resource-0377",
-        "key": 15510,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0381",
-        "key": 15970,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0387",
-        "key": 16967,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0409",
-        "key": 14870,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0410",
         "key": 18368,
         "owner_id": 18652,
@@ -18100,96 +18180,6 @@
           19570,
           20783,
           21012
-        ]
-      },
-      {
-        "resource_id": "resource-0411",
-        "key": 17429,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0424",
-        "key": 16817,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0433",
-        "key": 15930,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0490",
-        "key": 17315,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0494",
-        "key": 15387,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0511",
-        "key": 16819,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0516",
-        "key": 15552,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0569",
-        "key": 16812,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0587",
-        "key": 17303,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -18213,16 +18203,6 @@
         ]
       },
       {
-        "resource_id": "resource-0689",
-        "key": 15116,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0696",
         "key": 18034,
         "owner_id": 18284,
@@ -18230,26 +18210,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0706",
-        "key": 17194,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0736",
-        "key": 16046,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -18263,46 +18223,6 @@
         ]
       },
       {
-        "resource_id": "resource-0771",
-        "key": 17490,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0780",
-        "key": 16652,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0819",
-        "key": 15526,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0836",
-        "key": 15819,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0840",
         "key": 18219,
         "owner_id": 18284,
@@ -18310,16 +18230,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0850",
-        "key": 17007,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -18333,13 +18243,413 @@
         ]
       },
       {
+        "resource_id": "resource-0071",
+        "key": 16228,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0095",
+        "key": 16781,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0097",
+        "key": 16746,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0208",
+        "key": 17434,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0275",
+        "key": 16721,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0284",
+        "key": 17428,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0332",
+        "key": 17225,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0387",
+        "key": 16967,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0411",
+        "key": 17429,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0424",
+        "key": 16817,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0490",
+        "key": 17315,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0511",
+        "key": 16819,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0569",
+        "key": 16812,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0587",
+        "key": 17303,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0706",
+        "key": 17194,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0771",
+        "key": 17490,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0780",
+        "key": 16652,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0850",
+        "key": 17007,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0941",
+        "key": 16541,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0946",
+        "key": 16873,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0963",
+        "key": 17149,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0986",
+        "key": 16953,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0690",
+        "key": 14635,
+        "owner_id": 14756,
+        "replica_node_ids": [
+          16173,
+          18284,
+          18652
+        ]
+      },
+      {
+        "resource_id": "resource-0040",
+        "key": 14795,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0165",
+        "key": 15988,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0209",
+        "key": 15555,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0225",
+        "key": 15024,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0239",
+        "key": 15354,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0268",
+        "key": 15946,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0336",
+        "key": 16069,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0377",
+        "key": 15510,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0381",
+        "key": 15970,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0409",
+        "key": 14870,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0433",
+        "key": 15930,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0494",
+        "key": 15387,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0516",
+        "key": 15552,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0689",
+        "key": 15116,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0736",
+        "key": 16046,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0819",
+        "key": 15526,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0836",
+        "key": 15819,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
         "resource_id": "resource-0876",
         "key": 15091,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
@@ -18347,9 +18657,9 @@
         "key": 15727,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
@@ -18357,45 +18667,15 @@
         "key": 16098,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
         "resource_id": "resource-0928",
         "key": 15244,
         "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0941",
-        "key": 16541,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0946",
-        "key": 16873,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0963",
-        "key": 17149,
-        "owner_id": 17673,
         "replica_node_ids": [
           18284,
           18652,
@@ -18407,25 +18687,15 @@
         "key": 15674,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
         "resource_id": "resource-0979",
         "key": 15466,
         "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0986",
-        "key": 16953,
-        "owner_id": 17673,
         "replica_node_ids": [
           18284,
           18652,
@@ -18437,9 +18707,9 @@
         "key": 15312,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       }
     ]
@@ -19593,7 +19863,7 @@
         "index": 13,
         "start": 16951,
         "interval_end": 21047,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 14,
@@ -25743,7 +26013,7 @@
         "node_id": 52902
       }
     ],
-    "resource_count": 51,
+    "resource_count": 75,
     "resources": [
       {
         "resource_id": "resource-0020",
@@ -25796,16 +26066,6 @@
         ]
       },
       {
-        "resource_id": "resource-0071",
-        "key": 16228,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0073",
         "key": 18108,
         "owner_id": 18284,
@@ -25813,26 +26073,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0095",
-        "key": 16781,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0097",
-        "key": 16746,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -25856,16 +26096,6 @@
         ]
       },
       {
-        "resource_id": "resource-0208",
-        "key": 17434,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0214",
         "key": 18616,
         "owner_id": 18652,
@@ -25886,16 +26116,6 @@
         ]
       },
       {
-        "resource_id": "resource-0275",
-        "key": 16721,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0279",
         "key": 18733,
         "owner_id": 19570,
@@ -25903,16 +26123,6 @@
           20783,
           21012,
           24076
-        ]
-      },
-      {
-        "resource_id": "resource-0284",
-        "key": 17428,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -25936,16 +26146,6 @@
         ]
       },
       {
-        "resource_id": "resource-0332",
-        "key": 17225,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0375",
         "key": 17895,
         "owner_id": 18284,
@@ -25956,16 +26156,6 @@
         ]
       },
       {
-        "resource_id": "resource-0387",
-        "key": 16967,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0410",
         "key": 18368,
         "owner_id": 18652,
@@ -25973,26 +26163,6 @@
           19570,
           20783,
           21012
-        ]
-      },
-      {
-        "resource_id": "resource-0411",
-        "key": 17429,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0424",
-        "key": 16817,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -26016,26 +26186,6 @@
         ]
       },
       {
-        "resource_id": "resource-0490",
-        "key": 17315,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0511",
-        "key": 16819,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0543",
         "key": 18844,
         "owner_id": 19570,
@@ -26043,26 +26193,6 @@
           20783,
           21012,
           24076
-        ]
-      },
-      {
-        "resource_id": "resource-0569",
-        "key": 16812,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0587",
-        "key": 17303,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -26126,16 +26256,6 @@
         ]
       },
       {
-        "resource_id": "resource-0706",
-        "key": 17194,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0715",
         "key": 18996,
         "owner_id": 19570,
@@ -26156,26 +26276,6 @@
         ]
       },
       {
-        "resource_id": "resource-0771",
-        "key": 17490,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0780",
-        "key": 16652,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
         "resource_id": "resource-0840",
         "key": 18219,
         "owner_id": 18284,
@@ -26183,16 +26283,6 @@
           18652,
           19570,
           20783
-        ]
-      },
-      {
-        "resource_id": "resource-0850",
-        "key": 17007,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
         ]
       },
       {
@@ -26216,29 +26306,229 @@
         ]
       },
       {
+        "resource_id": "resource-0071",
+        "key": 16228,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0095",
+        "key": 16781,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0097",
+        "key": 16746,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0208",
+        "key": 17434,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0275",
+        "key": 16721,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0284",
+        "key": 17428,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0332",
+        "key": 17225,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0387",
+        "key": 16967,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0411",
+        "key": 17429,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0424",
+        "key": 16817,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0490",
+        "key": 17315,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0511",
+        "key": 16819,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0569",
+        "key": 16812,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0587",
+        "key": 17303,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0706",
+        "key": 17194,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0771",
+        "key": 17490,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0780",
+        "key": 16652,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0850",
+        "key": 17007,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
         "resource_id": "resource-0941",
         "key": 16541,
-        "owner_id": 17673,
+        "owner_id": 18284,
         "replica_node_ids": [
-          18284,
           18652,
-          19570
+          19570,
+          20783
         ]
       },
       {
         "resource_id": "resource-0946",
         "key": 16873,
-        "owner_id": 17673,
+        "owner_id": 18284,
         "replica_node_ids": [
-          18284,
           18652,
-          19570
+          19570,
+          20783
         ]
       },
       {
         "resource_id": "resource-0963",
         "key": 17149,
-        "owner_id": 17673,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0986",
+        "key": 16953,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0040",
+        "key": 14795,
+        "owner_id": 16173,
         "replica_node_ids": [
           18284,
           18652,
@@ -26246,9 +26536,229 @@
         ]
       },
       {
-        "resource_id": "resource-0986",
-        "key": 16953,
-        "owner_id": 17673,
+        "resource_id": "resource-0165",
+        "key": 15988,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0209",
+        "key": 15555,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0225",
+        "key": 15024,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0239",
+        "key": 15354,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0268",
+        "key": 15946,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0336",
+        "key": 16069,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0377",
+        "key": 15510,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0381",
+        "key": 15970,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0409",
+        "key": 14870,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0433",
+        "key": 15930,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0494",
+        "key": 15387,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0516",
+        "key": 15552,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0689",
+        "key": 15116,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0736",
+        "key": 16046,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0819",
+        "key": 15526,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0836",
+        "key": 15819,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0876",
+        "key": 15091,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0906",
+        "key": 15727,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0924",
+        "key": 16098,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0928",
+        "key": 15244,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0967",
+        "key": 15674,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0979",
+        "key": 15466,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0990",
+        "key": 15312,
+        "owner_id": 16173,
         "replica_node_ids": [
           18284,
           18652,
@@ -26261,73 +26771,73 @@
     "node_id": 16173,
     "active": true,
     "predecessor": 14756,
-    "successor": 17673,
+    "successor": 18284,
     "finger_table": [
       {
         "index": 1,
         "start": 16174,
         "interval_end": 16175,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 2,
         "start": 16175,
         "interval_end": 16177,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 3,
         "start": 16177,
         "interval_end": 16181,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 4,
         "start": 16181,
         "interval_end": 16189,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 5,
         "start": 16189,
         "interval_end": 16205,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 6,
         "start": 16205,
         "interval_end": 16237,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 7,
         "start": 16237,
         "interval_end": 16301,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 8,
         "start": 16301,
         "interval_end": 16429,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 9,
         "start": 16429,
         "interval_end": 16685,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 10,
         "start": 16685,
         "interval_end": 17197,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 11,
         "start": 17197,
         "interval_end": 18221,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 12,
@@ -26363,16 +26873,6 @@
     "resource_count": 64,
     "resources": [
       {
-        "resource_id": "resource-0013",
-        "key": 13585,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0017",
         "key": 12798,
         "owner_id": 12855,
@@ -26380,26 +26880,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0040",
-        "key": 14795,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0104",
-        "key": 13265,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -26413,136 +26893,6 @@
         ]
       },
       {
-        "resource_id": "resource-0165",
-        "key": 15988,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0209",
-        "key": 15555,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0225",
-        "key": 15024,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0239",
-        "key": 15354,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0268",
-        "key": 15946,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0287",
-        "key": 13398,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0336",
-        "key": 16069,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0354",
-        "key": 14073,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0370",
-        "key": 13187,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0377",
-        "key": 15510,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0380",
-        "key": 14192,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0381",
-        "key": 15970,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0392",
-        "key": 14556,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0396",
         "key": 12709,
         "owner_id": 12855,
@@ -26550,16 +26900,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0409",
-        "key": 14870,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -26573,86 +26913,6 @@
         ]
       },
       {
-        "resource_id": "resource-0433",
-        "key": 15930,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0465",
-        "key": 13883,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0483",
-        "key": 13170,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0493",
-        "key": 13712,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0494",
-        "key": 15387,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0516",
-        "key": 15552,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0536",
-        "key": 14551,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0554",
-        "key": 13901,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0561",
         "key": 12507,
         "owner_id": 12855,
@@ -26660,16 +26920,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0613",
-        "key": 12867,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -26683,36 +26933,6 @@
         ]
       },
       {
-        "resource_id": "resource-0660",
-        "key": 13612,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0689",
-        "key": 15116,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0690",
-        "key": 14635,
-        "owner_id": 14756,
-        "replica_node_ids": [
-          16173,
-          17673,
-          18284
-        ]
-      },
-      {
         "resource_id": "resource-0695",
         "key": 12635,
         "owner_id": 12855,
@@ -26723,16 +26943,6 @@
         ]
       },
       {
-        "resource_id": "resource-0697",
-        "key": 14092,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0698",
         "key": 12841,
         "owner_id": 12855,
@@ -26740,56 +26950,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0707",
-        "key": 12920,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0721",
-        "key": 14432,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0736",
-        "key": 16046,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0741",
-        "key": 13971,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0765",
-        "key": 13301,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -26813,26 +26973,6 @@
         ]
       },
       {
-        "resource_id": "resource-0819",
-        "key": 15526,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0836",
-        "key": 15819,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
         "resource_id": "resource-0858",
         "key": 12652,
         "owner_id": 12855,
@@ -26840,26 +26980,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0876",
-        "key": 15091,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0906",
-        "key": 15727,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
         ]
       },
       {
@@ -26873,86 +26993,6 @@
         ]
       },
       {
-        "resource_id": "resource-0911",
-        "key": 13426,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0924",
-        "key": 16098,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0928",
-        "key": 15244,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0938",
-        "key": 14243,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0952",
-        "key": 14157,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0967",
-        "key": 15674,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0969",
-        "key": 14540,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0972",
-        "key": 14012,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0974",
         "key": 12847,
         "owner_id": 12855,
@@ -26963,13 +27003,253 @@
         ]
       },
       {
+        "resource_id": "resource-0013",
+        "key": 13585,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0104",
+        "key": 13265,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0287",
+        "key": 13398,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0354",
+        "key": 14073,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0370",
+        "key": 13187,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0380",
+        "key": 14192,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0392",
+        "key": 14556,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0465",
+        "key": 13883,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0483",
+        "key": 13170,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0493",
+        "key": 13712,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0536",
+        "key": 14551,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0554",
+        "key": 13901,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0613",
+        "key": 12867,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0660",
+        "key": 13612,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0697",
+        "key": 14092,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0707",
+        "key": 12920,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0721",
+        "key": 14432,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0741",
+        "key": 13971,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0765",
+        "key": 13301,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0911",
+        "key": 13426,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0938",
+        "key": 14243,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0952",
+        "key": 14157,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0969",
+        "key": 14540,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0972",
+        "key": 14012,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
         "resource_id": "resource-0976",
         "key": 13738,
         "owner_id": 14615,
         "replica_node_ids": [
           14756,
           16173,
-          17673
+          18284
         ]
       },
       {
@@ -26979,7 +27259,237 @@
         "replica_node_ids": [
           14756,
           16173,
-          17673
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0690",
+        "key": 14635,
+        "owner_id": 14756,
+        "replica_node_ids": [
+          16173,
+          18284,
+          18652
+        ]
+      },
+      {
+        "resource_id": "resource-0040",
+        "key": 14795,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0165",
+        "key": 15988,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0209",
+        "key": 15555,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0225",
+        "key": 15024,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0239",
+        "key": 15354,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0268",
+        "key": 15946,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0336",
+        "key": 16069,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0377",
+        "key": 15510,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0381",
+        "key": 15970,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0409",
+        "key": 14870,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0433",
+        "key": 15930,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0494",
+        "key": 15387,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0516",
+        "key": 15552,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0689",
+        "key": 15116,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0736",
+        "key": 16046,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0819",
+        "key": 15526,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0836",
+        "key": 15819,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0876",
+        "key": 15091,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0906",
+        "key": 15727,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0924",
+        "key": 16098,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0928",
+        "key": 15244,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
+        ]
+      },
+      {
+        "resource_id": "resource-0967",
+        "key": 15674,
+        "owner_id": 16173,
+        "replica_node_ids": [
+          18284,
+          18652,
+          19570
         ]
       },
       {
@@ -26987,9 +27497,9 @@
         "key": 15466,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       },
       {
@@ -26997,9 +27507,9 @@
         "key": 15312,
         "owner_id": 16173,
         "replica_node_ids": [
-          17673,
           18284,
-          18652
+          18652,
+          19570
         ]
       }
     ]
@@ -28403,7 +28913,7 @@
         "index": 12,
         "start": 16804,
         "interval_end": 18852,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 13,
@@ -28433,16 +28943,6 @@
     "resource_count": 89,
     "resources": [
       {
-        "resource_id": "resource-0013",
-        "key": 13585,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0017",
         "key": 12798,
         "owner_id": 12855,
@@ -28460,16 +28960,6 @@
           12855,
           14615,
           14756
-        ]
-      },
-      {
-        "resource_id": "resource-0104",
-        "key": 13265,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -28513,16 +29003,6 @@
         ]
       },
       {
-        "resource_id": "resource-0287",
-        "key": 13398,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0300",
         "key": 12191,
         "owner_id": 12461,
@@ -28530,46 +29010,6 @@
           12855,
           14615,
           14756
-        ]
-      },
-      {
-        "resource_id": "resource-0354",
-        "key": 14073,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0370",
-        "key": 13187,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0380",
-        "key": 14192,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0392",
-        "key": 14556,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -28603,56 +29043,6 @@
         ]
       },
       {
-        "resource_id": "resource-0465",
-        "key": 13883,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0483",
-        "key": 13170,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0493",
-        "key": 13712,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0536",
-        "key": 14551,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0554",
-        "key": 13901,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0561",
         "key": 12507,
         "owner_id": 12855,
@@ -28673,16 +29063,6 @@
         ]
       },
       {
-        "resource_id": "resource-0613",
-        "key": 12867,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0630",
         "key": 12583,
         "owner_id": 12855,
@@ -28693,26 +29073,6 @@
         ]
       },
       {
-        "resource_id": "resource-0660",
-        "key": 13612,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0690",
-        "key": 14635,
-        "owner_id": 14756,
-        "replica_node_ids": [
-          16173,
-          17673,
-          18284
-        ]
-      },
-      {
         "resource_id": "resource-0695",
         "key": 12635,
         "owner_id": 12855,
@@ -28720,16 +29080,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0697",
-        "key": 14092,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -28753,36 +29103,6 @@
         ]
       },
       {
-        "resource_id": "resource-0707",
-        "key": 12920,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0721",
-        "key": 14432,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0741",
-        "key": 13971,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0758",
         "key": 12425,
         "owner_id": 12461,
@@ -28790,16 +29110,6 @@
           12855,
           14615,
           14756
-        ]
-      },
-      {
-        "resource_id": "resource-0765",
-        "key": 13301,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -28863,56 +29173,6 @@
         ]
       },
       {
-        "resource_id": "resource-0911",
-        "key": 13426,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0938",
-        "key": 14243,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0952",
-        "key": 14157,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0969",
-        "key": 14540,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0972",
-        "key": 14012,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
         "resource_id": "resource-0974",
         "key": 12847,
         "owner_id": 12855,
@@ -28920,26 +29180,6 @@
           14615,
           14756,
           16173
-        ]
-      },
-      {
-        "resource_id": "resource-0976",
-        "key": 13738,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0977",
-        "key": 13202,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
         ]
       },
       {
@@ -29321,6 +29561,276 @@
           14615,
           14756
         ]
+      },
+      {
+        "resource_id": "resource-0013",
+        "key": 13585,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0104",
+        "key": 13265,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0287",
+        "key": 13398,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0354",
+        "key": 14073,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0370",
+        "key": 13187,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0380",
+        "key": 14192,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0392",
+        "key": 14556,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0465",
+        "key": 13883,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0483",
+        "key": 13170,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0493",
+        "key": 13712,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0536",
+        "key": 14551,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0554",
+        "key": 13901,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0613",
+        "key": 12867,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0660",
+        "key": 13612,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0697",
+        "key": 14092,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0707",
+        "key": 12920,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0721",
+        "key": 14432,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0741",
+        "key": 13971,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0765",
+        "key": 13301,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0911",
+        "key": 13426,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0938",
+        "key": 14243,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0952",
+        "key": 14157,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0969",
+        "key": 14540,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0972",
+        "key": 14012,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0976",
+        "key": 13738,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0977",
+        "key": 13202,
+        "owner_id": 14615,
+        "replica_node_ids": [
+          14756,
+          16173,
+          18284
+        ]
+      },
+      {
+        "resource_id": "resource-0690",
+        "key": 14635,
+        "owner_id": 14756,
+        "replica_node_ids": [
+          16173,
+          18284,
+          18652
+        ]
       }
     ]
   },
@@ -29427,7 +29937,7 @@
         "node_id": 54053
       }
     ],
-    "resource_count": 51,
+    "resource_count": 73,
     "resources": [
       {
         "resource_id": "resource-0020",
@@ -29937,6 +30447,226 @@
           21012,
           24076,
           27465
+        ]
+      },
+      {
+        "resource_id": "resource-0071",
+        "key": 16228,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0095",
+        "key": 16781,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0097",
+        "key": 16746,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0208",
+        "key": 17434,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0275",
+        "key": 16721,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0284",
+        "key": 17428,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0332",
+        "key": 17225,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0387",
+        "key": 16967,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0411",
+        "key": 17429,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0424",
+        "key": 16817,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0490",
+        "key": 17315,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0511",
+        "key": 16819,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0569",
+        "key": 16812,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0587",
+        "key": 17303,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0706",
+        "key": 17194,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0771",
+        "key": 17490,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0780",
+        "key": 16652,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0850",
+        "key": 17007,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0941",
+        "key": 16541,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0946",
+        "key": 16873,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0963",
+        "key": 17149,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
+        ]
+      },
+      {
+        "resource_id": "resource-0986",
+        "key": 16953,
+        "owner_id": 18284,
+        "replica_node_ids": [
+          18652,
+          19570,
+          20783
         ]
       }
     ]
@@ -31297,7 +32027,7 @@
         "index": 13,
         "start": 16557,
         "interval_end": 20653,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 14,
@@ -39236,840 +39966,12 @@
   },
   {
     "node_id": 17673,
-    "active": true,
-    "predecessor": 16173,
-    "successor": 18284,
-    "finger_table": [
-      {
-        "index": 1,
-        "start": 17674,
-        "interval_end": 17675,
-        "node_id": 18284
-      },
-      {
-        "index": 2,
-        "start": 17675,
-        "interval_end": 17677,
-        "node_id": 18284
-      },
-      {
-        "index": 3,
-        "start": 17677,
-        "interval_end": 17681,
-        "node_id": 18284
-      },
-      {
-        "index": 4,
-        "start": 17681,
-        "interval_end": 17689,
-        "node_id": 18284
-      },
-      {
-        "index": 5,
-        "start": 17689,
-        "interval_end": 17705,
-        "node_id": 18284
-      },
-      {
-        "index": 6,
-        "start": 17705,
-        "interval_end": 17737,
-        "node_id": 18284
-      },
-      {
-        "index": 7,
-        "start": 17737,
-        "interval_end": 17801,
-        "node_id": 18284
-      },
-      {
-        "index": 8,
-        "start": 17801,
-        "interval_end": 17929,
-        "node_id": 18284
-      },
-      {
-        "index": 9,
-        "start": 17929,
-        "interval_end": 18185,
-        "node_id": 18284
-      },
-      {
-        "index": 10,
-        "start": 18185,
-        "interval_end": 18697,
-        "node_id": 18284
-      },
-      {
-        "index": 11,
-        "start": 18697,
-        "interval_end": 19721,
-        "node_id": 19570
-      },
-      {
-        "index": 12,
-        "start": 19721,
-        "interval_end": 21769,
-        "node_id": 20783
-      },
-      {
-        "index": 13,
-        "start": 21769,
-        "interval_end": 25865,
-        "node_id": 24076
-      },
-      {
-        "index": 14,
-        "start": 25865,
-        "interval_end": 34057,
-        "node_id": 27465
-      },
-      {
-        "index": 15,
-        "start": 34057,
-        "interval_end": 50441,
-        "node_id": 34423
-      },
-      {
-        "index": 16,
-        "start": 50441,
-        "interval_end": 17673,
-        "node_id": 50643
-      }
-    ],
-    "resource_count": 73,
-    "resources": [
-      {
-        "resource_id": "resource-0013",
-        "key": 13585,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0040",
-        "key": 14795,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0071",
-        "key": 16228,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0095",
-        "key": 16781,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0097",
-        "key": 16746,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0104",
-        "key": 13265,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0165",
-        "key": 15988,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0208",
-        "key": 17434,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0209",
-        "key": 15555,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0225",
-        "key": 15024,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0239",
-        "key": 15354,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0268",
-        "key": 15946,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0275",
-        "key": 16721,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0284",
-        "key": 17428,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0287",
-        "key": 13398,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0332",
-        "key": 17225,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0336",
-        "key": 16069,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0354",
-        "key": 14073,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0370",
-        "key": 13187,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0377",
-        "key": 15510,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0380",
-        "key": 14192,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0381",
-        "key": 15970,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0387",
-        "key": 16967,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0392",
-        "key": 14556,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0409",
-        "key": 14870,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0411",
-        "key": 17429,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0424",
-        "key": 16817,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0433",
-        "key": 15930,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0465",
-        "key": 13883,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0483",
-        "key": 13170,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0490",
-        "key": 17315,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0493",
-        "key": 13712,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0494",
-        "key": 15387,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0511",
-        "key": 16819,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0516",
-        "key": 15552,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0536",
-        "key": 14551,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0554",
-        "key": 13901,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0569",
-        "key": 16812,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0587",
-        "key": 17303,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0613",
-        "key": 12867,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0660",
-        "key": 13612,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0689",
-        "key": 15116,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0690",
-        "key": 14635,
-        "owner_id": 14756,
-        "replica_node_ids": [
-          16173,
-          17673,
-          18284
-        ]
-      },
-      {
-        "resource_id": "resource-0697",
-        "key": 14092,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0706",
-        "key": 17194,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0707",
-        "key": 12920,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0721",
-        "key": 14432,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0736",
-        "key": 16046,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0741",
-        "key": 13971,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0765",
-        "key": 13301,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0771",
-        "key": 17490,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0780",
-        "key": 16652,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0819",
-        "key": 15526,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0836",
-        "key": 15819,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0850",
-        "key": 17007,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0876",
-        "key": 15091,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0906",
-        "key": 15727,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0911",
-        "key": 13426,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0924",
-        "key": 16098,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0928",
-        "key": 15244,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0938",
-        "key": 14243,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0941",
-        "key": 16541,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0946",
-        "key": 16873,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0952",
-        "key": 14157,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0963",
-        "key": 17149,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0967",
-        "key": 15674,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0969",
-        "key": 14540,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0972",
-        "key": 14012,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0976",
-        "key": 13738,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0977",
-        "key": 13202,
-        "owner_id": 14615,
-        "replica_node_ids": [
-          14756,
-          16173,
-          17673
-        ]
-      },
-      {
-        "resource_id": "resource-0979",
-        "key": 15466,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      },
-      {
-        "resource_id": "resource-0986",
-        "key": 16953,
-        "owner_id": 17673,
-        "replica_node_ids": [
-          18284,
-          18652,
-          19570
-        ]
-      },
-      {
-        "resource_id": "resource-0990",
-        "key": 15312,
-        "owner_id": 16173,
-        "replica_node_ids": [
-          17673,
-          18284,
-          18652
-        ]
-      }
-    ]
+    "active": false,
+    "predecessor": null,
+    "successor": null,
+    "finger_table": [],
+    "resource_count": 0,
+    "resources": []
   },
   {
     "node_id": 52317,
@@ -42436,7 +42338,7 @@
         "index": 15,
         "start": 16583,
         "interval_end": 32967,
-        "node_id": 17673
+        "node_id": 18284
       },
       {
         "index": 16,

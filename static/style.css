@@ -1126,7 +1126,7 @@ button.neighbor-card:hover:not(:disabled) {
   color: #64748b;
 }
 
-.metrics-chart-shell {
+.metrics-sweep-charts {
   position: relative;
   margin-top: 0;
   min-height: 260px;
@@ -1142,7 +1142,16 @@ button.neighbor-card:hover:not(:disabled) {
   background: transparent;
 }
 
-.metrics-chart-shell .chart {
+.metrics-sweep-charts[hidden] {
+  display: none;
+}
+
+.metrics-sweep-charts .sweep-chart-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.metrics-sweep-charts .sweep-chart-item .chart {
   display: none;
   margin-top: 0;
   max-width: none;
@@ -1156,7 +1165,7 @@ button.neighbor-card:hover:not(:disabled) {
   background: #ffffff;
 }
 
-.metrics-chart-shell .chart.loading {
+.metrics-sweep-charts .sweep-chart-item .chart.loading {
   display: block;
 }
 
@@ -2163,16 +2172,12 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .metrics-chart-shell {
+  .metrics-sweep-charts {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
-  .metrics-content {
-    grid-template-columns: 1fr;
-  }
-
   .lookup-result-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2181,7 +2186,7 @@ th {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .metrics-chart-shell {
+  .metrics-sweep-charts {
     min-height: 300px;
     grid-template-columns: 1fr;
   }

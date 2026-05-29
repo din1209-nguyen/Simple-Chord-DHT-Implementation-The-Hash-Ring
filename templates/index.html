@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chord DHT - Distributed Hash Ring</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=95" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=99" />
   </head>
   <body>
     <div id="appLoading" class="app-loading-overlay" aria-live="polite">
@@ -205,11 +205,17 @@
           <button id="metricsBtn" type="button" class="secondary">Run Metrics</button>
         </div>
         <div id="metricsOutput" class="artifact-output"></div>
-        <div class="metrics-chart-shell">
-          <div class="chart-placeholder" hidden>Run metrics to generate charts.</div>
-          <img id="metricsHopsChart" class="chart" alt="Lookup hops chart" />
-          <img id="metricsLatencyChart" class="chart" alt="Lookup latency chart" />
-          <img id="metricsOverheadChart" class="chart" alt="Message overhead chart" />
+        <div id="metricsSweepCharts" class="metrics-sweep-charts" hidden>
+          <div class="chart-placeholder" hidden>Click "Run Metrics" to generate 3 sweep charts (N=1..50).</div>
+          <div class="sweep-chart-item">
+            <img id="metricsHopsChart" class="chart" alt="Sweep chart: average hops" />
+          </div>
+          <div class="sweep-chart-item">
+            <img id="metricsLatencyChart" class="chart" alt="Sweep chart: lookup latency" />
+          </div>
+          <div class="sweep-chart-item">
+            <img id="metricsOverheadChart" class="chart" alt="Sweep chart: message overhead" />
+          </div>
         </div>
       </section>
     </main>
@@ -241,6 +247,6 @@
       </div>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=95"></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=99"></script>
   </body>
 </html>
