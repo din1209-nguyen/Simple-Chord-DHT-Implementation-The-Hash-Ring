@@ -469,87 +469,45 @@ button.secondary[hidden] {
 
 .lookup-result-summary {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
+  margin-top: 10px;
 }
 
-.lookup-result-card {
+.lookup-result-item {
   display: grid;
   gap: 2px;
   min-width: 0;
   min-height: 44px;
-  border: 1px solid #dbeafe;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   padding: 6px 8px;
   background: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1.2;
 }
 
-.lookup-result-card span {
+.lookup-result-label {
   color: #64748b;
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0;
 }
 
-.lookup-result-card strong {
+.lookup-result-value {
   color: var(--ink);
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.86rem;
+  font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
-.lookup-result-card small {
-  color: #64748b;
-  font-size: 0.62rem;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.lookup-result-card--owner {
-  border-color: #94a3b8;
-  background: #f8fafc;
-}
-
-.lookup-result-card--key,
-.lookup-result-card--replicas {
-  border-color: #bae6fd;
-  background: #f0f9ff;
-}
-
-.lookup-result-card--key strong,
-.lookup-result-card--replicas strong {
-  color: #075985;
-}
-
-.lookup-result-card--found {
-  border-color: #99f6e4;
-  background: #f0fdfa;
-}
-
-.lookup-result-card--found strong {
-  color: var(--accent-strong);
-}
-
-#lookupOutput.lookup-output--missing .lookup-result-card--found {
+#lookupOutput.lookup-output--missing .lookup-result-item:nth-child(3) {
   border-color: #fecaca;
   background: #fff7f7;
 }
 
-#lookupOutput.lookup-output--missing .lookup-result-card--found strong {
+#lookupOutput.lookup-output--missing .lookup-result-item:nth-child(3) .lookup-result-value {
   color: var(--danger);
-}
-
-.lookup-result-card--hops {
-  border-color: #fed7aa;
-  background: #fff7ed;
-}
-
-.lookup-result-card--hops strong {
-  color: #9a3412;
 }
 
 .lookup-missing-banner {
@@ -599,6 +557,16 @@ button.secondary[hidden] {
   border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.lookup-log li.lookup-log-item--miss {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.lookup-log li.lookup-log-item--miss::before {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
 }
 
 .route span,
@@ -1838,55 +1806,20 @@ th {
   background: #f0fdfa;
 }
 
+/* Make topology image fill the entire frame */
 .topology-frame {
   position: relative;
   display: none;
   align-items: center;
   justify-content: center;
   flex: 1 1 auto;
-  min-height: 50vh;
+  min-height: 70vh;
+  height: 80vh;
   margin-top: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #f8fafc;
   overflow: hidden;
-}
-
-/* Overlay summary on top of network image */
-.topology-overlay {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.topology-overlay .topology-summary {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.topology-overlay .topology-summary-card {
-  padding: 6px 8px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
-}
-
-.topology-overlay .topology-summary-card span {
-  font-size: 0.68rem;
-}
-
-.topology-overlay .topology-summary-card strong {
-  font-size: 0.92rem;
-}
-
-@media (max-width: 760px) {
-  .topology-overlay .topology-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 .topology-frame.is-ready {
@@ -1897,12 +1830,11 @@ th {
   opacity: 0.45;
 }
 
-/* Make topology image fit inside frame */
 .topology-frame .artifact-image {
   display: block;
   width: 100%;
   height: 100%;
-  max-height: 50vh;
+  max-height: 80vh;
   object-fit: contain;
 }
 
@@ -2177,6 +2109,94 @@ th {
   }
 }
 
+/* ── hops_chart_sweep ─────────────────────────────── */
+.hops-chart-sweep {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.hops-chart-sweep[hidden] {
+  display: none;
+}
+
+.hops-chart-sweep-header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #f8fafc;
+}
+
+.hops-chart-sweep-header h3 {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.hops-chart-sweep-img {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.hops-chart-sweep-table-wrap {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.hops-chart-sweep-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.hops-chart-sweep-table th,
+.hops-chart-sweep-table td {
+  white-space: nowrap;
+  padding: 7px 9px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+
+.hops-chart-sweep-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.hops-chart-sweep-table th:first-child,
+.hops-chart-sweep-table td:first-child {
+  text-align: center;
+  width: 40px;
+}
+
+.hops-chart-sweep-table tbody tr:hover {
+  background: #ecfeff;
+}
+
+@media (max-width: 640px) {
+  .hops-chart-sweep-table {
+    font-size: 0.72rem;
+  }
+  .hops-chart-sweep-table th,
+  .hops-chart-sweep-table td {
+    padding: 5px 6px;
+  }
+}
+
+/* ── metric summary (lookup metric cards) ─────────── */
+/* kept for reference, not rendered in new UI */
+
 @media (max-width: 760px) {
   .lookup-result-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2265,4 +2285,70 @@ th {
   .neighbor-arrow {
     display: none;
   }
+}
+
+.metrics-sweep-row:hover {
+  background: #ecfeff;
+}
+
+.metrics-trace {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.metrics-trace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.metrics-trace-header h3 {
+  margin: 0;
+}
+
+.metrics-trace-body {
+  padding: 12px;
+}
+
+.metrics-trace-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.metrics-trace-section h4 {
+  margin: 10px 0 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.metrics-trace-card {
+  display: grid;
+  gap: 2px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8fafc;
+}
+
+.metrics-trace-card span {
+  color: #64748b;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.metrics-trace-card strong {
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.metrics-trace-empty {
+  color: var(--muted);
+  font-weight: 800;
 }

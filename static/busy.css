@@ -1,0 +1,30 @@
+  /* Busy state: show per-section loading feedback */
+button.is-busy {
+  position: relative;
+  padding-right: 34px;
+}
+
+button.is-busy::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #ffffff;
+  animation: btn-spin 0.8s linear infinite;
+}
+
+button.secondary.is-busy::after {
+  border-color: rgba(15, 118, 110, 0.25);
+  border-top-color: var(--accent);
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

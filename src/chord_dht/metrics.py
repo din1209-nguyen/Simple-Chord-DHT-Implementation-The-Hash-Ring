@@ -51,7 +51,7 @@ def _record_lookup_sample(
 
     # Lưu latency, số hop và tăng số lookup thành công
     # Thêm simulated network latency để latency không bằng 0
-    simulated_latency = random.uniform(0.05, 0.5)  # Simulate 0.05-0.5ms network delay
+    simulated_latency = random.uniform(5.0, 30.0)  # Simulate 5-30ms network delay
     accumulator["latencies_ms"].append((time.perf_counter() - started_at) * 1000 + simulated_latency)
     accumulator["hops"].append(result.hops)
     accumulator["successful_lookups"] += 1
@@ -82,17 +82,13 @@ def _build_metric_point(
     # Trả về cả metric chính và thông tin phụ phục vụ chart, bảng và debug lỗi lookup
     return {
         "nodes": node_count,
-        "average_hops": round(message_overhead / successful_lookups, 3) if successful_lookups else 0,
-        "max_hops": max_hops,
+    "average_hops": round(message_overhead / successful_lookups, 3) if successful_lookups else 0,
         "log2_nodes": round(math.log2(node_count), 3),
-        "lookups": lookups_per_trial,
-        "trials": trial_count,
         "attempted_lookups": attempted_lookups,
         "total_lookups": attempted_lookups,
         "successful_lookups": successful_lookups,
         "failed_lookups": failed_lookups,
-        "success_rate": round(successful_lookups / attempted_lookups, 3) if attempted_lookups else 0,
-        "average_latency_ms": round(sum(latencies_ms) / len(latencies_ms), 4) if latencies_ms else 0,
+        "average_latency_ms": round(sum(latencies_ms) / len(latencies_ms), 3) if latencies_ms else 0,
         "message_overhead": message_overhead,
         "messages_per_lookup": round(message_overhead / successful_lookups, 3) if successful_lookups else 0,
         "max_lookup_trace": accumulator["max_lookup_trace"],
@@ -236,6 +232,7 @@ def run_lookup_metrics(
     # Trả toàn bộ dữ liệu để API/UI vừa render bảng vừa hiển thị chart nếu có
     return {
         "points": points,
+        "node_counts": [int(p["nodes"]) for p in points],
         "chart_path": str(chart_path) if chart_path else None,
         "message": "Metrics completed successfully.",
     }

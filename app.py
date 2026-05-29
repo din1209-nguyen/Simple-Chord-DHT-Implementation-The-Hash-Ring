@@ -383,8 +383,37 @@ def kill_node():
         return json_error(str(exc))
 
 
-@app.post("/api/node")
-def add_node():
+
+
+@app.delete("/api/node/<int:node_id>")
+def delete_node(node_id: int):
+    """Permanently remove a node from the ring.
+
+    If the node is active, kill it first (to trigger recovery and detach links),
+    then remove it from ring storage and stabilize.
+    """
+    try:
+        with coordinator_lock:
+            _autoload_once()
+            if node_id not in ring.nodes:
+                return json_error(f"Node {node_id} does not exist", 404)
+
+            if ring.nodes[node_id].active:
+                ring.kill_node(node_id)
+
+            del ring.nodes[node_id]
+            ring.failed_nodes.discard(node_id)
+            ring.stabilize()
+            _save_ring_state(ring)
+
+        return jsonify({
+            "ok": True,
+            "message": f"Node {node_id} deleted.",
+            "state": ring.summary(sample_size=None),
+        })
+    except Exception as exc:
+        return json_error(str(exc))
+
     payload = request.get_json(silent=True) or {}
     try:
         with coordinator_lock:
@@ -483,11 +512,12 @@ def metrics_current_ring():
             )
             charts = save_metric_charts_from_points(sweep_result["points"])
 
-        # Keep response minimal and stable for the frontend.
+        # Return sweep data including node_counts for the HTTP messages table
         return jsonify({
             "ok": True,
             "message": "Metrics completed successfully.",
             "sweep_points": sweep_result["points"],
+            "node_counts": [int(p["nodes"]) for p in sweep_result["points"]],
             "charts": charts,
         })
     except Exception as exc:

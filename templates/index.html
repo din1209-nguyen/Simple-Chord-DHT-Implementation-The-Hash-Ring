@@ -2,19 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chord DHT - Distributed Hash Ring</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=99" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=105" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='busy.css') }}?v=105" />
   </head>
   <body>
-    <div id="appLoading" class="app-loading-overlay" aria-live="polite">
-      <div class="app-loading-content">
-        <div class="app-loading-spinner"></div>
-        <div class="app-loading-title">Chord DHT</div>
-        <div id="appLoadingStatus" class="app-loading-status">Initializing distributed ring...</div>
-      </div>
-    </div>
-
+  <body>
     <header class="topbar">
       <div class="topbar-brand">
         <div class="brand-logo">
@@ -99,6 +96,7 @@
               <div id="selectedNodeActions" class="selected-actions" hidden>
                 <button id="restartNodeBtn" type="button" class="secondary">Restart</button>
                 <button id="killBtn" type="button" class="danger">Kill</button>
+                <button id="deleteNodeBtn" type="button" class="danger">Delete</button>
               </div>
               <span class="failed-count">Failed: <input id="failedNodesInput" type="text" readonly value="0" /></span>
             </div>
@@ -185,7 +183,7 @@
           </div>
           <div id="topologyFrame" class="topology-frame">
             <div class="chart-placeholder" hidden>Generate topology graph to render the current network.</div>
-            <img id="topologyChart" class="artifact-image" alt="Chord topology graph" />
+            <img id="topologyChart" class="artifact-image topology-image" alt="Chord topology graph" />
           </div>
           <div id="topologyOutput" class="artifact-output" hidden></div>
         </section>
@@ -195,18 +193,51 @@
         <h2>Metrics</h2>
         <div class="metrics-controls">
           <label>
-            Lookups
+            Lookups per trial
             <input id="metricLookupsInput" type="number" min="1" value="100" />
           </label>
           <label>
-            Trials
+            Number of trials
             <input id="metricTrialsInput" type="number" min="1" value="5" />
           </label>
-          <button id="metricsBtn" type="button" class="secondary">Run Metrics</button>
+          <button id="metricsBtn" type="button">Run Metrics</button>
         </div>
-        <div id="metricsOutput" class="artifact-output"></div>
+
+        <div id="metricsOutput" class="metrics-content"></div>
+
+        <!-- Table above charts -->
+        <div id="hopsChartSweep" class="hops-chart-sweep" hidden>
+          <div class="hops-chart-sweep-table-wrap">
+            <table class="data-table hops-chart-sweep-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>N</th>
+                  <th>Avg Hops</th>
+                  <th>log2(N)</th>
+                  <th>Latency (ms)</th>
+                  <th>Total Lookups</th>
+                  <th>Success / Failed</th>
+                  <th>Message Overhead</th>
+                  <th>Messages / Lookup</th>
+                </tr>
+              </thead>
+              <tbody id="hopsChartSweepOutput"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="metricsTracePanel" class="metrics-trace" hidden>
+          <div class="metrics-trace-header">
+            <h3>Metric Point Details</h3>
+            <button id="metricsTraceClose" type="button" class="secondary">Close</button>
+          </div>
+          <div id="metricsTraceBody" class="metrics-trace-body"></div>
+        </div>
+
+        <!-- 3 matplotlib charts below table -->
         <div id="metricsSweepCharts" class="metrics-sweep-charts" hidden>
-          <div class="chart-placeholder" hidden>Click "Run Metrics" to generate 3 sweep charts (N=1..50).</div>
+          <div class="chart-placeholder" hidden>Click "Run Metrics" to generate charts (N=1..50).</div>
           <div class="sweep-chart-item">
             <img id="metricsHopsChart" class="chart" alt="Sweep chart: average hops" />
           </div>
@@ -220,33 +251,29 @@
       </section>
     </main>
 
-    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
-    <div id="formModal" class="modal" aria-hidden="true">
-      <div class="modal-card">
-        <header class="modal-header">
+    <!-- Form modal for add/edit operations -->
+    <div id="formModal" class="form-modal" aria-hidden="true">
+      <div class="form-dialog">
+        <div class="modal-header">
           <h3 id="formModalTitle">Form</h3>
+        </div>
+        <div id="formModalFields" class="modal-fields"></div>
+        <div class="modal-actions">
           <button id="formModalCancelBtn" type="button" class="secondary">Cancel</button>
-        </header>
-        <div id="formModalFields" class="modal-body"></div>
-        <footer class="modal-footer">
           <button id="formModalSubmitBtn" type="button">Save</button>
-        </footer>
-      </div>
-    </div>
-
-    <div id="topologyModal" class="modal" aria-hidden="true">
-      <div class="modal-card modal-card--wide">
-        <header class="modal-header">
-          <h3>Topology</h3>
-          <button id="topologyCloseBtn" type="button" class="secondary">Close</button>
-        </header>
-        <div class="modal-body">
-          <img id="topologyModalImage" class="modal-image" alt="Chord topology graph" />
         </div>
       </div>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=99"></script>
+    <!-- Image modal for topology zoom -->
+    <div id="topologyModal" class="image-modal" aria-hidden="true">
+      <button id="topologyCloseBtn" type="button" class="image-modal-close icon-btn">✕</button>
+      <img id="topologyModalImage" class="modal-image" alt="Topology graph" />
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='app.js') }}?v=105"></script>
   </body>
 </html>
