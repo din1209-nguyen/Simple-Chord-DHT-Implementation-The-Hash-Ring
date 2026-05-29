@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chord DHT - Distributed Hash Ring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=95" />
+  </head>
+  <body>
+    <div id="appLoading" class="app-loading-overlay" aria-live="polite">
+      <div class="app-loading-content">
+        <div class="app-loading-spinner"></div>
+        <div class="app-loading-title">Chord DHT</div>
+        <div id="appLoadingStatus" class="app-loading-status">Initializing distributed ring...</div>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-logo">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+            <circle cx="18" cy="3" r="3" fill="currentColor"/>
+            <circle cx="31" cy="10" r="3" fill="currentColor"/>
+            <circle cx="31" cy="26" r="3" fill="currentColor"/>
+            <circle cx="18" cy="33" r="3" fill="currentColor"/>
+            <circle cx="5" cy="26" r="3" fill="currentColor"/>
+            <circle cx="5" cy="10" r="3" fill="currentColor"/>
+            <circle cx="18" cy="18" r="4" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Chord DHT</h1>
+          <p>Topic 61: Distributed Hash Ring</p>
+        </div>
+      </div>
+      <div class="status-strip">
+        <div class="status-item">
+          <span class="status-label">Nodes</span>
+          <span id="statusNodes" class="status-value">--</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Resources</span>
+          <span id="statusResources" class="status-value">--</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Replicas</span>
+          <span id="statusReplicas" class="status-value">--</span>
+        </div>
+        <div class="status-item status-item--compact">
+          <span class="status-label">ID Space</span>
+          <span id="statusSpace" class="status-value">2^16</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel control-panel">
+        <div class="control-group">
+          <h2>Deployment</h2>
+          <div class="form-grid control-grid">
+            <label>
+              Sites / Nodes (10-100)
+              <input id="nodesInput" type="number" min="10" max="100" value="50" />
+            </label>
+            <label>
+              Resources
+              <input id="resourcesInput" type="number" min="0" value="1000" />
+            </label>
+            <label>
+              m Bits
+              <input id="mInput" type="number" min="1" max="160" value="16" />
+            </label>
+            <label>
+              Seed
+              <input id="seedInput" type="number" value="61" />
+            </label>
+            <label>
+              Replicas
+              <input id="replicationInput" type="number" min="0" value="3" />
+            </label>
+          </div>
+          <div class="deployment-actions">
+            <button id="initializeBtn" type="button">Initialize / Reset Data</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel wide ring-state-panel">
+        <h2>Ring State</h2>
+        <div class="state-grid">
+          <div class="state-col state-col-nodes">
+            <h3>Nodes</h3>
+            <div id="nodesOutput" class="pill-list pill-list--fill"></div>
+            <div id="selectedNodeSummary" class="selected-node-summary" hidden></div>
+
+            <div class="state-actions" aria-label="Node management">
+              <button id="addNodeBtn" type="button">Join Node</button>
+              <div id="selectedNodeActions" class="selected-actions" hidden>
+                <button id="restartNodeBtn" type="button" class="secondary">Restart</button>
+                <button id="killBtn" type="button" class="danger">Stop</button>
+              </div>
+              <span class="failed-count">Failed: <input id="failedNodesInput" type="text" readonly value="0" /></span>
+            </div>
+            <div id="nodeRemovalReport" class="kill-report" hidden></div>
+          </div>
+
+          <div class="state-col state-col-resources">
+            <h3>
+              <span id="resourceScopeLabel">All Resources</span>
+              <span id="resourcesCountLabel" class="resource-count"></span>
+            </h3>
+
+            <div class="resource-actions">
+              <div class="resource-actions-row">
+                <button id="showPrimaryBtn" type="button" class="filter-toggle active" title="Show primary resources">Primary</button>
+                <button id="showReplicaBtn" type="button" class="filter-toggle active" title="Show replica resources">Replicas</button>
+                <input id="resourceTableFilter" type="text" placeholder="Filter resources..." />
+                <button id="addResourceBtn" type="button">Add Resource</button>
+              </div>
+            </div>
+
+            <div class="resources-table-wrap">
+              <table class="data-table resources-table">
+                <thead>
+                  <tr>
+                    <th>Resource ID</th>
+                    <th>Key</th>
+                    <th>Owner</th>
+                    <th>Replicas</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="resourcesOutput"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="state-col state-col-fingers">
+            <h3>Finger Table</h3>
+            <div class="finger-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>start</th>
+                    <th>end</th>
+                    <th>node</th>
+                  </tr>
+                </thead>
+                <tbody id="fingerOutput"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel wide lookup-and-topology">
+        <section class="lookup-panel">
+          <h2>Lookup</h2>
+          <div class="lookup-row">
+            <label>
+              Resource ID / Key
+              <input id="resourceInput" type="text" value="resource-0001" list="resourceTableList" />
+              <datalist id="resourceTableList"></datalist>
+            </label>
+            <label>
+              Start node (optional)
+              <input id="startNodeInput" type="number" placeholder="auto" list="nodeList" />
+              <datalist id="nodeList"></datalist>
+            </label>
+            <button id="lookupBtn" type="button">Lookup</button>
+          </div>
+          <div id="lookupOutput" class="lookup-output"></div>
+        </section>
+
+        <section class="topology-card">
+          <div class="topology-header">
+            <h2>Topology</h2>
+            <button id="topologyExpandBtn" type="button" class="icon-btn" title="Expand">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+              </svg>
+            </button>
+          </div>
+          <div id="topologyFrame" class="topology-frame">
+            <div class="chart-placeholder" hidden>Generate topology graph to render the current network.</div>
+            <img id="topologyChart" class="artifact-image" alt="Chord topology graph" />
+          </div>
+          <div id="topologyOutput" class="artifact-output" hidden></div>
+        </section>
+      </section>
+
+      <section class="panel wide metrics-panel">
+        <h2>Metrics</h2>
+        <div class="form-grid two" style="max-width:400px;margin-bottom:10px;">
+          <label>
+            Lookups
+            <input id="metricLookupsInput" type="number" min="1" value="100" />
+          </label>
+          <label>
+            Trials
+            <input id="metricTrialsInput" type="number" min="1" value="5" />
+          </label>
+        </div>
+        <div id="metricsOutput" class="artifact-output" style="margin-bottom:10px;"></div>
+        <div class="metrics-chart-shell">
+          <div class="chart-placeholder" hidden>Run metrics to generate charts.</div>
+          <img id="metricsHopsChart" class="chart" alt="Lookup hops chart" />
+          <img id="metricsLatencyChart" class="chart" alt="Lookup latency chart" />
+          <img id="metricsOverheadChart" class="chart" alt="Message overhead chart" />
+        </div>
+        <div class="topology-actions" style="margin-top:10px;">
+          <button id="metricsBtn" type="button" class="secondary">Run Metrics</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="formModal" class="modal" aria-hidden="true">
+      <div class="modal-card">
+        <header class="modal-header">
+          <h3 id="formModalTitle">Form</h3>
+          <button id="formModalCancelBtn" type="button" class="secondary">Cancel</button>
+        </header>
+        <div id="formModalFields" class="modal-body"></div>
+        <footer class="modal-footer">
+          <button id="formModalSubmitBtn" type="button">Save</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="topologyModal" class="modal" aria-hidden="true">
+      <div class="modal-card modal-card--wide">
+        <header class="modal-header">
+          <h3>Topology</h3>
+          <button id="topologyCloseBtn" type="button" class="secondary">Close</button>
+        </header>
+        <div class="modal-body">
+          <img id="topologyModalImage" class="modal-image" alt="Chord topology graph" />
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}?v=95"></script>
+  </body>
+</html>

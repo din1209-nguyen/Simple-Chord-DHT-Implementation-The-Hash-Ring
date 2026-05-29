@@ -31,7 +31,7 @@ const els = {
     document.querySelector("#metricsOverheadChart"),
   ],
   metricsChartPlaceholder: document.querySelector(".metrics-chart-shell .chart-placeholder"),
-  topologyBtn: document.querySelector("#topologyBtn"),
+  topologyBtn: null,
   topologyExpandBtn: document.querySelector("#topologyExpandBtn"),
   topologyCloseBtn: document.querySelector("#topologyCloseBtn"),
   topologyOutput: document.querySelector("#topologyOutput"),
@@ -57,11 +57,8 @@ const els = {
   fingerOutput: document.querySelector("#fingerOutput"),
   nodeList: document.querySelector("#nodeList"),
   toast: document.querySelector("#toast"),
-  resourceDetailModal: document.querySelector("#resourceDetailModal"),
-  resourceDetailContent: document.querySelector("#resourceDetailContent"),
-  resourceDetailEditBtn: document.querySelector("#resourceDetailEditBtn"),
-  resourceDetailDeleteBtn: document.querySelector("#resourceDetailDeleteBtn"),
-  resourceDetailCloseBtn: document.querySelector("#resourceDetailCloseBtn"),
+  showPrimaryBtn: document.querySelector("#showPrimaryBtn"),
+  showReplicaBtn: document.querySelector("#showReplicaBtn"),
   appLoading: document.querySelector("#appLoading"),
   appLoadingStatus: document.querySelector("#appLoadingStatus"),
 };
@@ -126,6 +123,9 @@ async function api(path, payload, method = "POST") {
 
 // Khóa nút trong lúc request đang chạy để người dùng không gửi trùng thao tác
 function setBusy(button, busy, label) {
+  if (!button) {
+    return;
+  }
   button.disabled = busy;
   if (busy) {
     button.dataset.label = button.textContent;
@@ -244,68 +244,12 @@ let currentActiveNodeCount = Number(els.nodesInput.value) || 10;
 let currentActiveNodes = [];
 let currentSites = [];
 let artifactGeneration = 0;
-let sitePortAssignments = new Map();
-let nextSitePort = Number(els.basePortInput?.value) || 5100;
+let showPrimaryOnly = true;
+let showReplicaOnly = true;
 
-// Đọc port cơ sở đã cấu hình để hiển thị địa chỉ các process node
-function configuredBasePort() {
-  return Number(els.basePortInput?.value) || 5100;
-}
-
-// Đọc thư mục JSON đã cấu hình để hiển thị vị trí lưu trữ cục bộ
-function configuredStorageDirectory() {
-  const directory = (els.storageDirInput?.value || "data/nodes").trim().replace(/[\\/]+$/, "");
-  return directory || "data/nodes";
-}
-
-// Tạo địa chỉ hiển thị dự phòng khi snapshot chưa trả metadata cho một site
-function allocateSite(nodeId) {
-  const numericNodeId = Number(nodeId);
-  if (!sitePortAssignments.has(numericNodeId)) {
-    const usedPorts = new Set(Array.from(sitePortAssignments.values(), (site) => site.port));
-    while (usedPorts.has(nextSitePort)) {
-      nextSitePort += 1;
-    }
-    sitePortAssignments.set(numericNodeId, { port: nextSitePort });
-    nextSitePort += 1;
-  }
-  const site = sitePortAssignments.get(numericNodeId);
-  return {
-    nodeId: numericNodeId,
-    port: null,
-    endpoint: null,
-    jsonFile: "data/state.json",
-  };
-}
-
-// Đồng bộ metadata endpoint thật để phục vụ chọn, dừng và khởi chạy lại process
-function resetSiteMetadata(sites = []) {
-  sitePortAssignments = new Map();
-  nextSitePort = configuredBasePort();
-  sites.forEach((site) => {
-    sitePortAssignments.set(Number(site.node_id), {
-      port: Number(site.port),
-      endpoint: site.endpoint,
-      jsonFile: site.storage_file,
-      status: site.status,
-    });
-  });
-}
-
-// Đọc địa chỉ process và file JSON thật của một site từ snapshot coordinator
+// Single-process: no per-node site metadata.
 function nodeSite(nodeId) {
-  const numericNodeId = Number(nodeId);
-  const assigned = sitePortAssignments.get(numericNodeId);
-  if (assigned) {
-    return {
-      nodeId: numericNodeId,
-      port: assigned.port,
-      endpoint: assigned.endpoint,
-      jsonFile: assigned.jsonFile,
-      status: assigned.status,
-    };
-  }
-  return allocateSite(numericNodeId);
+  return { nodeId: Number(nodeId), status: "Running" };
 }
 
 // Xác định owner của resource được chọn để đánh dấu node trên vòng hiển thị
@@ -329,27 +273,51 @@ function applyResourceTableFilter() {
             (Array.isArray(item.replica_node_ids) &&
               item.replica_node_ids.map(Number).includes(Number(selectedNodeId))),
         );
+  const scopeFilteredRows = nodeFilteredRows.filter((item) => {
+    if (selectedNodeId === null) return true;
+    const isPrimary = Number(item.owner_id) === Number(selectedNodeId);
+    const isReplica =
+      Array.isArray(item.replica_node_ids) &&
+      item.replica_node_ids.map(Number).includes(Number(selectedNodeId));
+    if (showPrimaryOnly && isPrimary) return true;
+    if (showReplicaOnly && isReplica) return true;
+    return false;
+  });
   const searchedRows = !q
-    ? nodeFilteredRows
-    : nodeFilteredRows.filter((item) => {
+    ? scopeFilteredRows
+    : scopeFilteredRows.filter((item) => {
         const replicas = Array.isArray(item.replica_node_ids) ? item.replica_node_ids.join(" ") : "";
         const hay = `${item.resource_id} ${item.key} ${item.owner_id} ${replicas}`.toLowerCase();
         return hay.includes(q);
       });
   const renderResourceRow = (item) => {
+    const replicas = Array.isArray(item.replica_node_ids) ? item.replica_node_ids.join(", ") : "";
     return `
       <tr class="resource-row ${item.resource_id === selectedResourceId ? "is-selected" : ""}" data-resource-id="${escapeHtml(item.resource_id)}">
         <td>${escapeHtml(item.resource_id)}</td>
         <td>${escapeHtml(item.key)}</td>
         <td><code>${escapeHtml(item.owner_id)}</code></td>
+        <td class="resource-replicas">${escapeHtml(replicas || "-")}</td>
+        <td>
+          <button type="button" class="delete-resource-btn danger" data-resource-id="${escapeHtml(item.resource_id)}" title="Delete resource">Delete</button>
+        </td>
       </tr>
     `;
   };
   els.resourcesOutput.innerHTML = searchedRows.length
     ? searchedRows.map(renderResourceRow).join("")
-    : `<tr><td colspan="3" class="empty-cell">No resources match the current filter.</td></tr>`;
+    : `<tr><td colspan="5" class="empty-cell">No resources match the current filter.</td></tr>`;
   els.resourcesOutput.querySelectorAll(".resource-row").forEach((row) => {
-    row.addEventListener("click", () => selectResource(row.dataset.resourceId));
+    row.addEventListener("click", (e) => {
+      if (e.target.closest(".delete-resource-btn")) return;
+      selectResource(row.dataset.resourceId);
+    });
+  });
+  els.resourcesOutput.querySelectorAll(".delete-resource-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteResourceFromTable(btn.dataset.resourceId, btn);
+    });
   });
   if (els.resourcesCountLabel) {
     const total = resourceTotalCount;
@@ -360,52 +328,39 @@ function applyResourceTableFilter() {
   updateResourceSelection();
 }
 
-// Cập nhật chi tiết process và trạng thái nút thao tác cho node đang chọn
+// Cập nhật chi tiết node đang chọn (single-process friendly)
 function updateNodeSelection() {
   const resourceOwnerId = selectedResourceOwnerId();
   document.querySelectorAll("#nodesOutput .node-pill").forEach((button) => {
     const nodeId = Number(button.dataset.nodeId);
     button.classList.toggle("is-selected", nodeId === Number(selectedNodeId));
-    button.classList.toggle("is-resource-owner", resourceOwnerId !== null && nodeId === resourceOwnerId);
+    button.classList.toggle(
+      "is-resource-owner",
+      resourceOwnerId !== null && nodeId === resourceOwnerId,
+    );
   });
+
   if (els.selectedNodeActions) {
     els.selectedNodeActions.hidden = selectedNodeId === null;
   }
-  const selectedSite = selectedNodeId === null ? null : nodeSite(selectedNodeId);
-  if (els.killBtn) {
-    els.killBtn.hidden = !selectedSite || selectedSite.status !== "Running";
-  }
+
+  // Restart is a distributed-process control; hide in single-process mode.
   if (els.restartNodeBtn) {
-    els.restartNodeBtn.hidden = !selectedSite || selectedSite.status === "Running";
+    els.restartNodeBtn.hidden = true;
   }
+
   if (els.selectedNodeSummary) {
-    if (selectedNodeId === null) {
-      els.selectedNodeSummary.hidden = true;
-      els.selectedNodeSummary.innerHTML = "";
-    } else {
-      const running = selectedSite.status === "Running";
-      els.selectedNodeSummary.innerHTML = `
-        <div class="selected-node-title">Local Ring View / Process Site</div>
-        <div class="selected-site-detail">
-          <span><strong>Status</strong> <strong class="node-status ${running ? "" : "node-status--stopped"}">${escapeHtml(selectedSite.status || "Stopped")}</strong></span>
-          <span><strong>REST</strong> <code>${escapeHtml(selectedSite.endpoint)}</code></span>
-          <span><strong>JSON</strong> <code>${escapeHtml(selectedSite.jsonFile)}</code></span>
-        </div>
-        <div class="local-view-loading">${
-          running
-            ? `Reading local neighbor state from ${escapeHtml(selectedSite.endpoint)}...`
-            : "Process is stopped. Restart this node to read its local neighbor state again."
-        }</div>
-      `;
-      els.selectedNodeSummary.hidden = false;
-    }
+    els.selectedNodeSummary.hidden = true;
+    els.selectedNodeSummary.innerHTML = "";
   }
+
   if (els.addResourceBtn) {
     els.addResourceBtn.disabled = false;
     els.addResourceBtn.title = "Add a resource to the ring";
   }
   if (els.resourceScopeLabel) {
-    els.resourceScopeLabel.textContent = selectedNodeId === null ? "All Resources" : `Resources on Node ${selectedNodeId}`;
+    els.resourceScopeLabel.textContent =
+      selectedNodeId === null ? "All Resources" : `Resources on Node ${selectedNodeId}`;
   }
 }
 
@@ -510,10 +465,9 @@ function singleLookupMetricFromResult(result, metric) {
   };
 }
 
-// Hiển thị thống kê lookup HTTP thực trên deployment đang chạy
+// Hiển thị bảng số liệu metrics mà không có các thẻ thống kê
 function renderMetricsSummary(point, currentNodes, rows = []) {
   const displayedNodes = Number(point.nodes ?? currentNodes);
-  const successPercent = `${(Number(point.success_rate) * 100).toFixed(1)}%`;
   const tableRows = rows
     .map((row) => normalizeMetricPoint(row))
     .map(
@@ -532,44 +486,6 @@ function renderMetricsSummary(point, currentNodes, rows = []) {
     )
     .join("");
   return `
-    <div class="metric-summary">
-      <div class="metric-card metric-card--primary">
-        <span>Current Nodes</span>
-        <strong>${escapeHtml(displayedNodes)}</strong>
-      </div>
-      <div class="metric-card metric-card--primary">
-        <span>Average Hops</span>
-        <strong>${escapeHtml(point.average_hops)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>log2(N)</span>
-        <strong>${escapeHtml(point.log2_nodes)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Success Rate</span>
-        <strong>${escapeHtml(successPercent)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Attempted Lookups</span>
-        <strong>${escapeHtml(point.total_lookups)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Successful / Failed</span>
-        <strong>${escapeHtml(point.successful_lookups)} / ${escapeHtml(point.failed_lookups)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Latency ms</span>
-        <strong>${escapeHtml(point.average_latency_ms)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Message Overhead</span>
-        <strong>${escapeHtml(point.message_overhead)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Messages / Lookup</span>
-        <strong>${escapeHtml(point.messages_per_lookup)}</strong>
-      </div>
-    </div>
     <div class="metrics-benchmark">
       <h3>Current HTTP Deployment Measurement (N = ${escapeHtml(currentNodes)})</h3>
       <div class="metrics-table-wrap">
@@ -668,28 +584,22 @@ function renderTopologyArtifact(topology, generation = artifactGeneration) {
   if (!topology || !topology.report || !topology.chart_url) {
     return false;
   }
+  const report = topology.report || {};
+  const nodeCount = Number(report.node_count);
+  const failedCount = Number(report.failed_node_count);
+  const safeNodeCount = Number.isFinite(nodeCount) ? nodeCount : 0;
+  const safeFailedCount = Number.isFinite(failedCount) ? failedCount : 0;
+  const safeFingerEdges = Number.isFinite(Number(report.finger_edges)) ? Number(report.finger_edges) : 0;
+  const safePathEdges = Number.isFinite(Number(report.path_edges)) ? Number(report.path_edges) : 0;
+
   els.topologyFrame.classList.add("is-ready");
   els.topologyFrame.classList.remove("loading");
-  els.topologyOutput.innerHTML = `
-      <div class="topology-summary">
-        <div class="topology-summary-card topology-summary-card--nodes">
-          <span>Total nodes</span>
-          <strong>${escapeHtml(topology.report.node_count)}</strong>
-        </div>
-        <div class="topology-summary-card topology-summary-card--failed">
-          <span>Stopped nodes</span>
-          <strong>${escapeHtml(topology.report.failed_node_count)}</strong>
-        </div>
-        <div class="topology-summary-card topology-summary-card--finger">
-          <span>Finger edges</span>
-          <strong>${escapeHtml(topology.report.finger_edges)}</strong>
-        </div>
-        <div class="topology-summary-card topology-summary-card--path">
-          <span>Highlighted path</span>
-          <strong>${escapeHtml(topology.report.path_edges)}</strong>
-        </div>
-      </div>
-    `;
+
+  // Render overlay summary on top of the topology image (not below).
+
+  // Keep legacy output text empty to avoid UI duplication.
+  els.topologyOutput.innerHTML = "";
+
   setImageReady(els.topologyChart, els.topologyPlaceholder, topology.chart_url, generation);
   return true;
 }
@@ -935,9 +845,13 @@ async function loadState() {
 // Render số node, resource mẫu, danh sách node active và preview Finger Table
 // Hiển thị snapshot trạng thái do coordinator thu thập từ các node đang sống
 function renderState(state) {
-    currentActiveNodeCount = Number(state.active_node_count) || 0;
-    currentActiveNodes = Array.isArray(state.active_nodes) ? state.active_nodes.map(Number) : [];
-    currentSites = Array.isArray(state.nodes) ? state.nodes : [];
+  currentActiveNodeCount = Number(state.active_node_count) || 0;
+  currentActiveNodes = Array.isArray(state.active_nodes) ? state.active_nodes.map(Number) : [];
+  if (Array.isArray(state.nodes) && state.nodes.length) {
+    currentSites = state.nodes;
+  } else {
+    currentSites = currentActiveNodes.map((nodeId) => ({ node_id: nodeId, active: true }));
+  }
   els.statusNodes.textContent = state.active_node_count;
   els.statusResources.textContent = state.resource_count;
   els.statusReplicas.textContent = state.replication_count || 0;
@@ -1067,6 +981,7 @@ async function lookupResource() {
     });
     const result = data.result;
     els.lookupOutput.classList.remove("lookup-output--missing");
+    const ownerSite = nodeSite(result.owner_id);
     const path = (Array.isArray(result.path) ? result.path : []).map((nodeId) => {
       return `<span>${escapeHtml(nodeId)}</span>`;
     });
@@ -1086,7 +1001,6 @@ async function lookupResource() {
         <div class="lookup-result-card lookup-result-card--owner">
           <span>Owner</span>
           <strong>${escapeHtml(result.owner_id)}</strong>
-          <small>${escapeHtml(ownerSite.endpoint)}</small>
         </div>
         <div class="lookup-result-card lookup-result-card--key">
           <span>Key</span>
@@ -1109,7 +1023,9 @@ async function lookupResource() {
       <div class="route">${route}</div>
       <ul class="lookup-log">${logs}</ul>
     `;
-    await generateTopology(true, true);
+
+    // Re-generate topology with lookup path highlighted.
+    await generateTopology(true, true, Array.isArray(result.path) ? result.path : null);
     showToast(data.message);
   } catch (error) {
     els.lookupOutput.classList.add("lookup-output--missing");
@@ -1299,7 +1215,7 @@ async function runMetrics(silent = false) {
     };
     const point = normalizeMetricPoint(pointSource);
     currentActiveNodeCount = currentNodes;
-    els.statusNodes.textContent = `Nodes: ${currentNodes}`;
+    els.statusNodes.textContent = currentNodes;
     els.metricsOutput.innerHTML = renderMetricsSummary(point, currentNodes, metricRows);
     setMetricChartsReady(data.chart_urls || {
       hops: data.chart_url,
@@ -1324,17 +1240,22 @@ async function runMetrics(silent = false) {
 }
 
 // Tạo topology graph từ snapshot node và chỉ highlight đường HTTP sau lookup
-async function generateTopology(silent = false, includeLastPath = false) {
+async function generateTopology(silent = false, includeLastPath = false, lookupPath = null) {
   const requestGeneration = artifactGeneration;
+  if (!els.topologyFrame || !els.topologyChart) {
+    return;
+  }
   setBusy(els.topologyBtn, true, "Generating...");
   els.topologyOutput.textContent = "Generating topology graph...";
   els.topologyFrame.classList.add("is-ready");
   els.topologyFrame.classList.add("loading");
   setImageLoading(els.topologyChart, els.topologyPlaceholder, "Generating topology graph...");
   try {
-    const data = await api("/api/topology", {
-      include_last_path: includeLastPath,
-    });
+    const payload = { include_last_path: includeLastPath };
+    if (includeLastPath && Array.isArray(lookupPath) && lookupPath.length) {
+      payload.lookup_path = lookupPath;
+    }
+    const data = await api("/api/topology", payload);
     if (requestGeneration !== artifactGeneration) {
       return;
     }
@@ -1374,86 +1295,73 @@ function closeTopologyModal() {
   els.topologyModal.setAttribute("aria-hidden", "true");
 }
 
-// Hiển thị chi tiết resource trong modal
-function showResourceDetailModal(resource) {
-  if (!resource || !els.resourceDetailModal) return;
-  const ownerSite = nodeSite(resource.owner_id);
-  const replicas = Array.isArray(resource.replica_node_ids) ? resource.replica_node_ids : [];
-  const replicaBadges = replicas.length
-    ? replicas.map((rid) => {
-        const rSite = nodeSite(rid);
-        return `<span class="replica-badge">${escapeHtml(rid)}<span class="port">:${escapeHtml(rSite.port)}</span></span>`;
-      }).join("")
-    : '<span class="resource-detail-value">None</span>';
-  els.resourceDetailContent.innerHTML = `
-    <div class="resource-detail-grid">
-      <span class="resource-detail-label">Resource ID</span>
-      <span class="resource-detail-value"><code>${escapeHtml(resource.resource_id)}</code></span>
-    </div>
-    <div class="resource-detail-grid">
-      <span class="resource-detail-label">Key</span>
-      <span class="resource-detail-value"><code>${escapeHtml(resource.key)}</code></span>
-    </div>
-    <div class="resource-detail-grid">
-      <span class="resource-detail-label">Owner</span>
-      <span class="resource-detail-value primary">Node ${escapeHtml(resource.owner_id)} <span class="port">(${escapeHtml(ownerSite.endpoint)})</span></span>
-    </div>
-    <div class="resource-detail-grid">
-      <span class="resource-detail-label">Replicas</span>
-      <div class="resource-detail-value">${replicaBadges}</div>
-    </div>
-    <div class="resource-detail-grid">
-      <span class="resource-detail-label">Replication</span>
-      <span class="resource-detail-value ${resource.degraded_replication ? 'degraded' : ''}">${resource.degraded_replication ? 'Degraded' : 'Healthy'}</span>
-    </div>
-  `;
-  els.resourceDetailModal.classList.add("is-open");
-  els.resourceDetailModal.setAttribute("aria-hidden", "false");
+// Xóa resource trực tiếp từ bảng không cần chọn trước
+async function deleteResourceFromTable(resourceId, button) {
+  if (!resourceId) return;
+  if (!window.confirm(`Delete resource ${resourceId}?`)) return;
+  if (button) setBusy(button, true, "Deleting...");
+  try {
+    const data = await api(
+      "/api/resource",
+      { resource_id: resourceId },
+      "DELETE",
+    );
+    selectedResourceId = null;
+    await refreshAfterChange(data.state);
+    showToast(data.message);
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    if (button) setBusy(button, false);
+  }
 }
 
 // Đóng modal chi tiết resource
 function closeResourceDetailModal() {
-  if (els.resourceDetailModal) {
-    els.resourceDetailModal.classList.remove("is-open");
-    els.resourceDetailModal.setAttribute("aria-hidden", "true");
-  }
+  // Modal removed - kept for compatibility
 }
 
-// Mở chi tiết resource khi click
+// Chọn resource để highlight trong bảng mà không hiển thị modal
 function selectResource(resourceId) {
-  if (selectedResourceId === resourceId && els.resourceDetailModal && els.resourceDetailModal.classList.contains("is-open")) {
-    closeResourceDetailModal();
+  if (selectedResourceId === resourceId) {
     selectedResourceId = null;
   } else {
     selectedResourceId = resourceId;
-    const resource = cachedResourceRows.find((r) => r.resource_id === resourceId);
-    if (resource) {
-      showResourceDetailModal(resource);
-    }
   }
   applyResourceTableFilter();
   updateNodeSelection();
 }
 
-els.initializeBtn.addEventListener("click", initializeNetwork);
-els.lookupBtn.addEventListener("click", lookupResource);
-els.killBtn.addEventListener("click", killNode);
-els.addNodeBtn.addEventListener("click", addNode);
-els.restartNodeBtn.addEventListener("click", restartNode);
-els.addResourceBtn.addEventListener("click", addResource);
-els.metricsBtn.addEventListener("click", () => runMetrics(false));
-els.topologyBtn.addEventListener("click", () => generateTopology(false, false));
-els.topologyExpandBtn.addEventListener("click", openTopologyModal);
-els.topologyCloseBtn.addEventListener("click", closeTopologyModal);
-els.formModalCancelBtn.addEventListener("click", closeFormModal);
-els.formModalSubmitBtn.addEventListener("click", submitFormModal);
-els.formModal.addEventListener("click", (event) => {
-  if (event.target === els.formModal) {
-    closeFormModal();
+function bindClick(el, handler) {
+  if (!el) {
+    return;
   }
-});
+  el.addEventListener("click", handler);
+}
+
+bindClick(els.initializeBtn, initializeNetwork);
+bindClick(els.lookupBtn, lookupResource);
+bindClick(els.killBtn, killNode);
+bindClick(els.addNodeBtn, addNode);
+bindClick(els.restartNodeBtn, restartNode);
+bindClick(els.addResourceBtn, addResource);
+bindClick(els.metricsBtn, () => runMetrics(false));
+  // Topology expand/close
+  bindClick(els.topologyExpandBtn, openTopologyModal);
+  bindClick(els.topologyCloseBtn, closeTopologyModal);
+bindClick(els.formModalCancelBtn, closeFormModal);
+bindClick(els.formModalSubmitBtn, submitFormModal);
+
+if (els.formModal) {
+  els.formModal.addEventListener("click", (event) => {
+    if (event.target === els.formModal) {
+      closeFormModal();
+    }
+  });
+}
+
 document.addEventListener("keydown", (event) => {
-  if (!els.formModal.classList.contains("is-open")) {
+  if (!els.formModal || !els.formModal.classList.contains("is-open")) {
     return;
   }
   if (event.key === "Escape") {
@@ -1464,11 +1372,13 @@ document.addEventListener("keydown", (event) => {
     void submitFormModal();
   }
 });
-els.topologyModal.addEventListener("click", (event) => {
-  if (event.target === els.topologyModal) {
-    closeTopologyModal();
-  }
-});
+if (els.topologyModal) {
+  els.topologyModal.addEventListener("click", (event) => {
+    if (event.target === els.topologyModal) {
+      closeTopologyModal();
+    }
+  });
+}
 // Resource detail modal handlers
 if (els.resourceDetailCloseBtn) {
   els.resourceDetailCloseBtn.addEventListener("click", closeResourceDetailModal);
@@ -1494,6 +1404,22 @@ if (els.resourceDetailModal) {
 }
 if (els.resourceTableFilter) {
   els.resourceTableFilter.addEventListener("input", applyResourceTableFilter);
+}
+
+// Filter toggle handlers
+if (els.showPrimaryBtn) {
+  els.showPrimaryBtn.addEventListener("click", () => {
+    showPrimaryOnly = !showPrimaryOnly;
+    els.showPrimaryBtn.classList.toggle("active", showPrimaryOnly);
+    applyResourceTableFilter();
+  });
+}
+if (els.showReplicaBtn) {
+  els.showReplicaBtn.addEventListener("click", () => {
+    showReplicaOnly = !showReplicaOnly;
+    els.showReplicaBtn.classList.toggle("active", showReplicaOnly);
+    applyResourceTableFilter();
+  });
 }
 if (els.basePortInput) {
   els.basePortInput.addEventListener("change", () => {
