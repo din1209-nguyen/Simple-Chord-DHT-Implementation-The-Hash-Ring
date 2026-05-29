@@ -192,11 +192,11 @@ def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, st
     # Hops chart (line) — shows average hops vs log2(N) theoretical bound
     hops_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep_hops_{ts}.png")
     plt.figure(figsize=(7.0, 4.2), dpi=150)
-    plt.plot(node_counts, average_hops, marker="o", linewidth=2, color="#0f766e", label="Số bước TB")
+    plt.plot(node_counts, average_hops, marker="o", linewidth=2, color="#0f766e", label="Average hops")
     plt.plot(node_counts, log_values, marker="s", linestyle="--", color="#f59e0b", label="log2(N)")
-    plt.title("Thống Kê Số Bước Tìm Kiếm (Lookup Hops)", fontsize=12, fontweight="bold")
-    plt.xlabel("Số Lượng Node (N)", fontsize=10)
-    plt.ylabel("Số Bước (Hops)", fontsize=10)
+    plt.title("Lookup hops vs log2(N)", fontsize=12, fontweight="bold")
+    plt.xlabel("Number of nodes (N)", fontsize=10)
+    plt.ylabel("Hops", fontsize=10)
     plt.xticks(node_counts, fontsize=7, rotation=90)
     plt.yticks(fontsize=9)
     plt.grid(True, alpha=0.3)
@@ -209,10 +209,10 @@ def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, st
     # Latency chart (line)
     latency_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep_latency_{ts}.png")
     plt.figure(figsize=(7.0, 4.2), dpi=150)
-    plt.plot(node_counts, average_latencies, marker="^", linewidth=2, color="#2563eb", label="Độ trễ TB (ms)")
-    plt.title("Thống Kê Độ Trễ Tìm Kiếm (Lookup Latency)", fontsize=12, fontweight="bold")
-    plt.xlabel("Số Lượng Node (N)", fontsize=10)
-    plt.ylabel("Độ Trễ (ms)", fontsize=10)
+    plt.plot(node_counts, average_latencies, marker="^", linewidth=2, color="#2563eb", label="Average latency (ms)")
+    plt.title("Lookup latency (ms)", fontsize=12, fontweight="bold")
+    plt.xlabel("Number of nodes (N)", fontsize=10)
+    plt.ylabel("Latency (ms)", fontsize=10)
     plt.xticks(node_counts, fontsize=7, rotation=90)
     plt.yticks(fontsize=9)
     plt.grid(True, alpha=0.3)
@@ -225,10 +225,10 @@ def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, st
     # Overhead chart (line)
     overhead_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep_overhead_{ts}.png")
     plt.figure(figsize=(7.0, 4.2), dpi=150)
-    plt.plot(node_counts, messages_per_lookup, marker="D", linewidth=2, color="#b45309", label="Tin nhắn / Lookup")
-    plt.title("Thống Kê Chi Phí Tin Nhắn (Message Overhead)", fontsize=12, fontweight="bold")
-    plt.xlabel("Số Lượng Node (N)", fontsize=10)
-    plt.ylabel("Tin Nhắn / Lookup", fontsize=10)
+    plt.plot(node_counts, messages_per_lookup, marker="D", linewidth=2, color="#b45309", label="Messages per lookup")
+    plt.title("Message overhead (messages/lookup)", fontsize=12, fontweight="bold")
+    plt.xlabel("Number of nodes (N)", fontsize=10)
+    plt.ylabel("Messages / lookup", fontsize=10)
     plt.xticks(node_counts, fontsize=7, rotation=90)
     plt.yticks(fontsize=9)
     plt.grid(True, alpha=0.3)
@@ -500,9 +500,14 @@ def metrics_current_ring():
             seed = ring.seed
 
         with plot_lock:
-            # Always generate sweep data (1..50) for BOTH table and charts
+            # Always generate sweep data based on current ring size.
+            # Requirement: table must have exactly min(active_nodes, 50) rows.
+            active_nodes = int(ring.summary(sample_size=None).get("active_node_count", 0) or 0)
+            row_count = max(1, min(active_nodes, 50))
+            node_sizes = build_growth_node_sizes(active_nodes, row_limit=row_count)
             sweep_result = run_lookup_metrics(
-                max_node_count=50,
+                max_node_count=active_nodes,
+                node_sizes=node_sizes,
                 trial_count=trials,
                 lookups_per_size=lookups,
                 resource_count=resource_count,
@@ -586,6 +591,12 @@ def topology():
 
 
 if __name__ == "__main__":
+    # Load persisted state at startup (do not wait for first request)
+    try:
+        _autoload_once()
+    except Exception as exc:
+        logging.warning(f"Startup auto-load failed (continuing anyway): {exc}")
+
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "5000"))
     app.run(host=host, port=port, debug=False)

@@ -96,7 +96,6 @@
               <div id="selectedNodeActions" class="selected-actions" hidden>
                 <button id="restartNodeBtn" type="button" class="secondary">Restart</button>
                 <button id="killBtn" type="button" class="danger">Kill</button>
-                <button id="deleteNodeBtn" type="button" class="danger">Delete</button>
               </div>
               <span class="failed-count">Failed: <input id="failedNodesInput" type="text" readonly value="0" /></span>
             </div>
@@ -227,12 +226,16 @@
           </div>
         </div>
 
-        <div id="metricsTracePanel" class="metrics-trace" hidden>
-          <div class="metrics-trace-header">
-            <h3>Metric Point Details</h3>
-            <button id="metricsTraceClose" type="button" class="secondary">Close</button>
+        <div id="metricsTracePanel" class="modal-overlay" hidden>
+          <div class="modal-panel" role="dialog" aria-modal="true">
+            <div class="modal-header">
+              <h3>Metric Point Details</h3>
+              <button id="metricsTraceClose" type="button" class="icon-btn" title="Close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div id="metricsTraceBody" class="modal-body"></div>
           </div>
-          <div id="metricsTraceBody" class="metrics-trace-body"></div>
         </div>
 
         <!-- 3 matplotlib charts below table -->

@@ -80,9 +80,17 @@ def _build_metric_point(
     max_hops = max(hops) if hops else 0
 
     # Trả về cả metric chính và thông tin phụ phục vụ chart, bảng và debug lỗi lookup
+    max_trace = accumulator["max_lookup_trace"]
+    if max_trace:
+        max_trace = {
+            **max_trace,
+            "key": str(max_trace["key"]),
+            "owner_id": str(max_trace["owner_id"]),
+            "path": [str(n) for n in max_trace.get("path", [])],
+        }
     return {
         "nodes": node_count,
-    "average_hops": round(message_overhead / successful_lookups, 3) if successful_lookups else 0,
+        "average_hops": round(message_overhead / successful_lookups, 3) if successful_lookups else 0,
         "log2_nodes": round(math.log2(node_count), 3),
         "attempted_lookups": attempted_lookups,
         "total_lookups": attempted_lookups,
@@ -91,7 +99,7 @@ def _build_metric_point(
         "average_latency_ms": round(sum(latencies_ms) / len(latencies_ms), 3) if latencies_ms else 0,
         "message_overhead": message_overhead,
         "messages_per_lookup": round(message_overhead / successful_lookups, 3) if successful_lookups else 0,
-        "max_lookup_trace": accumulator["max_lookup_trace"],
+        "max_lookup_trace": max_trace,
         "sample_errors": accumulator["errors"],
     }
 
@@ -247,17 +255,33 @@ def build_growth_node_sizes(max_node_count: int, row_limit: int = 50) -> tuple[i
     if row_limit < 1:
         raise ValueError("row_limit must be at least 1")
 
+    # Nếu N <= row_limit, trả về full 1..N
     if max_node_count <= row_limit:
         return tuple(range(1, max_node_count + 1))
 
-    # Dùng set để loại mốc trùng nhau khi làm tròn các mốc tăng dần tới N lớn
-    sizes = {
-        max(1, round(max_node_count * step / row_limit))
-        for step in range(1, row_limit + 1)
-    }
+    # Nếu N > row_limit, lấy mẫu đều để có ĐÚNG row_limit điểm.
+    # Công thức đảm bảo: điểm đầu = 1, điểm cuối = N.
+    sizes = [
+        int(round(1 + (max_node_count - 1) * (i / (row_limit - 1))))
+        for i in range(row_limit)
+    ]
 
-    # Sắp xếp lại để biểu đồ luôn đi từ ít node đến nhiều node
-    return tuple(sorted(sizes))
+    # Khử trùng do làm tròn, nhưng vẫn cố giữ đủ row_limit điểm bằng cách lấp chỗ trống.
+    unique_sorted = sorted(set(sizes))
+    if len(unique_sorted) < row_limit:
+        used = set(unique_sorted)
+        # ưu tiên bổ sung các số chưa có từ nhỏ -> lớn
+        for candidate in range(1, max_node_count + 1):
+            if candidate in used:
+                continue
+            unique_sorted.append(candidate)
+            used.add(candidate)
+            if len(unique_sorted) >= row_limit:
+                break
+        unique_sorted = sorted(unique_sorted)
+
+    # Nếu vẫn dư (hiếm), cắt về đúng row_limit
+    return tuple(unique_sorted[:row_limit])
 
 
 # Lưu biểu đồ tổng hợp metric ra file PNG

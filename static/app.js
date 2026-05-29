@@ -16,7 +16,6 @@ const els = {
   lookupLatency: document.querySelector("#lookupLatency"),
   failedNodesInput: document.querySelector("#failedNodesInput"),
   killBtn: document.querySelector("#killBtn"),
-  deleteNodeBtn: document.querySelector("#deleteNodeBtn"),
   addNodeBtn: document.querySelector("#addNodeBtn"),
   restartNodeBtn: document.querySelector("#restartNodeBtn"),
   addResourceBtn: document.querySelector("#addResourceBtn"),
@@ -377,9 +376,6 @@ function updateNodeSelection() {
 if (els.killBtn) {
   els.killBtn.hidden = selectedNodeId === null || nodeSite(selectedNodeId).status !== "Running";
 }
-if (els.deleteNodeBtn) {
-  els.deleteNodeBtn.hidden = selectedNodeId === null || nodeSite(selectedNodeId).status !== "Stopped";
-}
 if (els.restartNodeBtn) {
   els.restartNodeBtn.hidden = true;
 }
@@ -575,47 +571,68 @@ function renderLookupMetricSummary(metric) {
   `;
 }
 
+function formatNumber(val) {
+  if (val === null || val === undefined) return "--";
+  const s = String(val);
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 function renderMetricTrace(point) {
   if (!point) {
-    return "<div class=\"metrics-trace-empty\">No details available.</div>";
+    return "<div class=\"trace-empty\">No details available.</div>";
   }
 
-  const normalized = normalizeMetricPoint(point);
-  const trace = point?.max_lookup_trace || null;
+  const trace = point?.max_lookup_trace || point;
 
-  const route = Array.isArray(trace?.path)
-    ? trace.path.map((nodeId) => `<span>${escapeHtml(nodeId)}</span>`).join("")
-    : "";
-  const logs = Array.isArray(trace?.logs) ? trace.logs.map((l) => `<li>${escapeHtml(l)}</li>`).join("") : "";
+  const path = Array.isArray(trace.path) ? trace.path : [];
+  const routeHTML = path.map((nodeId, i) => {
+    const n = formatNumber(nodeId);
+    const arrow = i < path.length - 1
+      ? `<span class="route-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>`
+      : "";
+    return `<span class="route-node">${n}${arrow}</span>`;
+  }).join("");
+
+  const logsHTML = Array.isArray(trace.logs) && trace.logs.length
+    ? trace.logs.map((l, i) => `<li class="trace-log-item"><span class="trace-log-num">${i + 1}</span>${escapeHtml(l)}</li>`).join("")
+    : "<li class=\"trace-empty\">No hop logs.</li>";
 
   return `
-    <div class="metrics-trace-summary">
-      <div class="metrics-trace-card"><span>N</span><strong>${escapeHtml(normalized.nodes)}</strong></div>
-      <div class="metrics-trace-card"><span>Avg hops</span><strong>${escapeHtml(normalized.average_hops)}</strong></div>
-      <div class="metrics-trace-card"><span>log2(N)</span><strong>${escapeHtml(normalized.log2_nodes)}</strong></div>
-      <div class="metrics-trace-card"><span>Latency (ms)</span><strong>${escapeHtml(normalized.average_latency_ms)}</strong></div>
-      <div class="metrics-trace-card"><span>Total lookups</span><strong>${escapeHtml(normalized.total_lookups)}</strong></div>
-      <div class="metrics-trace-card"><span>Success / failed</span><strong>${escapeHtml(normalized.successful_lookups)} / ${escapeHtml(normalized.failed_lookups)}</strong></div>
-      <div class="metrics-trace-card"><span>Message overhead</span><strong>${escapeHtml(normalized.message_overhead)}</strong></div>
-      <div class="metrics-trace-card"><span>Messages / lookup</span><strong>${escapeHtml(normalized.messages_per_lookup)}</strong></div>
-      <div class="metrics-trace-card"><span>Worst trace hops</span><strong>${escapeHtml(trace?.hops ?? "--")}</strong></div>
+    <div class="trace-cards">
+      <div class="trace-card"><span class="trace-label">N</span><strong>${formatNumber(point.nodes ?? trace.nodes)}</strong></div>
+      <div class="trace-card"><span class="trace-label">Avg Hops</span><strong>${formatNumber(point.average_hops ?? trace.hops)}</strong></div>
+      <div class="trace-card"><span class="trace-label">log2(N)</span><strong>${formatNumber(point.log2_nodes ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Latency (ms)</span><strong>${formatNumber(point.average_latency_ms ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Total Lookups</span><strong>${formatNumber(point.total_lookups ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Success</span><strong>${formatNumber(point.successful_lookups ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Failed</span><strong>${formatNumber(point.failed_lookups ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Msg Overhead</span><strong>${formatNumber(point.message_overhead ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Msgs/Lookup</span><strong>${formatNumber(point.messages_per_lookup ?? "")}</strong></div>
+      <div class="trace-card"><span class="trace-label">Trace Hops</span><strong>${path.length}</strong></div>
+      <div class="trace-card"><span class="trace-label">Requested Key</span><strong>${formatNumber(trace.key)}</strong></div>
+      <div class="trace-card"><span class="trace-label">Owner</span><strong>${formatNumber(trace.owner_id)}</strong></div>
     </div>
-
-    ${trace ? `<div class=\"metrics-trace-section\"><h4>Trace route</h4><div class=\"metric-trace-route\">${route}</div></div>` : ""}
-    ${trace ? `<div class=\"metrics-trace-section\"><h4>Trace logs</h4><ul class=\"lookup-log\">${logs}</ul></div>` : ""}
+    <div class="trace-section">
+      <h4 class="trace-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
+        Lookup Route (${path.length} hop${path.length !== 1 ? "s" : ""})
+      </h4>
+      <div class="trace-route">${routeHTML || "<span class=\"trace-empty\">No route.</span>"}</div>
+    </div>
+    <div class="trace-section">
+      <h4 class="trace-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Hop-by-Hop Logs
+      </h4>
+      <ul class="trace-log">${logsHTML}</ul>
+    </div>
   `;
 }
 
 function openMetricsTrace(pointIndex) {
-  if (!els.metricsTracePanel || !els.metricsTraceBody || !els.hopsChartSweep) {
-    return;
-  }
+  if (!els.metricsTracePanel || !els.metricsTraceBody || !els.hopsChartSweep) return;
   let points = [];
-  try {
-    points = JSON.parse(els.hopsChartSweep.dataset.points || "[]");
-  } catch {
-    points = [];
-  }
+  try { points = JSON.parse(els.hopsChartSweep.dataset.points || "[]"); } catch { points = []; }
   const point = points[pointIndex];
   els.metricsTraceBody.innerHTML = renderMetricTrace(point);
   els.metricsTracePanel.hidden = false;
@@ -624,9 +641,7 @@ function openMetricsTrace(pointIndex) {
 function closeMetricsTrace() {
   if (!els.metricsTracePanel) return;
   els.metricsTracePanel.hidden = true;
-  if (els.metricsTraceBody) {
-    els.metricsTraceBody.innerHTML = "";
-  }
+  if (els.metricsTraceBody) els.metricsTraceBody.innerHTML = "";
 }
 
 // Đặt vùng ảnh về trạng thái chờ trong lúc backend dựng artifact mới
@@ -1099,13 +1114,57 @@ async function initializeNetwork() {
   }
 }
 
+function renderLookupResult(result) {
+  const path = Array.isArray(result.path) ? result.path : [];
+  const routeHTML = path.map((nodeId, i) => {
+    const n = formatNumber(nodeId);
+    const arrow = i < path.length - 1
+      ? `<span class="route-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>`
+      : "";
+    return `<span class="route-node">${n}${arrow}</span>`;
+  }).join("");
+
+  const logsHTML = Array.isArray(result.logs) && result.logs.length
+    ? result.logs.map((l, i) => `<li class="trace-log-item"><span class="trace-log-num">${i + 1}</span>${escapeHtml(l)}</li>`).join("")
+    : "<li class=\"trace-empty\">No hop logs.</li>";
+
+  const replicaText =
+    Array.isArray(result.replica_node_ids) && result.replica_node_ids.length
+      ? result.replica_node_ids.map((nodeId) => escapeHtml(nodeId)).join(", ")
+      : "None";
+
+  return `
+    <div class="trace-cards">
+      <div class="trace-card"><span class="trace-label">Owner</span><strong>${formatNumber(result.owner_id)}</strong></div>
+      <div class="trace-card"><span class="trace-label">Requested Key</span><strong>${formatNumber(result.key)}</strong></div>
+      <div class="trace-card"><span class="trace-label">Found</span><strong>${result.found ? "Yes" : "No"}</strong></div>
+      <div class="trace-card"><span class="trace-label">Replica Nodes</span><strong>${escapeHtml(replicaText)}</strong></div>
+      <div class="trace-card"><span class="trace-label">Hops</span><strong>${path.length}</strong></div>
+      <div class="trace-card"><span class="trace-label">Latency (ms)</span><strong>${formatNumber(result.latency_ms ?? "--")}</strong></div>
+    </div>
+    <div class="trace-section">
+      <h4 class="trace-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
+        Lookup Route (${path.length} hop${path.length !== 1 ? "s" : ""})
+      </h4>
+      <div class="trace-route">${routeHTML || "<span class=\"trace-empty\">No route.</span>"}</div>
+    </div>
+    <div class="trace-section">
+      <h4 class="trace-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Hop-by-Hop Logs
+      </h4>
+      <ul class="trace-log">${logsHTML}</ul>
+    </div>
+  `;
+}
+
 // Gọi lookup resource/key và hiển thị owner, hop count, path và log từng hop
 async function lookupResource() {
   setBusy(els.lookupBtn, true, "Looking up...");
   els.lookupOutput.textContent = "Running lookup...";
   try {
     const startNodeValue = els.startNodeInput.value.trim();
-    // measure client-observed API time (ms)
     const lookupStartedAt = performance.now();
     const data = await api("/api/lookup", {
       resource_id: els.resourceInput.value.trim(),
@@ -1113,62 +1172,9 @@ async function lookupResource() {
     });
     const lookupElapsedMs = Math.round((performance.now() - lookupStartedAt) * 1000) / 1000;
     const result = data.result;
-    // prefer server latency_ms if present
     result.latency_ms = result.latency_ms ?? lookupElapsedMs;
     els.lookupOutput.classList.remove("lookup-output--missing");
-    const ownerSite = nodeSite(result.owner_id);
-    const path = (Array.isArray(result.path) ? result.path : []).map((nodeId) => {
-      return `<span>${escapeHtml(nodeId)}</span>`;
-    });
-    const route = path.join("");
-    const logs =
-      Array.isArray(result.logs)
-        ? result.logs
-            .map((line, idx) => {
-              const isLast = idx === result.logs.length - 1;
-              const css = !result.found && isLast ? "lookup-log-item lookup-log-item--miss" : "lookup-log-item";
-              return `<li class="${css}">${escapeHtml(line)}</li>`;
-            })
-            .join("")
-        : "";
-    const replicaText =
-      Array.isArray(result.replica_node_ids) && result.replica_node_ids.length
-        ? result.replica_node_ids.map((nodeId) => escapeHtml(nodeId)).join(", ")
-        : "None";
-    const missingBanner = "";
-    els.lookupOutput.innerHTML = `
-      ${missingBanner}
-      <div class="lookup-result-summary lookup-result-summary--row">
-        <div class="lookup-result-item">
-          <span class="lookup-result-label">Owner</span>
-          <strong class="lookup-result-value">${escapeHtml(result.owner_id)}</strong>
-        </div>
-        <div class="lookup-result-item">
-          <span class="lookup-result-label">Key</span>
-          <strong class="lookup-result-value">${escapeHtml(result.key)}</strong>
-        </div>
-        <div class="lookup-result-item">
-          <span class="lookup-result-label">Found on owner</span>
-          <strong class="lookup-result-value">${result.found ? "Yes" : "No"}</strong>
-        </div>
-        <div class="lookup-result-item">
-          <span class="lookup-result-label">Replica nodes</span>
-          <strong class="lookup-result-value">${replicaText}</strong>
-        </div>
-        <div class="lookup-result-item">
-          <span class="lookup-result-label">Hops</span>
-          <strong class="lookup-result-value">${escapeHtml(result.hops)}</strong>
-        </div>
-        <div class="lookup-result-item">
-          <span class="lookup-result-label">Latency (ms)</span>
-          <strong class="lookup-result-value">${escapeHtml(result.latency_ms ?? "--")}</strong>
-        </div>
-      </div>
-      <div class="route">${route}</div>
-      <ul class="lookup-log">${logs}</ul>
-    `;
-
-    // Re-generate topology with lookup path highlighted.
+    els.lookupOutput.innerHTML = renderLookupResult(result);
     await generateTopology(true, true, Array.isArray(result.path) ? result.path : null);
     showToast(data.message);
   } catch (error) {
@@ -1212,34 +1218,6 @@ async function killNode() {
   }
 }
 
-async function deleteNode() {
-  if (selectedNodeId === null) {
-    showToast("Select a node first.");
-    return;
-  }
-  const nodeToDelete = Number(selectedNodeId);
-  if (nodeSite(nodeToDelete).status !== "Stopped") {
-    showToast("Only stopped (red) nodes can be deleted.");
-    return;
-  }
-  if (!window.confirm(`Delete node ${nodeToDelete} permanently?\n\nThis will remove it from the UI and backend state.`)) {
-    return;
-  }
-
-  setBusy(els.deleteNodeBtn, true, "Deleting...");
-  try {
-    const data = await api(`/api/node/${nodeToDelete}`, {}, "DELETE");
-    selectedNodeId = null;
-    renderState(data.state);
-    clearNodeRemovalReport();
-    await refreshArtifacts();
-    showToast(data.message);
-  } catch (error) {
-    showToast(error.message);
-  } finally {
-    setBusy(els.deleteNodeBtn, false);
-  }
-}
 
 // Làm mới snapshot và artifact sau thao tác join, restart hoặc CRUD
 async function refreshAfterChange(state, { rebuildArtifacts = false } = {}) {
@@ -1578,7 +1556,6 @@ function bindClick(el, handler) {
 bindClick(els.initializeBtn, initializeNetwork);
 bindClick(els.lookupBtn, lookupResource);
 bindClick(els.killBtn, killNode);
-bindClick(els.deleteNodeBtn, deleteNode);
 bindClick(els.addNodeBtn, addNode);
 bindClick(els.restartNodeBtn, restartNode);
 bindClick(els.addResourceBtn, addResource);
