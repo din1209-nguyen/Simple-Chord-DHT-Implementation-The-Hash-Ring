@@ -32,3 +32,9 @@ commit_plan.txt
 
 # Office temp files
 ~$*.docx
+
+# Cursor
+.cursor/
+
+# Docs
+docs/

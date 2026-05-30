@@ -54,8 +54,10 @@ Chord thuộc nhóm DHT có routing geometry dạng ring. Các node được đ�
 **Nguồn dữ liệu:**  
 Dữ liệu được sinh tự động theo đúng yêu cầu của Topic 61. Cấu hình mặc định gồm:
 
-- 1.000 resource có định danh từ `resource-0001` đến `resource-1000`;
-- 50 node có `Node_ID = SHA1("127.0.0.1:<port>") mod 2^m`, với port riêng cho từng process.
+- 1.000 resource có định danh từ `resource-0001` đến `resource-1000`
+- 50 node với `Node_ID = SHA1("node:<seed>:<attempt>") mod 2^m`
+- Không gian định danh: `m = 16` bit (65.536 giá trị)
+- Replication count: 3 bản sao cho mỗi resource
 
 **Kích thước:**  
 1.000 bản ghi resource và 50 bản ghi node. Dữ liệu không lớn về dung lượng lưu trữ, nhưng đủ để chứng minh cách Chord phân phối resource, định tuyến lookup và đo số hop.
@@ -64,10 +66,10 @@ Dữ liệu được sinh tự động theo đúng yêu cầu của Topic 61. C�
 
 | Thực thể | Thuộc tính chính | Ý nghĩa |
 | --- | --- | --- |
-| Node | `node_id`, `active`, `predecessor`, `successor`, `finger_table` | Biểu diễn một peer trong vòng Chord |
+| Node | `node_id`, `active`, `predecessor`, `successor`, `finger_table`, `local_resources` | Biểu diễn một peer trong vòng Chord |
 | FingerEntry | `index`, `start`, `interval_end`, `node_id` | Biểu diễn một dòng trong Finger Table |
-| ResourceRecord | `resource_id`, `key`, `owner_id` | Biểu diễn resource sau khi được băm và gán owner |
-| LookupResult | `requested_id`, `key`, `owner_id`, `start_node_id`, `path`, `hops`, `logs` | Biểu diễn kết quả và đường đi của một lần lookup |
+| ResourceRecord | `resource_id`, `key`, `owner_id`, `replica_node_ids` | Biểu diễn resource sau khi được băm và gán owner |
+| LookupResult | `requested_id`, `key`, `owner_id`, `start_node_id`, `path`, `hops`, `logs`, `found`, `direct_key`, `replica_node_ids` | Biểu diễn kết quả và đường đi của một lần lookup |
 
 **Chiến lược phân mảnh:**  
 Dự án không dùng phân mảnh ngang truyền thống. Thay vào đó, dữ liệu được phân phối bằng consistent hashing của Chord:
@@ -83,32 +85,34 @@ Lý do dùng SHA-1 và consistent hashing là vì định danh gốc của resou
 
 ## 4. Kiến Trúc Hệ Thống
 
+**Chế độ triển khai:**  
+Hệ thống triển khai ở chế độ **single-process simulation** trong một Flask process duy nhất. Tất cả các node được mô phỏng trong bộ nhớ (in-memory) thay vì chạy trên các port riêng biệt. Trạng thái ring được tự động lưu vào file `data/state.json` và khôi phục khi server khởi động lại.
+
 **Số node:**  
-Hệ thống triển khai mục tiêu hỗ trợ từ `10` đến `50` node active trong không gian định danh `m = 16` bit. Mỗi node là một site độc lập chạy trên một port riêng của máy local. Với cấu hình mặc định `base_port = 5100`, các site sử dụng dải địa chỉ `http://127.0.0.1:5100` đến tối đa `http://127.0.0.1:5149`. `Node_ID` biểu diễn vị trí logic trên vòng Chord, còn port chỉ biểu diễn địa chỉ truyền thông của tiến trình node.
-
-**Tầng giao tiếp:**  
-Mỗi node cung cấp Flask REST API và trao đổi payload JSON trực tiếp với các node khác. Các message chính gồm tìm successor, `join`, `notify`, `stabilize`, `put/get/delete` resource và sao chép replica. Một web coordinator được dùng để khởi động/dừng site, gửi thao tác demo và tổng hợp trạng thái cho giao diện; coordinator không đóng vai trò bảng tra cứu owner tập trung.
-
-Một lookup bắt đầu từ endpoint của node nguồn, sau đó được chuyển tiếp bằng HTTP qua các endpoint trung gian dựa trên Finger Table và kết thúc tại owner của key. Mỗi request ghi lại `node_id`, port, path, số HTTP message và thời gian phản hồi để giao diện hiển thị multi-hop trace thực tế.
-
-**Lưu trữ:**  
-Mỗi site quản lý một file JSON cục bộ, ví dụ:
+Hệ thống hỗ trợ từ `10` đến `100` node mô phỏng trong không gian định danh `m = 16` bit. Mỗi node có `Node_ID` được sinh bằng:
 
 ```text
-data/nodes/
-  node_<node_id_1>.json
-  node_<node_id_2>.json
-  ...
+node_id = SHA1("node:<seed>:<attempt>") mod 2^m
 ```
 
-File của node chứa `node_id`, `host`, `port`, predecessor, successor, Finger Table, primary resources và replica resources. Khi nhận thao tác cập nhật, node chỉ ghi kho JSON của chính mình bằng cơ chế atomic write; resource được chuyển hoặc replicate qua REST request đến site đích. Nhờ vậy dữ liệu được phân bố vật lý trên nhiều kho cục bộ thay vì nằm trong một dictionary chung.
+**Tầng giao tiếp:**  
+Tất cả các node giao tiếp qua lời gọi hàm in-memory trong cùng một Python process. Giao diện web cung cấp REST API để thao tác với ring. Một lookup bắt đầu từ một node, đi qua nhiều hop trong bộ nhớ và kết thúc tại owner của key. Mỗi request ghi lại `node_id`, đường đi (path), số hop và log để hiển thị trace trên giao diện.
 
-Về routing state, mỗi node chỉ duy trì predecessor, successor và Finger Table. Khi một port ngừng phản hồi, các node còn sống phát hiện failure thông qua timeout/health check, chạy stabilize và phục hồi primary resource từ file JSON replica còn sống.
+**Lưu trữ:**  
+Trạng thái ring được lưu trong `data/state.json` với cơ chế atomic write:
 
-Topology của hệ thống được trực quan hóa bằng NetworkX. Ảnh demo chỉ vẽ các cạnh Finger Table phục vụ định tuyến, tô đỏ node đã dừng và có thể highlight lookup path HTTP gần nhất; vị trí replica không được biểu diễn thành cạnh topology.
+```text
+data/
+  state.json    # Trạng thái toàn bộ ring (nodes, resources, metrics)
+```
+
+File JSON chứa toàn bộ thông tin: cấu hình (m, seed, replication_count), danh sách node với trạng thái hoạt động, danh sách resource và metrics gần nhất. Nhờ cơ chế auto-load khi khởi động, hệ thống có thể tiếp tục từ trạng thái đã lưu.
+
+**Topology và Visualization:**  
+Topology của hệ thống được trực quan hóa bằng NetworkX và Matplotlib. Ảnh topology vẽ các cạnh successor/predecessor, các liên kết finger, tô màu node đã dừng và highlight lookup path. Biểu đồ metrics hiển thị hops, latency và message overhead theo số node.
 
 **Trạng thái triển khai hiện tại:**  
-Phiên bản triển khai dùng `DistributedCoordinator` và các process `node_server.py`: mọi lookup, CRUD, join, stabilize và replication đều được trao đổi qua HTTP giữa các node và persisted trong JSON cục bộ. Runtime không có core ring tập trung để trả lời ownership thay cho peer; coordinator chỉ khởi chạy process và tổng hợp snapshot quan sát.
+Phiên bản hiện tại dùng `ChordRing` trong một Flask process. Tất cả lookup, CRUD, join, stabilize và replication đều thực hiện trong bộ nhớ. `Coordinator` trong app.py quản lý trạng thái và cung cấp API REST cho giao diện web. Trạng thái ring được persist vào JSON và tự động load khi khởi động.
 
 ## 5. Công Nghệ & Kế Hoạch Cài Đặt
 
@@ -116,25 +120,28 @@ Phiên bản triển khai dùng `DistributedCoordinator` và các process `node_
 Python 3.10+
 
 **Triển khai:**  
-Một coordinator Flask chạy giao diện quản lý, còn mỗi node Chord chạy như một Flask service riêng trên port cấu hình và lưu dữ liệu vào file JSON cục bộ. Coordinator chỉ quản lý vòng đời process và tổng hợp snapshot; node tự định tuyến qua predecessor, successor và Finger Table cục bộ.
+Một Flask application (`app.py`) chạy giao diện web và quản lý trạng thái ring. Các node được mô phỏng trong bộ nhớ (in-memory) trong cùng một process. Trạng thái được persist vào `data/state.json` và tự động khôi phục khi server khởi động.
 
 **Thư viện và framework:**
 
-- Flask: xây dựng REST API và web server;
-- NetworkX: dựng đồ thị topology của vòng Chord;
-- Matplotlib: sinh ảnh topology và biểu đồ metrics;
-- Pytest: kiểm thử hashing, routing, churn handling và metrics.
+| Thư viện | Mục đích |
+|---|---|
+| Flask | REST API và web server |
+| NetworkX | Dựng đồ thị topology của vòng Chord |
+| Matplotlib | Sinh ảnh topology và biểu đồ metrics |
+| Pytest | Kiểm thử thuật toán Chord |
 
 **Các thành phần đã cài đặt:**
 
-1. UI deployment cấu hình `10-50` site, dải port, thư mục JSON và node pills thể hiện process sống/chết.
-2. `JsonNodeStore` để mỗi node đọc/ghi primary resource và replica trong file riêng bằng atomic replace.
-3. `node_server.py` và coordinator để khởi chạy/dừng/restart tối đa 50 Flask process ở các port riêng.
-4. REST message cho successor lookup, `join`, `notify`, `stabilize`, put/get/delete và replication.
-5. Failure detection, promote replica và repair bản sao sau khi một endpoint ngừng phản hồi.
-6. Trace HTTP, topology từ endpoint snapshot và metrics đo deployment thật.
-7. Integration test cho persistence, identity theo port, routing, recovery và restart.
-8. Benchmark báo cáo cần chạy tại `N = 10, 20, 30, 40, 50` bằng runtime distributed.
+1. **ChordRing** (`src/chord_dht/chord.py`): Triển khai core Chord protocol với finger table, successor/predecessor, lookup algorithm
+2. **Data Models** (`src/chord_dht/models.py`): Các dataclass Node, FingerEntry, ResourceRecord, LookupResult
+3. **Identifiers** (`src/chord_dht/identifiers.py`): Hàm băm SHA-1 và xử lý không gian định danh
+4. **Metrics** (`src/chord_dht/metrics.py`): Thu thập và tính toán performance metrics
+5. **Visualization** (`src/chord_dht/visualization.py`): Sinh ảnh topology và biểu đồ
+6. **Flask API** (`app.py`): REST endpoints cho CRUD operations, lookup, metrics
+7. **Web Interface** (`templates/index.html`, `static/app.js`): Giao diện người dùng tương tác
+8. **State Persistence**: Auto-save/load ring state từ JSON file
+9. **Test Suite** (`tests/test_distributed_chord.py`): Unit tests cho routing, failure recovery
 
 ## 6. Tiêu Chí Thành Công & Phân Tích
 
@@ -159,17 +166,17 @@ Hàm băm: SHA-1
 Không gian định danh mặc định: m = 16 bit
 ```
 
-**Bảng kết quả cần thu thập từ deployment multi-process:**
+**Bảng kết quả cần thu thập từ simulation:**
 
-| Số node | Average Hops | Max Hops | log2(N) | Avg HTTP Latency (ms) | Thành công / Thất bại | HTTP Messages / Lookup | Degraded / Lost |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10 | Chạy đo | Chạy đo | 3.322 | Chạy đo | Chạy đo | Chạy đo | Chạy đo |
-| 20 | Chạy đo | Chạy đo | 4.322 | Chạy đo | Chạy đo | Chạy đo | Chạy đo |
-| 30 | Chạy đo | Chạy đo | 4.907 | Chạy đo | Chạy đo | Chạy đo | Chạy đo |
-| 40 | Chạy đo | Chạy đo | 5.322 | Chạy đo | Chạy đo | Chạy đo | Chạy đo |
-| 50 | Chạy đo | Chạy đo | 5.644 | Chạy đo | Chạy đo | Chạy đo | Chạy đo |
+| Số node | Average Hops | Max Hops | log2(N) | Avg Latency (ms) | Thành công / Thất bại | Messages / Lookup |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | Chạy đo | Chạy đo | 3.322 | Chạy đo | Chạy đo | Chạy đo |
+| 20 | Chạy đo | Chạy đo | 4.322 | Chạy đo | Chạy đo | Chạy đo |
+| 30 | Chạy đo | Chạy đo | 4.907 | Chạy đo | Chạy đo | Chạy đo |
+| 40 | Chạy đo | Chạy đo | 5.322 | Chạy đo | Chạy đo | Chạy đo |
+| 50 | Chạy đo | Chạy đo | 5.644 | Chạy đo | Chạy đo | Chạy đo |
 
-Mỗi dòng phải được ghi từ request lookup đi qua các port node thật. `Average Hops` và `HTTP Messages / Lookup` được lấy từ route trace; `Avg HTTP Latency` là thời gian request local giữa các process; `Degraded / Lost` được đo sau kịch bản stop owner.
+Mỗi dòng được thu thập từ benchmark chạy nhiều trials trên simulation. `Average Hops` và `Messages / Lookup` được lấy từ route trace; `Avg Latency` là thời gian thực thi trong bộ nhớ. Metrics về replication và failure recovery được đo sau kịch bản kill node.
 
 Về mặt lý thuyết, nếu chỉ đi qua successor từng bước, lookup có thể gần `O(N)` trong trường hợp key nằm xa node bắt đầu. Finger Table khắc phục điều này bằng các bước nhảy theo lũy thừa của 2. Với node `n`, finger thứ `i` trỏ tới successor của vị trí:
 
@@ -196,17 +203,17 @@ N / 2^h <= 1
 Vì vậy số hop kỳ vọng tăng theo `O(log N)`: khi số node tăng gấp đôi, lookup thường chỉ cần thêm khoảng một hop. Đây là cơ sở lý thuyết để giải thích vì sao benchmark dùng `log2(N)` làm đường tham chiếu và vì sao average hops không tăng tuyến tính theo `N`.
 
 **Kịch bản lỗi:**  
-Dự án dừng process của một node active. Khi endpoint rời mạng:
+Dự án mô phỏng việc một node ngừng hoạt động (kill). Khi một node bị dừng:
 
-1. process ngừng phản hồi HTTP;
-2. các peer phát hiện predecessor/successor không phản hồi bằng health check;
-3. từng peer chạy `stabilize`, `notify` và `fix_finger` từ state cục bộ;
-4. node trở thành owner mới promote replica JSON còn sống thành primary;
-5. replica được gửi lại đến các successor, hoặc resource được báo lost nếu không còn bản sao.
+1. Node được đánh dấu inactive và thêm vào `failed_nodes` set
+2. Predecessor và successor của node được kết nối trực tiếp để vá vòng
+3. Các finger table trỏ đến node chết được sửa lại
+4. Resources của node chết được phục hồi từ replica còn sống (nếu có)
+5. Nếu không còn bản sao, resource được báo lost
 
-Hệ thống được xem là thành công nếu lookup vẫn tìm đúng owner mới sau khi process owner cũ đã dừng, với điều kiện còn replica sống. Điều này chứng minh khả năng phục hồi và sửa pointer sau churn mà không giả lập dữ liệu đã mất.
+Hệ thống được xem là thành công nếu lookup vẫn tìm đúng owner mới sau khi node đã bị dừng, với điều kiện còn replica sống. Điều này chứng minh khả năng phục hồi và sửa pointer sau churn.
 
-Trong kịch bản này, không có bước rebuild bảng định tuyến toàn mạng từ coordinator. Mỗi node dùng timeout và giao thức Chord cục bộ để hội tụ lại pointer. Nếu resource còn bản sao sống, lookup qua HTTP vẫn tìm được primary đã promote; nếu không, UI báo dữ liệu unavailable/lost thay vì giả lập dữ liệu còn tồn tại.
+Trong kịch bản này, không có bước rebuild bảng định tuyến toàn mạng từ coordinator. Mỗi node dùng thông tin cục bộ để hội tụ lại pointer. Nếu resource còn bản sao sống, lookup vẫn tìm được primary đã promote; nếu không, hệ thống báo dữ liệu unavailable/lost.
 
 ## 7. Các Mốc Thực Hiện
 
@@ -223,9 +230,9 @@ Hoàn thành thao tác join/stop/restart node, stabilize sau churn, benchmark HT
 
 Sản phẩm cuối cùng gồm:
 
-- mã nguồn Chord DHT multi-process trên localhost;
-- giao diện web Flask để demo;
-- test chứng minh routing và churn handling;
-- benchmark số hop với `N = 10` đến `N = 50`;
-- biểu đồ topology và metrics;
-- báo cáo phân tích tính chất lookup `O(log N)` và các quyết định thiết kế.
+- Mã nguồn Chord DHT simulation trong một Flask process
+- Giao diện web tương tác để demo
+- Test chứng minh routing và failure handling
+- Benchmark số hop với `N = 10` đến `N = 50`
+- Biểu đồ topology và performance metrics
+- Báo cáo phân tích tính chất lookup `O(log N)` và các quyết định thiết kế
