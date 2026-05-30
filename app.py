@@ -1,13 +1,8 @@
-"""Cung cấp giao diện web để mô phỏng Chord DHT (ChordRing) trong một process.
-
-Single-process mode:
-- Tất cả node nằm trong bộ nhớ của một Flask server
-- Persist trạng thái cơ bản vào `data/state.json` (best-effort)
-
-Ghi chú:
-- Lõi thuật toán dùng `chord_dht.chord.ChordRing` (consistent hashing + finger table)
-- Metrics + topology dùng `chord_dht.metrics` và `chord_dht.visualization`
-"""
+# Cung cap giao dien web de mo phong Chord DHT trong mot process.
+# Mo phong toan bo node trong bo nho cua Flask server.
+# Luu tru trai thai co ban vao `data/state.json` theo co che best effort.
+# Ghi nhan loi thuat toan tai `chord_dht.chord.ChordRing`.
+# Ghi nhan metrics va topology tai `chord_dht.metrics` va `chord_dht.visualization`.
 
 from __future__ import annotations
 
@@ -41,34 +36,43 @@ from chord_dht import (
 )
 
 
+# Cau hinh logging de hien thi thoi gian, muc do, ten logger, va noi dung.
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%H:%M:%S",
 )
 
+# Tao ung dung Flask de phuc vu cac API endpoint va giao dien web.
 app = Flask(__name__)
+# Tat cache tren tat ca cac file tinh (CSS, JS, hinh anh) de dam bao luon lay ban moi nhat.
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
-# Bảo vệ ring state khi nhiều request UI thay đổi đồng thời
+# Khoa dong bo de bao ve ring state khi nhieu request UI thay doi dong thoi.
 coordinator_lock = Lock()
 
-# Bảo vệ thao tác Matplotlib để các endpoint không ghi chồng file ảnh
+# Khoa dong bo de bao ve thao tac Matplotlib, ngan chan cac endpoint ghi chong lenh nhau khi tao anh.
 plot_lock = Lock()
 
+# Duong dan luu tru anh topology va cac bieu do metrics.
 TOPOLOGY_CHART_PATH = PROJECT_ROOT / "static" / "metrics" / "topology_graph.png"
 METRICS_CHART_BASE = PROJECT_ROOT / "static" / "metrics" / "hops_chart"
 
+# Duong dan file luu tru trai thai ring (nodes, resources, metrics) duoi dang JSON.
 STATE_PATH = PROJECT_ROOT / "data" / "state.json"
 
 
-# ---------------- persistence (best-effort) ----------------
+# ==================== Luu va tai lai trai thai (best-effort) ====================
 
+# Chuyen doi trai thai ring thanh dictionary de ghi vao file JSON.
+# Chi luu tru cac truong co ban: cau hinh, danh sach node, danh sach resource, va metrics cuoi cung.
+# Finger table, successor, predecessor se duoc xay dung lai boi stabilize() khi tai.
 def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
-    # Persist dữ liệu đủ để khôi phục lại topology + resources.
-    # Finger table / successor / predecessor sẽ được dựng lại bởi stabilize().
+    # Doc last_metrics_payload truc tiep tu module-level global (khong dung globals()).
+    # Vi ham nay la nested function nen khong doc duoc global cua module cha.
+    global last_metrics_payload
     return {
-        "schema_version": 2,
+        "schema_version": 1,
         "saved_at": time.time(),
         "config": {
             "m": ring.m,
@@ -80,25 +84,28 @@ def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
             for node in ring.nodes.values()
         ],
         "resources": sorted(list(ring.resources.keys())),
-        "metrics": globals().get("last_metrics_payload"),
+        "metrics": last_metrics_payload,
     }
 
 
+# Khoi phuc trai thai ring tu dictionary da doc tu file JSON.
+# Tao lai toan bo ring, cac lien ket successor/predecessor, finger table, va resource ownership.
 def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
+    # Tai lai metrics payload neu co trong JSON.
     global last_metrics_payload
-
-    # Restore last metrics payload if present
     metrics_payload = payload.get("metrics")
     last_metrics_payload = metrics_payload if isinstance(metrics_payload, dict) else None
 
+    # Doc cau hinh tu payload.
     config = payload.get("config") or {}
     m = int(config.get("m", 16))
     seed = int(config.get("seed", 61))
     replication_count = int(config.get("replication_count", 3))
 
+    # Tao ring moi voi cau hinh tuong ung.
     ring = ChordRing(m=m, seed=seed, replication_count=replication_count)
 
-    # Restore nodes
+    # Khoi phuc danh sach node.
     nodes_payload = payload.get("nodes") or []
     for node_info in nodes_payload:
         node_id = int(node_info["node_id"])
@@ -107,10 +114,22 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
         if not ring.nodes[node_id].active:
             ring.failed_nodes.add(node_id)
 
-    # Stabilize to build links + fingers
+    # Noi truoc successor/predecessor pointers theo thu tu circular.
+    # Sau khi khoi phuc, tat ca cac node deu co successor=None, predecessor=None.
+    # Neu goi stabilize() ngay luc nay, moi node se tu tham chieu chinh no (self-referential),
+    # lam vong bi tach ra nhieu vong don le. Viec noi truoc cac pointer dam bao
+    # stabilize() co the tinh chinh thay vi phai xay dung lai tu dau.
+    active_ids = ring.active_node_ids
+    active_count = len(active_ids)
+    if active_count > 0:
+        for i, node_id in enumerate(active_ids):
+            ring.nodes[node_id].successor = active_ids[(i + 1) % active_count]
+            ring.nodes[node_id].predecessor = active_ids[(i - 1) % active_count]
+
+    # Goi stabilize() de tinh chinh cac lien ket va xay dung finger tables.
     ring.stabilize()
 
-    # Restore resources (re-hash by id)
+    # Khoi phuc danh sach resource (re-hash theo id).
     for resource_id in payload.get("resources") or []:
         rid = str(resource_id).strip()
         if not rid:
@@ -119,19 +138,27 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
             continue
         ring.add_resource(rid)
 
+    # Goi stabilize() lan nua sau khi khoi phuc resource
+    # de dam bao resource duoc gan dung cho cac owner hien tai.
+    ring.stabilize()
+
     return ring
 
 
+# Ghi trai thai ring hien tai vao file JSON.
+# Su dung che do ghi tam tep roi doi ten de dam bao tinh nguyen tu tren Windows.
 def _save_ring_state(ring: ChordRing) -> None:
     import json
 
+    # Dam bao thu muc cha ton tai.
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # Tao ten tep tam chua PID va timestamp de tranh xung dot khi nhieu tien trinh chay dong thoi.
     tmp = STATE_PATH.with_suffix(f".json.tmp-{os.getpid()}-{time.time_ns()}")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(_ring_state_to_json(ring), f, ensure_ascii=False, indent=2)
         f.flush()
         os.fsync(f.fileno())
-    # Windows-friendly replace retries
+    # Thu lai doi ten tren Windows khi bi loi PermissionError (file dang bi chiem).
     last_exc: OSError | None = None
     for attempt in range(8):
         try:
@@ -149,6 +176,7 @@ def _save_ring_state(ring: ChordRing) -> None:
         raise last_exc
 
 
+# Doc va khoi phuc trai thai ring tu file JSON neu tep ton tai.
 def _load_ring_state() -> ChordRing | None:
     import json
 
@@ -161,23 +189,29 @@ def _load_ring_state() -> ChordRing | None:
     return _ring_state_from_json(payload)
 
 
-# Global ring instance
+# ==================== Bien toan cuc ====================
+
+# Ring instance mac dinh, duoc khoi tao khi module duoc nap.
 ring = ChordRing(m=16, seed=61, replication_count=3)
+# Co hieu de danh dau trang thai khoi dong da hoan thanh (nghia la da thu tai file JSON).
 ring_startup_completed = False
 startup_lock = Lock()
 
-# Best-effort persisted metrics payload (saved into state.json)
+# Payload metrics duoc luu tru best-effort vao state.json.
+# Gianh cho viec khoi phuc metrics khi app khoi dong lai.
 last_metrics_payload: dict[str, Any] | None = None
 
 
-# ---------------- helpers ----------------
+# ==================== Ham tro giup ====================
 
+# Tao phan hoi loi theo dinh dang JSON cho cac API endpoint.
 def json_error(message: str, status_code: int = 400):
     response = jsonify({"ok": False, "message": message})
     response.status_code = status_code
     return response
 
 
+# Trich xuat gia tri so nguyen tu payload JSON, nem loi neu truong bi thieu hoac khong hop le.
 def parse_int_field(payload: dict[str, Any], field: str, default: int | None = None) -> int:
     raw_value = payload.get(field, default)
     if raw_value is None or raw_value == "":
@@ -185,21 +219,24 @@ def parse_int_field(payload: dict[str, Any], field: str, default: int | None = N
     return int(raw_value)
 
 
+# Tao ba bieu do duong (hops, latency, overhead) tu danh sach cac diem sweep metrics.
+# Luu cac anh PNG voi ten chua timestamp de tranh browser su dung cache cu.
 def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, str]:
-    """Generate line charts from 50 data points for dynamic chart display."""
+    # Dam bao thu muc luu anh ton tai.
     METRICS_CHART_BASE.parent.mkdir(parents=True, exist_ok=True)
     urls: dict[str, str] = {}
 
-    # Timestamped filenames to force browser cache refresh
+    # Them timestamp vao ten tep de bua browser cache.
     ts = time.time_ns()
 
+    # Trich xuat du lieu tu danh sach diem.
     node_counts = [int(p["nodes"]) for p in points]
     average_hops = [float(p["average_hops"]) for p in points]
     log_values = [float(p["log2_nodes"]) for p in points]
     average_latencies = [float(p["average_latency_ms"]) for p in points]
     messages_per_lookup = [float(p["messages_per_lookup"]) for p in points]
 
-    # Hops chart (line) — shows average hops vs log2(N) theoretical bound
+    # Tao bieu do so sanh average hops voi gioi han ly thuyet log2(N).
     hops_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep_hops_{ts}.png")
     plt.figure(figsize=(7.0, 4.2), dpi=150)
     plt.plot(node_counts, average_hops, marker="o", linewidth=2, color="#0f766e", label="Average hops")
@@ -216,7 +253,7 @@ def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, st
     plt.close()
     urls["hops"] = f"/static/metrics/{hops_path.name}"
 
-    # Latency chart (line)
+    # Tao bieu do do tre trung binh theo so luong node.
     latency_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep_latency_{ts}.png")
     plt.figure(figsize=(7.0, 4.2), dpi=150)
     plt.plot(node_counts, average_latencies, marker="^", linewidth=2, color="#2563eb", label="Average latency (ms)")
@@ -232,7 +269,7 @@ def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, st
     plt.close()
     urls["latency"] = f"/static/metrics/{latency_path.name}"
 
-    # Overhead chart (line)
+    # Tao bieu do so tin hieu chuan (messages per lookup) theo so luong node.
     overhead_path = METRICS_CHART_BASE.with_name(f"{METRICS_CHART_BASE.name}_sweep_overhead_{ts}.png")
     plt.figure(figsize=(7.0, 4.2), dpi=150)
     plt.plot(node_counts, messages_per_lookup, marker="D", linewidth=2, color="#b45309", label="Messages per lookup")
@@ -251,11 +288,13 @@ def save_metric_charts_from_points(points: list[dict[str, Any]]) -> dict[str, st
     return urls
 
 
+# Tao ba bieu do tu mot diem duy nhat (che do cu, con su dung cho tuong thich nguoc).
 def save_metric_charts(point: dict[str, Any]) -> dict[str, str]:
-    """Generate single-point charts (legacy)."""
     return save_metric_charts_from_points([point])
 
 
+# Tai file state.json mot lan duy nhat khi app khoi dong.
+# Su dung startup_lock de dam bao chi tai mot lan cho du nhieu thread goi dong thoi.
 def _autoload_once() -> None:
     global ring_startup_completed, ring
     if ring_startup_completed:
@@ -273,8 +312,9 @@ def _autoload_once() -> None:
         ring_startup_completed = True
 
 
-# ---------------- error handlers ----------------
+# ==================== Xu ly loi ====================
 
+# Tra ve loi HTTP nhu binh thuong cho cac endpoint /api/.
 @app.errorhandler(HTTPException)
 def handle_http_error(exc: HTTPException):
     if request.path.startswith("/api/"):
@@ -282,6 +322,7 @@ def handle_http_error(exc: HTTPException):
     return exc
 
 
+# Log loi khong mong muon va tra ve JSON error cho cac endpoint /api/.
 @app.errorhandler(Exception)
 def handle_unexpected_error(exc: Exception):
     if request.path.startswith("/api/"):
@@ -289,13 +330,15 @@ def handle_unexpected_error(exc: Exception):
     raise exc
 
 
-# ---------------- routes ----------------
+# ==================== Cac endpoint API ====================
 
+# Tra ve trang giao dien chinh (index.html).
 @app.get("/")
 def index():
     return render_template("index.html")
 
 
+# Tra ve tom tat trai thai hien tai cua ring (nodes, resources, failed_nodes).
 @app.get("/api/state")
 def state():
     with coordinator_lock:
@@ -303,6 +346,7 @@ def state():
         return jsonify({"ok": True, "state": ring.summary(sample_size=None)})
 
 
+# Tra ve danh sach resource (tom tat, gioi han 200 mau).
 @app.get("/api/resources")
 def list_resources():
     with coordinator_lock:
@@ -311,6 +355,7 @@ def list_resources():
     return jsonify({"ok": True, "count": summary["resource_count"], "resources": summary["sample_resources"]})
 
 
+# Tra ve chi tiet mot node: thong tin co ban, finger table, va danh sach resource cuc bo.
 @app.get("/api/node/<int:node_id>")
 def node_details(node_id: int):
     with coordinator_lock:
@@ -318,6 +363,7 @@ def node_details(node_id: int):
         return jsonify({"ok": True, "node": ring.node_details(node_id)})
 
 
+# Khoi tao ring moi: tao node, phan bo resource, tao replica, va luu vao JSON.
 @app.post("/api/initialize")
 def initialize_network():
     payload = request.get_json(silent=True) or {}
@@ -340,6 +386,8 @@ def initialize_network():
         return json_error(str(exc))
 
 
+# Tim owner cua mot resource theo Chord DHT algorithm.
+# Tra ve duong di hops, node cuoi cung, va chi tiet tung buoc nhay.
 @app.post("/api/lookup")
 def lookup_resource():
     payload = request.get_json(silent=True) or {}
@@ -352,7 +400,7 @@ def lookup_resource():
             _autoload_once()
             start = None if start_node_id in (None, "") else int(start_node_id)
             result_obj = ring.lookup(resource_id, start_node_id=start)
-            # ring.lookup returns LookupResult dataclass
+            # ring.lookup tra ve LookupResult dataclass, chuyen doi thanh dict neu can.
             result = result_obj.to_dict() if hasattr(result_obj, "to_dict") else result_obj
             state_payload = ring.summary(sample_size=None)
             _save_ring_state(ring)
@@ -379,6 +427,8 @@ def lookup_resource():
         return json_error(str(exc))
 
 
+# Danh dau mot node la da dung (kill) va kich hoat quy trinh phuc hoi.
+# Noi vong Chord, sua finger tables, va promote replica cho cac resource bi anh huong.
 @app.post("/api/kill")
 def kill_node():
     payload = request.get_json(silent=True) or {}
@@ -395,13 +445,11 @@ def kill_node():
 
 
 
+# Xoa vinh vien mot node khoi ring.
+# Kill node truoc khi xoa khi node van con active.
+# Goi stabilize() sau khi xoa de hoi tu lai topology.
 @app.delete("/api/node/<int:node_id>")
 def delete_node(node_id: int):
-    """Permanently remove a node from the ring.
-
-    If the node is active, kill it first (to trigger recovery and detach links),
-    then remove it from ring storage and stabilize.
-    """
     try:
         with coordinator_lock:
             _autoload_once()
@@ -436,10 +484,13 @@ def delete_node(node_id: int):
         return json_error(str(exc))
 
 
+# Khong ho tro restart node trong che do mo phong don process.
 @app.post("/api/node/<int:node_id>/restart")
 def restart_node(node_id: int):
     return json_error("Restart is not supported. Use /api/node to join a new node.", 400)
 
+
+# Them mot resource moi vao ring: tinh key, tim owner, luu va copy replica.
 @app.post("/api/resource")
 def add_resource():
     payload = request.get_json(silent=True) or {}
@@ -456,6 +507,7 @@ def add_resource():
         return json_error(str(exc))
 
 
+# Cap nhat resource: xoa ban cu, them ban moi, sao chep replica.
 @app.put("/api/resource")
 def update_resource():
     payload = request.get_json(silent=True) or {}
@@ -473,6 +525,7 @@ def update_resource():
         return json_error(str(exc))
 
 
+# Xoa mot resource khoi ring: xoa khoi owner va tat ca replica.
 @app.delete("/api/resource")
 def delete_resource():
     payload = request.get_json(silent=True) or {}
@@ -489,15 +542,11 @@ def delete_resource():
         return json_error(str(exc))
 
 
+# Chay benchmark lookup tren ring hien tai de thu thap metrics.
+# Tra ve bang sweep (toi da 50 dong) va ba bieu do (hops, latency, overhead).
+# Luu metrics vao state.json de khoi phuc khi app khoi dong lai.
 @app.post("/api/metrics")
 def metrics_current_ring():
-    """Return ONLY the 50-point sweep table + 3 sweep charts.
-
-    UI requirement: show the 50 sweep rows (N, Avg Hops, log2(N), Latency, Lookups,
-    Success/Fail, Message Cost, Msgs/Lookup) and 3 sweep charts.
-
-    Avoid returning heavy per-trial traces/logs to keep payload small.
-    """
     payload = request.get_json(silent=True) or {}
     try:
         trials = parse_int_field(payload, "trials", 5)
@@ -510,8 +559,7 @@ def metrics_current_ring():
             seed = ring.seed
 
         with plot_lock:
-            # Always generate sweep data based on current ring size.
-            # Requirement: table must have exactly min(active_nodes, 50) rows.
+            # Tinh so dong trong bang sweep = min(so node active, 50).
             active_nodes = int(ring.summary(sample_size=None).get("active_node_count", 0) or 0)
             row_count = max(1, min(active_nodes, 50))
             node_sizes = build_growth_node_sizes(active_nodes, row_limit=row_count)
@@ -527,7 +575,7 @@ def metrics_current_ring():
             )
             charts = save_metric_charts_from_points(sweep_result["points"])
 
-        # Return sweep data including node_counts for the HTTP messages table
+        # Tao payload tra ve cho client.
         response_payload = {
             "ok": True,
             "message": "Metrics completed successfully.",
@@ -536,7 +584,7 @@ def metrics_current_ring():
             "charts": charts,
         }
 
-        # Persist last metrics payload into state.json for next startup
+        # Luu metrics payload vao bien toan cuc de ghi vao state.json.
         global last_metrics_payload
         last_metrics_payload = {
             "saved_at": time.time(),
@@ -555,9 +603,10 @@ def metrics_current_ring():
         return json_error(str(exc))
 
 
+# Tra ve metrics da luu gan nhat tu lan chay truoc (neu co).
+# Su dung de khoi phuc UI metrics khi app khoi dong lai ma khong can chay lai benchmark.
 @app.get("/api/metrics/last")
 def metrics_last():
-    """Return last persisted metrics payload if available."""
     with coordinator_lock:
         _autoload_once()
         if last_metrics_payload is None:
@@ -565,6 +614,7 @@ def metrics_last():
         return jsonify({"ok": True, "metrics": last_metrics_payload})
 
 
+# Chay benchmark sweep tuy chinh: cho phep dat so node, trials, lookups, resources, m, seed.
 @app.post("/api/metrics/sweep")
 def metrics_sweep():
     payload = request.get_json(silent=True) or {}
@@ -590,13 +640,14 @@ def metrics_sweep():
                 seed=seed,
                 output_path=None,
             )
-            # Generate line charts
             charts = save_metric_charts_from_points(result["points"])
         return jsonify({"ok": True, "message": result.get("message", "Sweep completed."), **result, "charts": charts})
     except Exception as exc:
         return json_error(str(exc))
 
 
+# Tao anh topology graph cua ring hien tai.
+# Ho tro highlight duong di lookup neu duoc cung cap.
 @app.post("/api/topology")
 def topology():
     payload = request.get_json(silent=True) or {}
@@ -606,7 +657,7 @@ def topology():
             _autoload_once()
             lookup_path = None
             if include_last_path:
-                # best-effort: use most recent lookup path if provided by client
+                # Su dung duong di lookup gan nhat neu client cung cap.
                 lookup_path = payload.get("lookup_path")
                 if isinstance(lookup_path, list):
                     lookup_path = [int(x) for x in lookup_path]
@@ -621,13 +672,13 @@ def topology():
                     title="Chord Ring Topology",
                 )
 
-        return jsonify({"ok": True, "message": "Topology graph generated.", "report": report, "chart_url": f"/static/metrics/{TOPOLOGY_CHART_PATH.name}?ts={time.time_ns()}"})
+        return jsonify({"ok": True, "message": "Topology graph generated.", "report": report, "chart_url": f"/static/metrics/{TOPOLOGY_CHART_PATH.name}?_={time.time_ns()}"})
     except Exception as exc:
         return json_error(str(exc))
 
 
 if __name__ == "__main__":
-    # Load persisted state at startup (do not wait for first request)
+    # Tai file state.json ngay khi khoi dong, truoc khi nhan request dau tien.
     try:
         _autoload_once()
     except Exception as exc:

@@ -817,52 +817,53 @@ function renderNodeRemovalReport(report) {
   if (!els.nodeRemovalReport) {
     return;
   }
-  const killedNode = escapeHtml(report.killed_node_id);
-  const oldPredecessor = escapeHtml(report.old_predecessor ?? "none");
-  const oldSuccessor = escapeHtml(report.old_successor ?? "none");
-  const activeNodes = escapeHtml(report.active_nodes ?? 0);
-  const recoveredCount = Number(report.recovered_resources || 0);
-  const lostCount = Number(report.lost_resources || 0);
-  const updatedFingerEntries = Number(report.updated_finger_entries || 0);
-  const updatedFingerTables = Number(report.updated_finger_tables || 0);
-  const configuredReplicas = Number(report.replication_count || 0);
-  const effectiveReplicas = Number(report.effective_replica_count || 0);
+  const killedNode = String(report.killed_node_id ?? "");
+  const oldPredecessor = String(report.old_predecessor ?? "none");
+  const oldSuccessor = String(report.old_successor ?? "none");
+  const activeNodes = Number(report.active_nodes ?? 0);
+  const configuredReplicas = Number(report.replication_count ?? 0);
+  const effectiveReplicas = Number(report.effective_replica_count ?? 0);
+
+  // Primary resources owned by killed node — recovered from its replica copies
+  const recoveredCount = Number(report.recovered_resource_total_count ?? 0);
   const recoveredSamples = Array.isArray(report.recovered_resource_ids) ? report.recovered_resource_ids : [];
-  const replicaRepairedCount = Number(report.replica_repaired_resources || 0);
+
+  // Resources that only stored a replica on killed node — rebuild replica elsewhere
+  const replicaRepairedCount = Number(report.replica_repaired_resource_total_count ?? 0);
   const replicaRepairedSamples = Array.isArray(report.replica_repaired_resource_ids)
     ? report.replica_repaired_resource_ids
     : [];
+
+  // Resources with no replica to recover from
+  const lostCount = Number(report.lost_resource_total_count ?? 0);
   const lostSamples = Array.isArray(report.lost_resource_ids) ? report.lost_resource_ids : [];
-  const recoveredTotal = Number(report.recovered_resource_total_count ?? recoveredCount);
-  const replicaRepairedTotal = Number(report.replica_repaired_resource_total_count ?? replicaRepairedCount);
-  const lostTotal = Number(report.lost_resource_total_count ?? lostCount);
-  // Hiển thị danh sách resource đại diện trong báo cáo failure recovery.
+
+  // Finger table repair stats from backend
+  const updatedFingerTables = Number(report.updated_finger_tables ?? 0);
+  const updatedFingerEntries = Number(report.updated_finger_entries ?? 0);
+
+  // Helper to render a short resource list with "+N more" when truncated
   const sampleList = (items, emptyText, totalCount = items.length) => {
     if (!items.length) {
       return `<div class="kill-resource-empty">${escapeHtml(emptyText)}</div>`;
     }
+    const shown = items.map((item) => `<span>${escapeHtml(item)}</span>`).join("");
     const remaining = Math.max(0, Number(totalCount || 0) - items.length);
-    const more = remaining > 0 ? `<span class="kill-resource-more">... +${escapeHtml(remaining)} more</span>` : "";
-    return `<div class="kill-resource-samples">${items.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}${more}</div>`;
+    const more = remaining > 0 ? `<span class="kill-resource-more">... +${remaining} more</span>` : "";
+    return `<div class="kill-resource-samples">${shown}${more}</div>`;
   };
-  const recoveryText =
-    recoveredCount > 0
-      ? `${escapeHtml(recoveredCount)} primary resource(s) had owner node ${killedNode} and were promoted from active replica copies.`
-      : "No resource owned by the killed node had an active replica to promote.";
-  const replicaRepairText =
-    replicaRepairedCount > 0
-      ? `${escapeHtml(replicaRepairedCount)} resource(s) used node ${killedNode} only as a replica; the failed replica was removed and replacement replicas were rebuilt.`
-      : `No surviving resource used node ${killedNode} only as a replica.`;
-  const lossText =
-    lostCount > 0
-      ? `${escapeHtml(lostCount)} resource(s) were lost because no active replica copy was available.`
-      : "No stored resource was lost.";
+
+  // Determine summary badge color
+  const totalLost = lostCount;
+  const summaryStatus = totalLost === 0
+    ? '<span class="kill-status-badge kill-status-ok">All resources safe</span>'
+    : `<span class="kill-status-badge kill-status-warn">${totalLost} resource(s) lost</span>`;
 
   els.nodeRemovalReport.innerHTML = `
     <div class="kill-report-header">
       <div>
-        <h3>Stop Node Recovery Report</h3>
-        <p>Process ${killedNode} stopped responding. Live peers stabilized through HTTP and promoted available JSON replicas.</p>
+        <h3>Node Recovery Report</h3>
+        <p>Node <strong>${killedNode}</strong> has been marked as stopped. The Chord system automatically repairs ring links and recovers data from surviving replica copies.</p>
       </div>
       <div class="kill-report-header-actions">
         <span>${activeNodes} active node(s)</span>
@@ -872,64 +873,86 @@ function renderNodeRemovalReport(report) {
     <div class="kill-report-body">
       <div class="kill-summary-grid">
         <div>
-          <strong>Stopped</strong>
+          <strong>Stopped Node</strong>
           <span class="stopped-node-text">${killedNode}</span>
         </div>
         <div>
-          <strong>Old predecessor</strong>
+          <strong>Old Predecessor</strong>
           <span>${oldPredecessor}</span>
         </div>
         <div>
-          <strong>Old successor</strong>
+          <strong>Old Successor</strong>
           <span>${oldSuccessor}</span>
         </div>
         <div>
-          <strong>Recovered / lost</strong>
-          <span>${escapeHtml(recoveredCount)} / ${escapeHtml(lostCount)}</span>
+          <strong>Status</strong>
+          ${summaryStatus}
+        </div>
+        <div>
+          <strong>Primary Recovered</strong>
+          <span>${recoveredCount}</span>
+        </div>
+        <div>
+          <strong>Replica Restored</strong>
+          <span>${replicaRepairedCount}</span>
+        </div>
+        <div>
+          <strong>Data Loss</strong>
+          <span>${lostCount}</span>
+        </div>
+        <div>
+          <strong>Finger Tables Fixed</strong>
+          <span>${updatedFingerTables} tables / ${updatedFingerEntries} entries</span>
         </div>
       </div>
       <div class="kill-recovery-note">
         <strong>Replica policy:</strong>
-        Configured replicas = ${escapeHtml(configuredReplicas)}.
-        Effective replicas after this kill = ${escapeHtml(effectiveReplicas)}
-        because a resource can only be copied to active nodes other than its owner.
+        Configured ${configuredReplicas} replica copies. Effective ${effectiveReplicas}
+        (each resource can only be copied to active nodes other than its owner).
       </div>
       <ol class="kill-timeline">
         <li>
-          <strong>1. Stop the node process</strong>
-          <span>Endpoint of node ${killedNode} no longer answers HTTP requests and cannot receive forwarded routes.</span>
+          <strong>1. Mark node as stopped</strong>
+          <span>Node ${killedNode} is set to <em>active = false</em>, added to <em>failed_nodes</em>, and all its successor / predecessor / finger table entries are cleared so it no longer participates in routing.</span>
         </li>
         <li>
-          <strong>2. Detect unreachable neighbors</strong>
-          <span>Remaining peers use health checks and local successor lists to avoid forwarding to the stopped endpoint.</span>
+          <strong>2. Reconnect the Chord ring</strong>
+          <span>Old predecessor (${oldPredecessor}) and old successor (${oldSuccessor}) are linked directly: predecessor.successor = successor and successor.predecessor = predecessor. The circular ring is closed without scanning the entire network.</span>
         </li>
         <li>
-          <strong>3. Stabilize local pointers</strong>
-          <span>Peers exchange predecessor and notify messages over HTTP until successor links converge again.</span>
+          <strong>3. Fix stale finger table entries</strong>
+          <span>${updatedFingerTables > 0
+            ? `${updatedFingerTables} node(s) had ${updatedFingerEntries} finger entries pointing to node ${killedNode} (no longer valid). These entries are updated by finding a new valid successor through local Chord lookup.`
+            : `No finger table entries pointed directly to node ${killedNode} (or the predecessor/successor reconnection automatically covered them).`
+          }</span>
         </li>
         <li>
-          <strong>4. Repair stale finger entries</strong>
-          <span>${escapeHtml(updatedFingerTables)} peer(s) repaired ${escapeHtml(updatedFingerEntries)} Finger Table entry/entries that targeted the stopped endpoint through local Chord lookups.</span>
+          <strong>4. Classify resources affected by the stopped node</strong>
+          <span>The system scans all resources and separates them into 3 groups: (a) resources where node ${killedNode} is the owner — need promote from replica; (b) resources where node ${killedNode} is only a replica — need to remove dead replica and rebuild; (c) unrelated resources.</span>
         </li>
         <li>
-          <strong>5. Inspect live local replicas</strong>
-          <span>The recovery step separates two cases: primary resources whose owner was node ${killedNode}, and replica copies that were merely stored on node ${killedNode}.</span>
+          <strong>5. Promote primary resources from replicas</strong>
+          ${recoveredCount > 0
+            ? `<span>${recoveredCount} resources owned by node ${killedNode} are recovered: the latest value is read from the nearest surviving replica (by successor order), assigned a new owner, and copied to the next ${effectiveReplicas} successor nodes.</span>
+               ${sampleList(recoveredSamples, "No primary resource samples.", recoveredCount)}`
+            : `<span>No resources were promoted — all resources of node ${killedNode} either have surviving replicas, or no replicas are available.</span>`
+          }
         </li>
         <li>
-          <strong>6. Promote recovered resources</strong>
-          <span>${recoveryText}</span>
-          ${sampleList(recoveredSamples, "No recovered primary resource sample.", recoveredTotal)}
-        </li>
-        <li>
-          <strong>7. Restore replica placement</strong>
-          <span>For promoted primary resources, the recovered value is written to the new owner and copied to the next ${escapeHtml(effectiveReplicas)} active successor node(s). For resources where node ${killedNode} was only a replica, that dead copy is removed from replica_node_ids and rebuilt on the next valid successor node.</span>
-          <span>${replicaRepairText}</span>
-          ${sampleList(replicaRepairedSamples, "No replica-only resource sample.", replicaRepairedTotal)}
+          <strong>6. Restore replica placement</strong>
+          ${replicaRepairedCount > 0
+            ? `<span>${replicaRepairedCount} resources had node ${killedNode} as a replica only — the dead replica is removed and a new replica is created on the nearest valid successor.</span>
+               ${sampleList(replicaRepairedSamples, "No replica resource samples.", replicaRepairedCount)}`
+            : `<span>No resources needed replica restoration — no resources had a replica on node ${killedNode}.</span>`
+          }
         </li>
         <li class="${lostCount > 0 ? "kill-step-warning" : ""}">
-          <strong>8. Report unrecoverable data</strong>
-          <span>${lossText}</span>
-          ${sampleList(lostSamples, "No lost resource sample.", lostTotal)}
+          <strong>7. Report data loss</strong>
+          ${lostCount > 0
+            ? `<span>${lostCount} resources were lost completely — no surviving replica is available to recover from. Cause: replication_count is too low relative to the number of consecutively failed nodes.</span>
+               ${sampleList(lostSamples, "No lost resource samples.", lostCount)}`
+            : `<span>No resources were lost — every resource has at least one surviving replica.</span>`
+          }
         </li>
       </ol>
     </div>
@@ -1217,7 +1240,8 @@ async function killNode() {
     renderState(data.state);
     updateNodeSelection();
     renderNodeRemovalReport(data.report);
-    await refreshArtifacts();
+    // Only refresh topology after kill — do NOT auto-run metrics
+    await generateTopology(true);
     showToast(data.message);
   } catch (error) {
     showToast(error.message);
@@ -1676,27 +1700,39 @@ loadState()
     clearGeneratedArtifacts();
     await generateTopology(true, false);
 
-    // Prefer loading persisted metrics (if any) to avoid re-running benchmark on every refresh.
+    // Load persisted metrics from last /api/metrics run.
+    // Only use if the ring node count matches the saved metrics.
+    // Otherwise, auto-run metrics for the current ring size.
+    let usedPersistedMetrics = false;
     try {
       const last = await api("/api/metrics/last");
       const saved = last?.metrics;
-      if (saved && Array.isArray(saved.sweep_points)) {
-        renderHopsChartSweep(saved.sweep_points);
-        setMetricChartsReady(
-          {
-            hops: saved.charts?.hops || null,
-            latency: saved.charts?.latency || null,
-            overhead: saved.charts?.overhead || null,
-          },
-          artifactGeneration,
-        );
-        return;
+      if (saved && Array.isArray(saved.sweep_points) && saved.sweep_points.length > 0) {
+        const savedActiveNodes = Number(saved.active_nodes) || 0;
+        const currentNodes = Number(currentActiveNodeCount) || 0;
+        // Only reuse if node count matches (ring not resized since last metrics run)
+        if (savedActiveNodes === currentNodes && currentNodes > 0) {
+          renderHopsChartSweep(saved.sweep_points);
+          setMetricChartsReady(
+            {
+              hops: saved.charts?.hops || null,
+              latency: saved.charts?.latency || null,
+              overhead: saved.charts?.overhead || null,
+            },
+            artifactGeneration,
+          );
+          usedPersistedMetrics = true;
+        } else {
+          // Ring was resized — fall through to auto-run (no notification shown)
+        }
       }
     } catch {
-      // fall back to fresh run below
+      // No persisted metrics yet — fall through to auto-run below
     }
 
-    await runMetrics(true);
+    if (!usedPersistedMetrics) {
+      await runMetrics(true);
+    }
   })
   .catch((error) => {
     showToast(error.message);
