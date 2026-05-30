@@ -64,27 +64,47 @@ Finger Table Entry i:
 ## Kiến trúc
 
 ```
+## Kiến trúc hệ thống
+
+```text
 ┌─────────────────────────────────────────────────────────────┐
-│                        Browser                               │
-│                   (Web Interface)                            │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ HTTP/REST
-                          ▼
+│                           Browser                           │
+│                       Web Interface                         │
+└───────────────────────────────┬─────────────────────────────┘
+                                │
+                                │ HTTP / REST API
+                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                     app.py (Flask)                          │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │              ChordRing (In-Memory)                   │  │
-│  │  • Nodes with finger tables                         │  │
-│  │  • Successor/Predecessor links                     │  │
-│  │  • Local resource storage                           │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                          │                                  │
-│                          ▼                                  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │              data/state.json                         │  │
-│  │         (Persistent State Backup)                    │  │
-│  └─────────────────────────────────────────────────────┘  │
+│                         app.py                              │
+│                    Flask Web Server                         │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │                    ChordRing                          │  │
+│  │                 In-Memory Storage                     │  │
+│  │                                                       │  │
+│  │  • Manage Chord nodes                                 │  │
+│  │  • Build and update finger tables                     │  │
+│  │  • Maintain successor and predecessor links           │  │
+│  │  • Store and lookup resources                         │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                                │                            │
+│                                │ Save / Restore state       │
+│                                ▼                            │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │                    data/state.json                    │  │
+│  │              Persistent State Backup                  │  │
+│  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
+```
+
+### Mô tả luồng hoạt động
+
+Người dùng thao tác thông qua giao diện web trên trình duyệt. Các request từ browser được gửi đến Flask server thông qua HTTP/REST API.
+
+Bên trong `app.py`, hệ thống sử dụng `ChordRing` để mô phỏng mạng Chord DHT trong bộ nhớ. `ChordRing` quản lý danh sách node, finger table, liên kết successor/predecessor và quá trình lưu trữ hoặc tìm kiếm resource.
+
+Dữ liệu trạng thái của hệ thống được sao lưu vào file `data/state.json`, giúp khôi phục lại node, resource và cấu trúc vòng Chord khi cần thiết.
+
 ```
 
 ### Đặc điểm triển khai
