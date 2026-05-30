@@ -66,7 +66,6 @@ Finger Table Entry i:
 ```
 ## Kiến trúc hệ thống
 
-```text
 ┌─────────────────────────────────────────────────────────────┐
 │                           Browser                           │
 │                       Web Interface                         │
