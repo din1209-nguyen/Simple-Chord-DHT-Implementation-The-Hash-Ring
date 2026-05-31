@@ -122,50 +122,6 @@ def _copy_resource_records(resources: list[ResourceRecord]) -> list[ResourceReco
     ]
 
 
-def _build_metric_ring_from_existing_resources(
-    *,
-    node_ids: list[int],
-    resources: list[ResourceRecord],
-    m: int,
-    seed: int,
-    replication_count: int,
-) -> ChordRing:
-    ring = ChordRing(m=m, seed=seed, replication_count=replication_count)
-    if not node_ids:
-        raise ValueError("metrics require at least one node")
-
-    first_id = int(node_ids[0])
-    ring.nodes[first_id] = Node(node_id=first_id, predecessor=first_id, successor=first_id)
-
-    for node_id in node_ids[1:]:
-        numeric_id = int(node_id)
-        ring.nodes[numeric_id] = Node(node_id=numeric_id)
-        ring.join(numeric_id, known_node_id=first_id)
-        ring.run_protocol(rounds=ring._default_convergence_rounds)
-
-    ring.run_protocol(rounds=ring._default_convergence_rounds)
-    ring.refresh_all_finger_tables()
-
-    for source in resources:
-        route = ring._route_key(
-            source.key,
-            start_node_id=first_id,
-            operation="MetricPut",
-            requested_id=source.resource_id,
-            collect_trace=False,
-        )
-        resource = ResourceRecord(
-            source.resource_id,
-            source.hashed_resource_id,
-            int(source.key),
-            int(route["owner_id"]),
-        )
-        ring.resources[resource.resource_id] = resource
-        ring._place_resource_copies(resource)
-
-    return ring
-
-
 def _join_metric_node(ring: ChordRing, node_id: int, *, known_node_id: int) -> None:
     numeric_id = int(node_id)
     ring.nodes[numeric_id] = Node(node_id=numeric_id)
@@ -320,44 +276,37 @@ def run_current_ring_metrics(
         "message": "Metrics completed successfully.",
     }
 
-    # Lặp qua từng trial
-    for _ in range(trial_count):
-        # Mỗi node độc lập thực hiện đúng lookups_per_trial lookup trong mỗi trial
-        for start_node_id in active_ids:
-            for _ in range(lookups_per_trial):
-                # Chọn resource ngẫu nhiên
-                resource = rng.choice(resources)
-
-                # Ghi nhận một mẫu lookup từ chính node đó
-                _record_lookup_sample(accumulator, ring, resource, start_node_id)
-
-    # Tính số node hiện tại
-    node_count = len(active_ids)
-
-    # Tạo một điểm metric
-    point = _build_metric_point(
-        node_count=node_count,
-        lookups_per_trial=lookups_per_trial,
-        trial_count=trial_count,
-        accumulator=accumulator,
-    )
-
-    # Khởi tạo đường dẫn ảnh biểu đồ
-    chart_path = None
-
-    # Lưu biểu đồ khi có yêu cầu
-    if output_path is not None:
-        chart_path = _save_metric_chart([point], Path(output_path))
-
-    # Trả về kết quả benchmark
-    return {
-        "points": [point],
-        "chart_path": str(chart_path) if chart_path else None,
-        "message": "Metrics completed successfully.",
-    }
 
 
 # Chạy benchmark theo nhiều kích thước mạng
+def build_growth_node_sizes(max_node_count: int, row_limit: int = 50) -> tuple[int, ...]:
+    """Return up to row_limit evenly distributed network sizes from 1..max_node_count."""
+    max_node_count = int(max_node_count)
+    row_limit = int(row_limit)
+    if max_node_count < 1 or row_limit < 1:
+        return tuple()
+
+    if max_node_count <= row_limit:
+        return tuple(range(1, max_node_count + 1))
+
+    step = (max_node_count - 1) / (row_limit - 1)
+    sizes: list[int] = []
+    used_sizes: set[int] = set()
+    for index in range(row_limit):
+        value = int(round(1 + step * index))
+        value = max(1, min(max_node_count, value))
+        while value in used_sizes and value < max_node_count:
+            value += 1
+        while value in used_sizes and value > 1:
+            value -= 1
+        sizes.append(value)
+        used_sizes.add(value)
+
+    sizes[0] = 1
+    sizes[-1] = max_node_count
+    return tuple(sorted(sizes))
+
+
 def run_lookup_metrics(
     *,
     node_sizes: tuple[int, ...] | None = None,
@@ -492,196 +441,6 @@ def run_lookup_metrics(
         "chart_path": str(chart_path) if chart_path else None,
         "message": "Metrics completed successfully.",
     }
-
-    # Duyệt từng kích thước mạng
-    for size_index, node_count in enumerate(node_sizes, start=1):
-        # Dùng điểm cố định nếu đã có sẵn
-        if node_count in fixed_points:
-            logger.info(
-                "Metrics sweep %s/%s: N=%s uses cached current-ring point",
-                size_index,
-                total_sizes,
-                node_count,
-            )
-            points.append(fixed_points[node_count])
-            continue
-
-        # Khởi tạo bộ tích lũy
-        accumulator = _empty_metric_accumulator()
-
-        logger.info(
-            "Metrics sweep %s/%s: building strict ring N=%s resources=%s",
-            size_index,
-            total_sizes,
-            node_count,
-            len(source_resources),
-        )
-        started_at = time.perf_counter()
-
-        # Tạo ring bằng protocol initialize thật một lần cho mỗi N, không build lại theo từng trial
-        ring = _build_metric_ring_from_existing_resources(
-            node_ids=source_node_ids[:node_count],
-            resources=source_resources,
-            m=m,
-            seed=seed + node_count,
-            replication_count=replication_count,
-        )
-        logger.info(
-            "Metrics sweep %s/%s: N=%s ring built in %.3fs",
-            size_index,
-            total_sizes,
-            node_count,
-            time.perf_counter() - started_at,
-        )
-
-        # Lấy danh sách resource
-        resources = list(ring.resources.values())
-
-        # Lấy danh sách node đang hoạt động
-        node_ids = ring.active_node_ids
-
-        for trial_index in range(effective_trial_count):
-            logger.info(
-                "Metrics sweep %s/%s: N=%s trial %s/%s running %s lookup(s)",
-                size_index,
-                total_sizes,
-                node_count,
-                trial_index + 1,
-                effective_trial_count,
-                effective_lookups,
-            )
-            for _ in range(effective_lookups):
-                start_node_id = rng.choice(node_ids)
-                resource = rng.choice(resources)
-                _record_lookup_sample(accumulator, ring, resource, start_node_id)
-
-        logger.info(
-            "Metrics sweep %s/%s: N=%s completed %s attempted lookup(s)",
-            size_index,
-            total_sizes,
-            node_count,
-            effective_lookups * effective_trial_count,
-        )
-
-        points.append(
-            _build_metric_point(
-                node_count=node_count,
-                lookups_per_trial=effective_lookups,
-                trial_count=effective_trial_count,
-                accumulator=accumulator,
-            )
-        )
-        continue
-
-        # Chạy nhiều trial trên cùng topology đã khởi tạo
-        for trial_index in range(effective_trial_count):
-            logger.info(
-                "Metrics sweep %s/%s: N=%s trial %s/%s running %s lookup(s) per node",
-                size_index,
-                total_sizes,
-                node_count,
-                trial_index + 1,
-                effective_trial_count,
-                effective_lookups,
-            )
-
-            # Mỗi node độc lập thực hiện đúng effective_lookups lookup trong trial này
-            for start_node_id in node_ids:
-                for _ in range(effective_lookups):
-                    # Chọn resource ngẫu nhiên
-                    resource = rng.choice(resources)
-
-                    # Ghi nhận mẫu lookup từ chính node đó
-                    _record_lookup_sample(accumulator, ring, resource, start_node_id)
-
-        logger.info(
-            "Metrics sweep %s/%s: N=%s completed %s attempted lookup(s)",
-            size_index,
-            total_sizes,
-            node_count,
-            node_count * effective_lookups * effective_trial_count,
-        )
-
-        # Tạo điểm metric cho kích thước mạng
-        # Dùng trial_count và lookups_per_size gốc (params đầu vào) cho heading
-        points.append(
-            _build_metric_point(
-                node_count=node_count,
-                lookups_per_trial=effective_lookups,
-                trial_count=effective_trial_count,
-                accumulator=accumulator,
-            )
-        )
-
-    # Khởi tạo đường dẫn ảnh biểu đồ
-    chart_path = None
-
-    # Lưu biểu đồ khi có yêu cầu
-    if output_path is not None:
-        chart_path = _save_metric_chart(points, Path(output_path))
-
-    # Trả về kết quả benchmark
-    return {
-        "points": points,
-        "node_counts": [int(p["nodes"]) for p in points],
-        "chart_path": str(chart_path) if chart_path else None,
-        "message": "Metrics completed successfully.",
-    }
-
-
-# Tạo dãy kích thước node tăng dần
-def build_growth_node_sizes(max_node_count: int, row_limit: int = 50) -> tuple[int, ...]:
-    # Kiểm tra giới hạn node
-    if max_node_count < 1:
-        raise ValueError("max_node_count must be at least 1")
-
-    # Kiểm tra giới hạn số dòng
-    if row_limit < 1:
-        raise ValueError("row_limit must be at least 1")
-
-    # Trả về đầy đủ khi số node nhỏ
-    if max_node_count <= row_limit:
-        return tuple(range(1, max_node_count + 1))
-
-    # Tạo danh sách kích thước theo bước đều
-    step = (max_node_count - 1) / (row_limit - 1)
-    even_sizes: list[int] = []
-    used_sizes: set[int] = set()
-    for index in range(row_limit):
-        value = int(round(1 + step * index))
-        value = max(1, min(max_node_count, value))
-        while value in used_sizes and value < max_node_count:
-            value += 1
-        while value in used_sizes and value > 1:
-            value -= 1
-        even_sizes.append(value)
-        used_sizes.add(value)
-    even_sizes[0] = 1
-    even_sizes[-1] = max_node_count
-    return tuple(sorted(even_sizes))
-
-    sizes = [
-        int(round(1 + (max_node_count - 1) * (i / (row_limit - 1))))
-        for i in range(row_limit)
-    ]
-
-    # Khử trùng và sắp xếp
-    unique_sorted = sorted(set(sizes))
-
-    # Bổ sung phần tử khi bị thiếu do làm tròn
-    if len(unique_sorted) < row_limit:
-        used = set(unique_sorted)
-        for candidate in range(1, max_node_count + 1):
-            if candidate in used:
-                continue
-            unique_sorted.append(candidate)
-            used.add(candidate)
-            if len(unique_sorted) >= row_limit:
-                break
-        unique_sorted = sorted(unique_sorted)
-
-    # Cắt danh sách về đúng số dòng
-    return tuple(unique_sorted[:row_limit])
 
 
 # Lưu biểu đồ metric ra file ảnh

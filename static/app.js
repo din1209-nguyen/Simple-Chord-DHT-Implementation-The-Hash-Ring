@@ -6,18 +6,14 @@ const els = {
   mInput: document.querySelector("#mInput"),
   seedInput: document.querySelector("#seedInput"),
   replicationInput: document.querySelector("#replicationInput"),
-  basePortInput: document.querySelector("#basePortInput"),
-  storageDirInput: document.querySelector("#storageDirInput"),
   initializeBtn: document.querySelector("#initializeBtn"),
   resourceInput: document.querySelector("#resourceInput"),
   startNodeInput: document.querySelector("#startNodeInput"),
   lookupBtn: document.querySelector("#lookupBtn"),
   lookupOutput: document.querySelector("#lookupOutput"),
-  lookupLatency: document.querySelector("#lookupLatency"),
   failedNodesInput: document.querySelector("#failedNodesInput"),
   killBtn: document.querySelector("#killBtn"),
   addNodeBtn: document.querySelector("#addNodeBtn"),
-  restartNodeBtn: document.querySelector("#restartNodeBtn"),
   addResourceBtn: document.querySelector("#addResourceBtn"),
   selectedNodeActions: document.querySelector("#selectedNodeActions"),
   selectedNodeSummary: document.querySelector("#selectedNodeSummary"),
@@ -29,7 +25,6 @@ const els = {
   metricsSweepCharts: document.querySelector("#metricsSweepCharts"),
   metricsSweepChartsPlaceholder: document.querySelector("#metricsSweepCharts .chart-placeholder"),
   hopsChartSweep: document.querySelector("#hopsChartSweep"),
-  hopsChartSweepImg: document.querySelector("#hopsChartSweepImg"),
   hopsChartSweepOutput: document.querySelector("#hopsChartSweepOutput"),
   metricsCharts: [
     document.querySelector("#metricsHopsChart"),
@@ -42,7 +37,6 @@ const els = {
   resourceInfoPanel: document.querySelector("#resourceInfoPanel"),
   resourceInfoBody: document.querySelector("#resourceInfoBody"),
   resourceInfoClose: document.querySelector("#resourceInfoClose"),
-  topologyBtn: null,
   topologyExpandBtn: document.querySelector("#topologyExpandBtn"),
   topologyCloseBtn: document.querySelector("#topologyCloseBtn"),
   topologyOutput: document.querySelector("#topologyOutput"),
@@ -373,13 +367,9 @@ function updateNodeSelection() {
     els.selectedNodeActions.hidden = selectedNodeId === null;
   }
 
-  // Restart is a distributed-process control; hide in single-process mode.
-if (els.killBtn) {
-  els.killBtn.hidden = selectedNodeId === null || nodeSite(selectedNodeId).status !== "Running";
-}
-if (els.restartNodeBtn) {
-  els.restartNodeBtn.hidden = true;
-}
+  if (els.killBtn) {
+    els.killBtn.hidden = selectedNodeId === null || nodeSite(selectedNodeId).status !== "Running";
+  }
 
   if (els.selectedNodeSummary) {
     els.selectedNodeSummary.hidden = true;
@@ -403,7 +393,6 @@ function showAllResources() {
   if (els.resourceTableFilter) {
     els.resourceTableFilter.value = "";
   }
-  closeResourceDetailModal();
   els.fingerOutput.innerHTML = fingerPlaceholder;
   updateNodeSelection();
   applyResourceTableFilter();
@@ -418,7 +407,6 @@ function showResourcesForNode(nodeId) {
   }
   selectedNodeId = nextNodeId;
   selectedResourceId = null;
-  closeResourceDetailModal();
   if (els.resourceTableFilter) {
     els.resourceTableFilter.value = "";
   }
@@ -449,128 +437,6 @@ function finiteMetricNumber(value, fallback = 0) {
   return Number.isFinite(numericValue) ? numericValue : fallback;
 }
 
-// Chuẩn hóa điểm đo HTTP lookup thành định dạng chung của các card thống kê
-function normalizeMetricPoint(point) {
-  const totalLookups = finiteMetricNumber(metricValue(point, "attempted_lookups", metricValue(point, "total_lookups", 0)));
-  const averageHops = finiteMetricNumber(metricValue(point, "average_hops", 0));
-  const messageOverhead = finiteMetricNumber(
-    metricValue(point, "message_overhead", Math.round(averageHops * totalLookups)),
-  );
-  const successfulLookups = finiteMetricNumber(metricValue(point, "successful_lookups", totalLookups));
-  const failedLookups = finiteMetricNumber(metricValue(point, "failed_lookups", Math.max(0, totalLookups - successfulLookups)));
-  const nodes = finiteMetricNumber(metricValue(point, "nodes", currentActiveNodeCount));
-  return {
-    ...point,
-    nodes,
-    log2_nodes: metricValue(point, "log2_nodes", nodes > 0 ? Math.log2(nodes).toFixed(3) : "0"),
-    average_hops: averageHops,
-    message_overhead: messageOverhead,
-    attempted_lookups: totalLookups,
-    total_lookups: totalLookups,
-    successful_lookups: successfulLookups,
-    failed_lookups: failedLookups,
-    success_rate: metricValue(point, "success_rate", totalLookups ? (successfulLookups / totalLookups).toFixed(3) : "0"),
-    average_latency_ms: metricValue(point, "average_latency_ms", "0.0000"),
-    messages_per_lookup: metricValue(point, "messages_per_lookup", successfulLookups ? (messageOverhead / successfulLookups).toFixed(3) : "0"),
-  };
-}
-
-// Tạo điểm đo cho một lookup vừa thực hiện khi backend chưa trả bản tổng hợp
-function singleLookupMetricFromResult(result, metric) {
-  if (metric) {
-    return metric;
-  }
-  const hops = Number(result?.hops ?? 0);
-  const nodes = Number(metric?.nodes ?? currentActiveNodeCount);
-  return {
-    nodes,
-    log2_nodes: nodes > 0 ? Math.log2(nodes).toFixed(3) : "0",
-    attempted_lookups: 1,
-    total_lookups: 1,
-    successful_lookups: 1,
-    failed_lookups: 0,
-    success_rate: 1,
-    average_hops: hops,
-    average_latency_ms: "0.0000",
-    message_overhead: hops,
-    messages_per_lookup: hops,
-  };
-}
-
-// Hiển thị bảng số liệu metrics mà không có các thẻ thống kê
-function renderMetricsSummary(point, currentNodes, rows = []) {
-  const displayedNodes = Number(point.nodes ?? currentNodes);
-  const maxRows = 50;
-  const limitedRows = rows.slice(0, maxRows);
-  const hasMore = rows.length > maxRows;
-
-  const tableRows = limitedRows
-    .map((row) => normalizeMetricPoint(row))
-    .map(
-      (row) => `
-        <tr>
-          <td>${escapeHtml(row.nodes)}</td>
-          <td>${escapeHtml(row.average_hops)}</td>
-          <td>${escapeHtml(row.log2_nodes)}</td>
-          <td>${escapeHtml(row.average_latency_ms)}</td>
-          <td>${escapeHtml(row.total_lookups)}</td>
-          <td>${escapeHtml(row.successful_lookups)} / ${escapeHtml(row.failed_lookups)}</td>
-          <td>${escapeHtml(row.message_overhead)}</td>
-          <td>${escapeHtml(row.messages_per_lookup)}</td>
-        </tr>
-      `,
-    )
-    .join("");
-
-  return `
-    <div class="metrics-benchmark">
-      <h3>Lookup Performance Statistics</h3>
-      <div class="metrics-table-wrap">
-        <table class="metrics-table">
-          <thead>
-            <tr>
-              <th>N</th>
-              <th>Avg Hops</th>
-              <th>log2(N)</th>
-              <th>Latency (ms)</th>
-              <th>Lookups</th>
-              <th>Success/Fail</th>
-              <th>Message Cost</th>
-              <th>Msgs/Lookup</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      </div>
-      ${hasMore ? `<div class="metrics-table-note">Showing ${maxRows} of ${rows.length} rows</div>` : ""}
-    </div>
-  `;
-}
-
-// Hiển thị metric gọn cho request lookup vừa đi qua các endpoint node
-function renderLookupMetricSummary(metric) {
-  const point = normalizeMetricPoint(metric || {});
-  return `
-    <div class="metric-summary lookup-metric-summary">
-      <div class="metric-card">
-        <span>log2(N)</span>
-        <strong>${escapeHtml(point.log2_nodes)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Latency ms</span>
-        <strong>${escapeHtml(point.average_latency_ms)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Message Overhead</span>
-        <strong>${escapeHtml(point.message_overhead)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Messages / Lookup</span>
-        <strong>${escapeHtml(point.messages_per_lookup)}</strong>
-      </div>
-    </div>
-  `;
-}
 
 function formatNumber(val) {
   if (val === null || val === undefined) return "--";
@@ -793,10 +659,6 @@ function clearGeneratedArtifacts() {
     els.hopsChartSweep.hidden = true;
     if (els.hopsChartSweepOutput) {
       els.hopsChartSweepOutput.innerHTML = "";
-    }
-    if (els.hopsChartSweepImg) {
-      els.hopsChartSweepImg.removeAttribute("src");
-      els.hopsChartSweepImg.style.display = "none";
     }
   }
 }
@@ -1419,7 +1281,7 @@ async function killNode() {
 }
 
 
-// Làm mới snapshot và artifact sau thao tác join, restart hoặc CRUD
+// Làm mới snapshot và artifact sau thao tác join hoặc CRUD
 async function refreshAfterChange(state, { rebuildArtifacts = false } = {}) {
   renderState(state);
   if (rebuildArtifacts) {
@@ -1450,17 +1312,6 @@ async function addNode() {
   );
 }
 
-// Khởi chạy lại node đã dừng với cùng endpoint và kho JSON persisted
-async function restartNode() {
-  if (selectedNodeId === null) {
-    showToast("Select a node first.");
-    return;
-  }
-  const data = await api(`/api/node/${selectedNodeId}/restart`, {});
-  clearNodeRemovalReport();
-  await refreshAfterChange(data.state, { rebuildArtifacts: true });
-  showToast(data.message);
-}
 
 // Ghi resource mới qua entry node để Chord định tuyến tới primary owner
 async function addResource() {
@@ -1613,10 +1464,6 @@ async function runMetrics(silent = false) {
 
     const sweepRows = Array.isArray(data.sweep_points) ? data.sweep_points : [];
 
-    // /api/metrics only returns sweep data; keep currentNodes stable.
-    const currentNodes = Number(currentActiveNodeCount);
-    const point = { nodes: currentNodes };
-
     if (requestGeneration !== artifactGeneration) {
       return;
     }
@@ -1659,7 +1506,6 @@ async function generateTopology(silent = false, includeLastPath = false, lookupP
   if (!els.topologyFrame || !els.topologyChart) {
     return;
   }
-  setBusy(els.topologyBtn, true, "Generating...");
   if (els.topologyOutput) {
     els.topologyOutput.textContent = "Generating topology graph...";
   }
@@ -1691,8 +1537,6 @@ async function generateTopology(silent = false, includeLastPath = false, lookupP
     if (!silent) {
       showToast(error.message);
     }
-  } finally {
-    setBusy(els.topologyBtn, false);
   }
 }
 
@@ -1734,10 +1578,6 @@ async function deleteResourceFromTable(resourceId, button) {
   }
 }
 
-// Đóng modal chi tiết resource
-function closeResourceDetailModal() {
-  // Modal removed - kept for compatibility
-}
 
 // Chọn resource để highlight trong bảng mà không hiển thị modal
 function selectResource(resourceId) {
@@ -1761,7 +1601,6 @@ bindClick(els.initializeBtn, initializeNetwork);
 bindClick(els.lookupBtn, lookupResource);
 bindClick(els.killBtn, killNode);
 bindClick(els.addNodeBtn, addNode);
-bindClick(els.restartNodeBtn, restartNode);
 bindClick(els.addResourceBtn, addResource);
 bindClick(els.metricsBtn, () => runMetrics(false));
 bindClick(els.metricsTraceClose, closeMetricsTrace);
@@ -1810,29 +1649,6 @@ if (els.topologyModal) {
     }
   });
 }
-// Resource detail modal handlers
-if (els.resourceDetailCloseBtn) {
-  els.resourceDetailCloseBtn.addEventListener("click", closeResourceDetailModal);
-}
-if (els.resourceDetailEditBtn) {
-  els.resourceDetailEditBtn.addEventListener("click", () => {
-    closeResourceDetailModal();
-    updateResource();
-  });
-}
-if (els.resourceDetailDeleteBtn) {
-  els.resourceDetailDeleteBtn.addEventListener("click", () => {
-    closeResourceDetailModal();
-    deleteResource();
-  });
-}
-if (els.resourceDetailModal) {
-  els.resourceDetailModal.addEventListener("click", (event) => {
-    if (event.target === els.resourceDetailModal) {
-      closeResourceDetailModal();
-    }
-  });
-}
 if (els.resourceTableFilter) {
   els.resourceTableFilter.addEventListener("input", applyResourceTableFilter);
 }
@@ -1852,26 +1668,7 @@ if (els.showReplicaBtn) {
     applyResourceTableFilter();
   });
 }
-if (els.basePortInput) {
-  els.basePortInput.addEventListener("change", () => {
-    renderState({
-      active_node_count: currentActiveNodeCount,
-      active_nodes: currentActiveNodes,
-      resource_count: resourceTotalCount,
-      replication_count: Number(els.replicationInput.value) || 0,
-      failed_node_count: Number(els.failedNodesInput.value) || 0,
-      m: Number(els.mInput.value) || 16,
-      sample_resources: cachedResourceRows,
-      sites: currentSites,
-    });
-  });
-}
-if (els.storageDirInput) {
-  els.storageDirInput.addEventListener("change", () => {
-    updateNodeSelection();
-  });
-}
-// Tải snapshot ban đầu rồi sinh metrics và topology tuần tự cho deployment hiện tại
+// Tải snapshot ban đầu, sinh topology và khôi phục metrics đã lưu nếu còn khớp ring hiện tại
 // No global loading overlay (use per-section loading only).
 function setAppLoadingStatus(_msg) {}
 

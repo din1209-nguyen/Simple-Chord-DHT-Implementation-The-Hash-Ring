@@ -533,12 +533,6 @@ def add_node():
         return json_error(str(exc))  # Trả về lỗi
 
 
-# Không hỗ trợ restart node
-@app.post("/api/node/<int:node_id>/restart")
-def restart_node(node_id: int):
-    return json_error("Restart is not supported. Use /api/node to join a new node.", 400)  # Trả về lỗi không hỗ trợ
-
-
 # Thêm resource mới
 @app.post("/api/resource")
 def add_resource():
@@ -682,38 +676,6 @@ def metrics_last():
         if last_metrics_payload is None:  # Kiểm tra có metrics không
             return jsonify({"ok": False, "message": "No saved metrics yet."})  # Trả về lỗi
         return jsonify({"ok": True, "metrics": last_metrics_payload})  # Trả về metrics đã lưu
-
-
-# Chạy metrics sweep tùy chỉnh
-@app.post("/api/metrics/sweep")
-def metrics_sweep():
-    payload = request.get_json(silent=True) or {}  # Lấy JSON payload
-    try:
-        max_nodes = parse_int_field(payload, "max_nodes", 50)  # Trích xuất số node tối đa, mặc định 50
-        trials = parse_int_field(payload, "trials", 5)  # Trích xuất số trials, mặc định 5
-        lookups = parse_int_field(payload, "lookups", 100)  # Trích xuất số lookups, mặc định 100
-        resources = parse_int_field(payload, "resources", 1000)  # Trích xuất số resource, mặc định 1000
-        m = parse_int_field(payload, "m", 16)  # Trích xuất số bit m, mặc định 16
-        seed = parse_int_field(payload, "seed", 61)  # Trích xuất seed, mặc định 61
-
-        node_sizes = tuple(payload.get("node_sizes") or [])  # Lấy danh sách kích thước node tùy chỉnh
-        node_sizes = node_sizes if node_sizes else build_growth_node_sizes(max_nodes)  # Sử dụng tùy chỉnh hoặc tạo mặc định
-
-        with plot_lock:  # Lock để đồng bộ vẽ biểu đồ
-            result = run_lookup_metrics(  # Chạy metrics với cấu hình tùy chỉnh
-                node_sizes=tuple(int(x) for x in node_sizes),  # Chuyển đổi sang tuple int
-                max_node_count=max_nodes,  # Số node tối đa
-                trial_count=trials,  # Số trials
-                lookups_per_size=lookups,  # Số lookups mỗi kích thước
-                resource_count=resources,  # Số resource
-                m=m,  # Số bit m
-                seed=seed,  # Seed
-                output_path=None,  # Không lưu file CSV
-            )
-            charts = save_metric_charts_from_points(result["points"])  # Tạo biểu đồ
-        return jsonify({"ok": True, "message": result.get("message", "Sweep completed."), **result, "charts": charts})  # Trả về kết quả
-    except Exception as exc:
-        return json_error(str(exc))  # Trả về lỗi
 
 
 # Tạo ảnh topology

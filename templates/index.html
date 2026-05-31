@@ -7,8 +7,8 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chord DHT - Distributed Hash Ring</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=119" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='busy.css') }}?v=119" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=120" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='busy.css') }}?v=120" />
   </head>
   <body>
     <header class="topbar">
@@ -93,7 +93,6 @@
             <div class="state-actions" aria-label="Node management">
               <button id="addNodeBtn" type="button">Join Node</button>
               <div id="selectedNodeActions" class="selected-actions" hidden>
-                <button id="restartNodeBtn" type="button" class="secondary">Restart</button>
                 <button id="killBtn" type="button" class="danger">Kill</button>
               </div>
               <span class="failed-count">Failed: <input id="failedNodesInput" type="text" readonly value="0" /></span>
@@ -290,6 +289,6 @@
     <!-- Toast notification -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=119"></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=120"></script>
   </body>
 </html>
