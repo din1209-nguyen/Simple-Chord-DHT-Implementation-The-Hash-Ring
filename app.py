@@ -27,6 +27,7 @@ from chord_dht import (
     ChordRing,
     ResourceRecord,
     build_growth_node_sizes,
+    run_current_ring_metrics,
     run_lookup_metrics,
     save_topology_graph,
 )
@@ -225,6 +226,23 @@ def _save_resource_ids(ring: ChordRing) -> None:
         raise last_exc
 
 
+def _save_initial_dataset_files(ring: ChordRing) -> None:
+    import json
+
+    _save_node_ids(ring)
+    _save_resource_ids(ring)
+
+    with NODE_IDS_PATH.open("r", encoding="utf-8") as f:
+        node_ids = json.load(f)
+    with RESOURCE_IDS_PATH.open("r", encoding="utf-8") as f:
+        resource_ids = json.load(f)
+
+    if len(node_ids) != len(ring.nodes):
+        raise RuntimeError("node_ids.json was not written with the initialized node count")
+    if len(resource_ids) != len(ring.resources):
+        raise RuntimeError("resource_ids.json was not written with the initialized resource count")
+
+
 # Đọc và khôi phục trạng thái ring từ file JSON
 def _load_ring_state() -> ChordRing | None:
     import json
@@ -413,8 +431,7 @@ def initialize_network():
             ring = ChordRing(m=m, seed=seed, replication_count=replication_count)  # Tạo ring mới với cấu hình
             state_payload = ring.initialize_network(node_count=nodes, resource_count=resources, seed=seed, replication_count=replication_count)  # Khởi tạo network
             _save_ring_state(ring)  # Lưu trạng thái ring
-            _save_node_ids(ring)  # Lưu danh sách node_ids
-            _save_resource_ids(ring)  # Lưu danh sách resource_id + hashed_resource_id
+            _save_initial_dataset_files(ring)  # Lưu dataset gốc node/resource chỉ khi initialize
 
         return jsonify({"ok": True, "message": "Chord ring initialized and persisted to JSON.", "state": state_payload})  # Trả về kết quả thành công
     except Exception as exc:
@@ -575,6 +592,11 @@ def delete_resource():
 
 
 # Chạy metrics trên ring hiện tại
+@app.get("/api/metrics")
+def metrics_requires_post():
+    return json_error("Metrics must be run with POST. Use the Run Metrics button on the UI.", 405)
+
+
 @app.post("/api/metrics")
 def metrics_current_ring():
     payload = request.get_json(silent=True) or {}  # Lấy JSON payload
@@ -585,10 +607,11 @@ def metrics_current_ring():
         with coordinator_lock:  # Lock để đồng bộ truy cập ring
             _autoload_once()  # Đảm bảo đã autoload
             resource_count = len(ring.resources) or 1000  # Lấy số resource hoặc mặc định 1000
+            resource_records = list(ring.resources.values())
+            metric_node_ids = ring.active_node_ids
             m = ring.m  # Lấy số bit m
             seed = ring.seed  # Lấy seed
-
-        with plot_lock:  # Lock để đồng bộ vẽ biểu đồ
+            replication_count = ring.replication_count
             active_nodes = int(ring.summary(sample_size=None).get("active_node_count", 0) or 0)  # Lấy số node đang hoạt động
             if active_nodes < 1:
                 return jsonify({
@@ -597,26 +620,39 @@ def metrics_current_ring():
                     "sweep_points": [],
                     "charts": {},
                 })
-
-            row_count = max(1, min(active_nodes, 50))  # Giới hạn số hàng tối đa 50
-            node_sizes = build_growth_node_sizes(active_nodes, row_limit=row_count)  # Xây dựng danh sách kích thước node để đo
-            sweep_result = run_lookup_metrics(  # Chạy metrics lookup
-                max_node_count=active_nodes,  # Số node tối đa
-                node_sizes=node_sizes,  # Danh sách kích thước node
-                trial_count=trials,  # Số trials
-                lookups_per_size=lookups,  # Số lookups mỗi kích thước
-                resource_count=resource_count,  # Số resource
-                m=m,  # Số bit m
-                seed=seed,  # Seed
-                output_path=None,  # Không lưu file CSV
+            current_result = run_current_ring_metrics(
+                ring,
+                trial_count=trials,
+                lookups_per_trial=lookups,
+                seed=seed,
+                output_path=None,
             )
-            charts = save_metric_charts_from_points(sweep_result["points"])  # Tạo biểu đồ từ kết quả
+            current_point = current_result["points"][0]
+
+        with plot_lock:  # Lock để đồng bộ vẽ biểu đồ
+            node_sizes = build_growth_node_sizes(active_nodes, row_limit=50)  # Trả về tối đa 50 dòng tương ứng 50 kích thước
+            sweep_result = run_lookup_metrics(  # Chạy sweep nhanh để có đủ bảng metrics
+                max_node_count=active_nodes,
+                node_sizes=node_sizes,
+                trial_count=trials,
+                lookups_per_size=lookups,
+                resource_count=resource_count,
+                resource_records=resource_records,
+                node_ids=metric_node_ids,
+                replication_count=replication_count,
+                m=m,
+                seed=seed,
+                fixed_points={active_nodes: current_point},
+                output_path=None,
+            )
+            sweep_points = sweep_result["points"]
+            charts = save_metric_charts_from_points(sweep_points)
 
         response_payload = {  # Tạo payload phản hồi
             "ok": True,
             "message": "Metrics completed successfully.",
-            "sweep_points": sweep_result["points"],  # Các điểm sweep
-            "node_counts": [int(p["nodes"]) for p in sweep_result["points"]],  # Danh sách số node
+            "sweep_points": sweep_points,  # Các điểm đo
+            "node_counts": [int(p["nodes"]) for p in sweep_points],  # Danh sách số node
             "charts": charts,  # Dictionary chứa đường dẫn biểu đồ
         }
 

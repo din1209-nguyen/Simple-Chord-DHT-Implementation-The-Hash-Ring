@@ -39,6 +39,9 @@ const els = {
   metricsTracePanel: document.querySelector("#metricsTracePanel"),
   metricsTraceBody: document.querySelector("#metricsTraceBody"),
   metricsTraceClose: document.querySelector("#metricsTraceClose"),
+  resourceInfoPanel: document.querySelector("#resourceInfoPanel"),
+  resourceInfoBody: document.querySelector("#resourceInfoBody"),
+  resourceInfoClose: document.querySelector("#resourceInfoClose"),
   topologyBtn: null,
   topologyExpandBtn: document.querySelector("#topologyExpandBtn"),
   topologyCloseBtn: document.querySelector("#topologyCloseBtn"),
@@ -226,7 +229,7 @@ async function refreshArtifacts() {
   const activeNodes = Number(currentActiveNodeCount) || 0;
   if (activeNodes > 60) {
     if (els.metricsOutput) {
-      els.metricsOutput.textContent = "Auto metrics skipped for large rings. Click Run Metrics when needed.";
+      els.metricsOutput.textContent = "";
     }
     if (els.topologyOutput) {
       els.topologyOutput.textContent = "Auto topology skipped for large rings. Click Generate Topology Graph when needed.";
@@ -241,7 +244,7 @@ async function refreshArtifacts() {
   }
 
   if (els.metricsOutput) {
-    els.metricsOutput.textContent = "Updating average hops...";
+    els.metricsOutput.textContent = "";
   }
   if (els.topologyOutput) {
     els.topologyOutput.textContent = "Generating topology graph...";
@@ -253,11 +256,7 @@ async function refreshArtifacts() {
   } catch (error) {
     showToast(error.message || "Topology generation failed.");
   }
-  try {
-    await runMetrics(true);
-  } catch (error) {
-    showToast(error.message || "Metrics generation failed.");
-  }
+  setMetricChartsLoading("Click Run Metrics to generate strict protocol metrics.");
 }
 
 // Lưu snapshot hiển thị phía client được đồng bộ từ coordinator khi cần
@@ -327,7 +326,7 @@ function applyResourceTableFilter() {
         <td class="col-hashed hashed-resource"><code>${escapeHtml(hash)}</code></td>
         <td class="col-key"><code>${escapeHtml(item.key)}</code></td>
         <td class="col-owner"><code>${escapeHtml(item.owner_id)}</code></td>
-        <td class="col-replicas resource-replicas">${escapeHtml(replicas || "-")}</td>
+        <td class="col-replicas" title="${escapeHtml(replicas || "-")}"><span class="resource-replicas">${escapeHtml(replicas || "-")}</span></td>
         <td class="col-action">
           <button type="button" class="delete-resource-btn danger" data-resource-id="${escapeHtml(item.resource_id)}" title="Delete resource">Delete</button>
         </td>
@@ -575,8 +574,28 @@ function renderLookupMetricSummary(metric) {
 
 function formatNumber(val) {
   if (val === null || val === undefined) return "--";
-  const s = String(val);
-  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return String(val);
+}
+
+function normalizeLogText(log) {
+  return String(log)
+    .replace(/^\[?\d+\]?[\s:]+/, "")
+    .replace(/\(resource '([^']+)'\) via HTTP\/REST via Flask API\.?/g, "$1")
+    .replace(/\((resource-[^)]+)\)\.?/g, "$1")
+    .trim();
+}
+
+function visibleHopLogs(logs) {
+  return (Array.isArray(logs) ? logs : []).filter(
+    (log) => !/Routing:\s*forwarded from node/i.test(String(log)),
+  );
+}
+
+function logNodeLabel(text) {
+  const match =
+    text.match(/-> node\s+(\d+)/i) ||
+    text.match(/successor\s+\[(\d+)\]/i);
+  return match ? `<code class="finger-tag">${escapeHtml(match[1])}</code>` : "";
 }
 
 function renderMetricTrace(point) {
@@ -597,6 +616,7 @@ function renderMetricTrace(point) {
   const msgsPerLookup = finiteMetricNumber(point.messages_per_lookup ?? 0);
   const traceHops = finiteMetricNumber(trace.hops ?? 0);
   const path = Array.isArray(trace.path) ? trace.path : [];
+  const routeHopCount = Math.max(0, path.length - 1);
   const key = trace.key ?? "--";
   const ownerId = trace.owner_id ?? "--";
 
@@ -616,16 +636,17 @@ function renderMetricTrace(point) {
       }).join("")
     : "";
 
-  const logs = Array.isArray(trace.logs) && trace.logs.length ? trace.logs : [];
+  const logs = visibleHopLogs(trace.logs);
   const logRowsHTML = logs.map((l, i) => {
     const step = i + 1;
-    const text = l.replace(/^\[?\d+\]?[\s:]+/, "").trim();
+    const text = normalizeLogText(l);
     const isMiss = /not found|does not store/i.test(text);
     const rowClass = isMiss ? "lookup-log-row lookup-log-row--miss" : "lookup-log-row";
+    const nodeLabel = logNodeLabel(text);
     return `<tr class="${rowClass}">
       <td class="lookup-log-cell lookup-log-cell--step"><span class="step-badge">${step}</span></td>
       <td class="lookup-log-cell lookup-log-cell--text">${escapeHtml(text)}</td>
-      <td class="lookup-log-cell lookup-log-cell--finger"></td>
+      <td class="lookup-log-cell lookup-log-cell--finger">${nodeLabel}</td>
     </tr>`;
   }).join("");
 
@@ -633,7 +654,6 @@ function renderMetricTrace(point) {
     <div class="lookup-result">
       <div class="lookup-section">
         <h4 class="lookup-section__title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Metric Point Details
         </h4>
         <div class="lookup-summary-table-wrap">
@@ -678,15 +698,6 @@ function renderMetricTrace(point) {
 
       <div class="lookup-section">
         <h4 class="lookup-section__title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
-          Lookup Route <span class="lookup-section__count">(${path.length} hop${path.length !== 1 ? "s" : ""})</span>
-        </h4>
-        <div class="lookup-route-track">${routeHTML || "<span class=\"muted\">No route.</span>"}</div>
-      </div>
-
-      <div class="lookup-section">
-        <h4 class="lookup-section__title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           Hop-by-Hop Logs <span class="lookup-section__count">(${logs.length} step${logs.length !== 1 ? "s" : ""})</span>
         </h4>
         <div class="lookup-log-table-wrap">
@@ -695,7 +706,7 @@ function renderMetricTrace(point) {
               <tr>
                 <th class="lookup-log-th--step">#</th>
                 <th class="lookup-log-th--text">Action / Reason</th>
-                <th class="lookup-log-th--finger">Finger</th>
+                <th class="lookup-log-th--finger">Node</th>
               </tr>
             </thead>
             <tbody>
@@ -703,6 +714,13 @@ function renderMetricTrace(point) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          Lookup Route <span class="lookup-section__count">(${routeHopCount} hop${routeHopCount !== 1 ? "s" : ""})</span>
+        </h4>
+        <div class="lookup-route-track">${routeHTML || "<span class=\"muted\">No route.</span>"}</div>
       </div>
     </div>
   `;
@@ -721,6 +739,29 @@ function closeMetricsTrace() {
   if (!els.metricsTracePanel) return;
   els.metricsTracePanel.hidden = true;
   if (els.metricsTraceBody) els.metricsTraceBody.innerHTML = "";
+}
+
+function showResourceInfoOverlay(resource, trace = {}) {
+  if (!els.resourceInfoPanel || !els.resourceInfoBody || !resource) return;
+  const replicas = Array.isArray(resource.replica_node_ids) && resource.replica_node_ids.length
+    ? resource.replica_node_ids.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")
+    : '<span class="muted">None</span>';
+  els.resourceInfoBody.innerHTML = `
+    <div class="resource-info-grid">
+      <div><span>Resource ID</span><code>${escapeHtml(resource.resource_id)}</code></div>
+      <div><span>Hashed</span><code>${escapeHtml(resource.hashed_resource_id || "")}</code></div>
+      <div><span>Key</span><code>${formatNumber(resource.key)}</code></div>
+      <div><span>Owner</span><code>${formatNumber(resource.owner_id)}</code></div>
+      <div><span>Replicas</span><div class="resource-info-replicas">${replicas}</div></div>
+    </div>
+  `;
+  els.resourceInfoPanel.hidden = false;
+}
+
+function closeResourceInfoOverlay() {
+  if (!els.resourceInfoPanel) return;
+  els.resourceInfoPanel.hidden = true;
+  if (els.resourceInfoBody) els.resourceInfoBody.innerHTML = "";
 }
 
 // Đặt vùng ảnh về trạng thái chờ trong lúc backend dựng artifact mới
@@ -949,39 +990,33 @@ function renderNodeRemovalReport(report) {
       </div>
     </div>
     <div class="kill-report-body">
-      <div class="kill-summary-grid">
-        <div>
-          <strong>Stopped Node</strong>
-          <span class="stopped-node-text">${killedNode}</span>
-        </div>
-        <div>
-          <strong>Old Predecessor</strong>
-          <span>${oldPredecessor}</span>
-        </div>
-        <div>
-          <strong>Old Successor</strong>
-          <span>${oldSuccessor}</span>
-        </div>
-        <div>
-          <strong>Status</strong>
-          ${summaryStatus}
-        </div>
-        <div>
-          <strong>Primary Recovered</strong>
-          <span>${recoveredCount}</span>
-        </div>
-        <div>
-          <strong>Replica Restored</strong>
-          <span>${replicaRepairedCount}</span>
-        </div>
-        <div>
-          <strong>Data Loss</strong>
-          <span>${lostCount}</span>
-        </div>
-        <div>
-          <strong>Finger Tables Fixed</strong>
-          <span>${updatedFingerTables} tables / ${updatedFingerEntries} entries</span>
-        </div>
+      <div class="kill-summary-table-wrap">
+        <table class="kill-summary-table">
+          <thead>
+            <tr>
+              <th>Stopped Node</th>
+              <th>Old Predecessor</th>
+              <th>Old Successor</th>
+              <th>Status</th>
+              <th>Primary Recovered</th>
+              <th>Replica Restored</th>
+              <th>Data Loss</th>
+              <th>Finger Tables Fixed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="stopped-node-text">${killedNode}</code></td>
+              <td><code>${oldPredecessor}</code></td>
+              <td><code>${oldSuccessor}</code></td>
+              <td>${summaryStatus}</td>
+              <td><code>${recoveredCount}</code></td>
+              <td><code>${replicaRepairedCount}</code></td>
+              <td><code>${lostCount}</code></td>
+              <td><code>${updatedFingerTables} tables / ${updatedFingerEntries} entries</code></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="kill-recovery-note">
         <strong>Replica policy:</strong>
@@ -1205,10 +1240,8 @@ async function initializeNetwork() {
     renderState(data.state);
     els.lookupOutput.classList.remove("lookup-output--missing");
     els.lookupOutput.innerHTML = "";
-    if (!renderTopologyArtifact(data.topology)) {
-      await generateTopology(true, false);
-    }
     showToast(data.message);
+    void generateTopology(true, false);
   } catch (error) {
     showToast(error.message);
   } finally {
@@ -1218,6 +1251,7 @@ async function initializeNetwork() {
 
 function renderLookupResult(result) {
   const path = Array.isArray(result.path) ? result.path : [];
+  const routeHopCount = Math.max(0, path.length - 1);
   const foundClass = result.found ? "" : " lookup-result-row--miss";
   const latency = result.latency_ms != null ? result.latency_ms : 0;
 
@@ -1242,24 +1276,21 @@ function renderLookupResult(result) {
   }).join("");
 
   // ── Hop-by-Hop Logs ───────────────────────────────────────────────────────
-  const logs = Array.isArray(result.logs) && result.logs.length ? result.logs : [];
+  const logs = visibleHopLogs(result.logs);
 
   // Each log line: strip the "[N] " or "Hop N: " prefix if present, then render in table
   const logRowsHTML = logs.map((l, i) => {
     const step = i + 1;
-    const text = l.replace(/^\[?\d+\]?[\s:]+/, "").trim();
+    const text = normalizeLogText(l);
     const isMiss = /not found|does not store/i.test(text);
     const rowClass = isMiss ? "lookup-log-row lookup-log-row--miss" : "lookup-log-row";
 
-    // Try to extract finger index from log text
-    const fingerMatch = text.match(/finger\s*#?(\d+)/i);
-    const fingerIdx = fingerMatch ? fingerMatch[1] : null;
-    const fingerLabel = fingerIdx != null ? `<code class="finger-tag">finger #${fingerIdx}</code>` : "";
+    const nodeLabel = logNodeLabel(text);
 
     return `<tr class="${rowClass}">
       <td class="lookup-log-cell lookup-log-cell--step"><span class="step-badge">${step}</span></td>
       <td class="lookup-log-cell lookup-log-cell--text">${escapeHtml(text)}</td>
-      <td class="lookup-log-cell lookup-log-cell--finger">${fingerLabel}</td>
+      <td class="lookup-log-cell lookup-log-cell--finger">${nodeLabel}</td>
     </tr>`;
   }).join("");
 
@@ -1267,7 +1298,6 @@ function renderLookupResult(result) {
     <div class="lookup-result">
       <div class="lookup-section">
         <h4 class="lookup-section__title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Lookup Summary
         </h4>
         <div class="lookup-summary-table-wrap">
@@ -1300,15 +1330,6 @@ function renderLookupResult(result) {
 
       <div class="lookup-section">
         <h4 class="lookup-section__title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
-          Lookup Route <span class="lookup-section__count">(${path.length} hop${path.length !== 1 ? "s" : ""})</span>
-        </h4>
-        <div class="lookup-route-track">${routeHTML || "<span class=\"muted\">No route.</span>"}</div>
-      </div>
-
-      <div class="lookup-section">
-        <h4 class="lookup-section__title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           Hop-by-Hop Logs <span class="lookup-section__count">(${logs.length} step${logs.length !== 1 ? "s" : ""})</span>
         </h4>
         <div class="lookup-log-table-wrap">
@@ -1317,7 +1338,7 @@ function renderLookupResult(result) {
               <tr>
                 <th class="lookup-log-th--step">#</th>
                 <th class="lookup-log-th--text">Action / Reason</th>
-                <th class="lookup-log-th--finger">Finger</th>
+                <th class="lookup-log-th--finger">Node</th>
               </tr>
             </thead>
             <tbody>
@@ -1325,6 +1346,13 @@ function renderLookupResult(result) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          Lookup Route <span class="lookup-section__count">(${routeHopCount} hop${routeHopCount !== 1 ? "s" : ""})</span>
+        </h4>
+        <div class="lookup-route-track">${routeHTML || "<span class=\"muted\">No route.</span>"}</div>
       </div>
     </div>
   `;
@@ -1407,17 +1435,17 @@ async function addNode() {
   }
   openFormModal(
     "Join Node",
-    [{ id: "portField", label: "Port", type: "number", placeholder: "Auto if empty" }],
+    [{ id: "nodeIdField", label: "Node ID", type: "number", placeholder: "Auto if empty" }],
     "Join",
-    async ({ portField }) => {
-      const portValue = portField.trim();
+    async ({ nodeIdField }) => {
+      const nodeIdValue = nodeIdField.trim();
       const data = await api("/api/node", {
-        port: portValue === "" ? null : Number(portValue),
+        node_id: nodeIdValue === "" ? null : Number(nodeIdValue),
       });
       selectedNodeId = Number(data.report.node_id);
       clearNodeRemovalReport();
       await refreshAfterChange(data.state, { rebuildArtifacts: true });
-      showToast(data.message);
+      showToast(`${data.message} Node: ${data.report.node_id}.`);
     },
   );
 }
@@ -1444,10 +1472,12 @@ async function addResource() {
       const data = await api("/api/resource", {
         resource_id: resourceIdField.trim(),
       });
+      const resource = data.resource;
       selectedNodeId = null;
-      selectedResourceId = data.report.resource.resource_id;
+      selectedResourceId = resource?.resource_id ?? resourceIdField.trim();
       await refreshAfterChange(data.state);
-      showToast(`${data.message} Owner: ${data.report.resource.owner_id}.`);
+      showResourceInfoOverlay(resource, data.trace);
+      showToast(`${data.message} Owner: ${resource?.owner_id ?? "--"}.`);
     },
   );
 }
@@ -1474,10 +1504,12 @@ async function updateResource() {
         },
         "PUT",
       );
-      selectedNodeId = Number(data.report.resource.owner_id);
-      selectedResourceId = data.report.resource.resource_id;
+      const resource = data.resource;
+      selectedNodeId = Number(resource?.owner_id);
+      selectedResourceId = resource?.resource_id ?? newResourceIdField.trim();
       await refreshAfterChange(data.state);
-      showToast(`${data.message} Owner: ${data.report.resource.owner_id}.`);
+      showResourceInfoOverlay(resource, data.trace);
+      showToast(`${data.message} Owner: ${resource?.owner_id ?? "--"}.`);
     },
   );
 }
@@ -1519,6 +1551,7 @@ function buildHopsSweepRow(point, index) {
   const rowIndex = index + 1;
   const n = Number(point.nodes ?? 0);
   const avgHops = finiteMetricNumber(metricValue(point, "average_hops", 0));
+  const maxHops = finiteMetricNumber(metricValue(point, "max_hops", 0));
   const log2N = metricValue(point, "log2_nodes", n > 0 ? Math.log2(n).toFixed(3) : "0");
   const latency = finiteMetricNumber(metricValue(point, "average_latency_ms", 0));
   const totalLookups = finiteMetricNumber(metricValue(point, "total_lookups", metricValue(point, "attempted_lookups", 0)));
@@ -1532,6 +1565,7 @@ function buildHopsSweepRow(point, index) {
       <td>${rowIndex}</td>
       <td>${n}</td>
       <td>${avgHops}</td>
+      <td>${maxHops}</td>
       <td>${log2N}</td>
       <td>${latency}</td>
       <td>${totalLookups}</td>
@@ -1548,7 +1582,7 @@ function renderHopsChartSweep(sweepPoints) {
   const maxRows = 50;
   const limited = sweepPoints.slice(0, maxRows);
   const rows = limited.map(buildHopsSweepRow).join("");
-  els.hopsChartSweepOutput.innerHTML = rows || `<tr><td colspan="9" class="empty-cell">No data.</td></tr>`;
+  els.hopsChartSweepOutput.innerHTML = rows || `<tr><td colspan="10" class="empty-cell">No data.</td></tr>`;
   els.hopsChartSweep.hidden = false;
   els.hopsChartSweep.dataset.points = JSON.stringify(sweepPoints || []);
   attachSweepRowClickHandlers();
@@ -1570,7 +1604,7 @@ function attachSweepRowClickHandlers() {
 async function runMetrics(silent = false) {
   const requestGeneration = artifactGeneration;
   setBusy(els.metricsBtn, true, "Running...");
-  setMetricChartsLoading("Generating charts...");
+  setMetricChartsLoading("Calculating metrics...");
   try {
     const data = await api("/api/metrics", {
       lookups: Number(els.metricLookupsInput.value),
@@ -1592,7 +1626,6 @@ async function runMetrics(silent = false) {
       els.metricsOutput.innerHTML = "";
     }
 
-    // Render sweep charts (hops/latency/overhead)
     setMetricChartsReady(
       {
         hops: data.charts?.hops || null,
@@ -1602,7 +1635,6 @@ async function runMetrics(silent = false) {
       requestGeneration,
     );
 
-    // Render hops_chart_sweep: table only (no image)
     renderHopsChartSweep(sweepRows);
 
     if (!silent) {
@@ -1733,6 +1765,7 @@ bindClick(els.restartNodeBtn, restartNode);
 bindClick(els.addResourceBtn, addResource);
 bindClick(els.metricsBtn, () => runMetrics(false));
 bindClick(els.metricsTraceClose, closeMetricsTrace);
+bindClick(els.resourceInfoClose, closeResourceInfoOverlay);
 // Topology expand/close
 bindClick(els.topologyExpandBtn, openTopologyModal);
 bindClick(els.topologyCloseBtn, closeTopologyModal);
@@ -1747,14 +1780,25 @@ if (els.formModal) {
   });
 }
 
+if (els.resourceInfoPanel) {
+  els.resourceInfoPanel.addEventListener("click", (event) => {
+    if (event.target === els.resourceInfoPanel) {
+      closeResourceInfoOverlay();
+    }
+  });
+}
+
 document.addEventListener("keydown", (event) => {
-  if (!els.formModal || !els.formModal.classList.contains("is-open")) {
-    return;
-  }
   if (event.key === "Escape") {
-    closeFormModal();
+    if (els.resourceInfoPanel && !els.resourceInfoPanel.hidden) {
+      closeResourceInfoOverlay();
+      return;
+    }
+    if (els.formModal && els.formModal.classList.contains("is-open")) {
+      closeFormModal();
+    }
   }
-  if (event.key === "Enter") {
+  if (event.key === "Enter" && els.formModal && els.formModal.classList.contains("is-open")) {
     event.preventDefault();
     void submitFormModal();
   }
@@ -1841,8 +1885,7 @@ loadState()
     await generateTopology(true, false);
 
     // Load persisted metrics from last /api/metrics run.
-    // Only use if the ring node count matches the saved metrics.
-    // Otherwise, auto-run metrics for the current ring size.
+    // Strict protocol metrics can be expensive, so run it only when the user clicks Run Metrics.
     let usedPersistedMetrics = false;
     try {
       const last = await api("/api/metrics/last");
@@ -1871,10 +1914,12 @@ loadState()
     }
 
     if (!usedPersistedMetrics) {
-      await runMetrics(true);
+      if (els.metricsOutput) {
+        els.metricsOutput.textContent = "";
+      }
+      setMetricChartsLoading("Click Run Metrics to generate strict protocol metrics.");
     }
   })
   .catch((error) => {
     showToast(error.message);
   });
-

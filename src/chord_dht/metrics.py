@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import random
 import time
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from .chord import ChordRing
+from .models import Node, ResourceRecord
+
+logger = logging.getLogger(__name__)
 
 
 # Khởi tạo bộ tích lũy số liệu trống
@@ -28,6 +32,7 @@ def _empty_metric_accumulator() -> dict[str, Any]:
         "successful_lookups": 0,
         "failed_lookups": 0,
         "errors": [],
+        "max_hops": 0,
         "max_lookup_trace": None,
     }
 
@@ -36,7 +41,7 @@ def _empty_metric_accumulator() -> dict[str, Any]:
 def _record_lookup_sample(
     accumulator: dict[str, Any],
     ring: ChordRing,
-    resource_id: str,
+    resource: ResourceRecord,
     start_node_id: int,
 ) -> None:
     # Bắt đầu đo thời gian xử lý lookup
@@ -44,7 +49,13 @@ def _record_lookup_sample(
 
     # Thực hiện lookup từ node xuất phát
     try:
-        result = ring.lookup(resource_id, start_node_id=start_node_id)
+        route = ring._route_key(
+            resource.key,
+            start_node_id=start_node_id,
+            operation="MetricLookup",
+            requested_id=resource.resource_id,
+            collect_trace=False,
+        )
     except Exception as exc:
         # Tăng số lần lookup thất bại
         accumulator["failed_lookups"] += 1
@@ -63,20 +74,97 @@ def _record_lookup_sample(
     accumulator["latencies_ms"].append((time.perf_counter() - started_at) * 1000 + simulated_latency)
 
     # Ghi số hop của lookup
-    accumulator["hops"].append(result.hops)
+    hops = int(route["hops"])
+    accumulator["hops"].append(hops)
 
     # Tăng số lần lookup thành công
     accumulator["successful_lookups"] += 1
 
     # Đọc trace có hop lớn nhất hiện tại
-    current_trace = accumulator["max_lookup_trace"]
+    current_trace = {"hops": int(accumulator["max_hops"])}
 
     # Cập nhật trace khi phát hiện hop lớn hơn
-    if current_trace is None or result.hops > current_trace["hops"]:
-        accumulator["max_lookup_trace"] = result.to_dict()
+    if accumulator["max_lookup_trace"] is None or hops > current_trace["hops"]:
+        accumulator["max_hops"] = hops
+        trace = ring._route_key(
+            resource.key,
+            start_node_id=start_node_id,
+            operation="MetricLookup",
+            requested_id=resource.resource_id,
+            collect_trace=True,
+        )
+        owner_node = ring.nodes[int(trace["owner_id"])]
+        accumulator["max_lookup_trace"] = {
+            "requested_id": resource.resource_id,
+            "key": int(trace["key"]),
+            "owner_id": int(trace["owner_id"]),
+            "start_node_id": int(trace["start_node_id"]),
+            "path": list(trace["path"]),
+            "hops": int(trace["hops"]),
+            "logs": list(trace["logs"]),
+            "found": resource.resource_id in owner_node.local_resources,
+            "direct_key": False,
+            "replica_node_ids": list(resource.replica_node_ids),
+        }
 
 
 # Tạo một điểm metric từ bộ tích lũy
+def _copy_resource_records(resources: list[ResourceRecord]) -> list[ResourceRecord]:
+    return [
+        ResourceRecord(
+            resource.resource_id,
+            resource.hashed_resource_id,
+            int(resource.key),
+            int(resource.owner_id),
+            list(resource.replica_node_ids),
+        )
+        for resource in resources
+    ]
+
+
+def _build_metric_ring_from_existing_resources(
+    *,
+    node_ids: list[int],
+    resources: list[ResourceRecord],
+    m: int,
+    seed: int,
+    replication_count: int,
+) -> ChordRing:
+    ring = ChordRing(m=m, seed=seed, replication_count=replication_count)
+    if not node_ids:
+        raise ValueError("metrics require at least one node")
+
+    first_id = int(node_ids[0])
+    ring.nodes[first_id] = Node(node_id=first_id, predecessor=first_id, successor=first_id)
+
+    for node_id in node_ids[1:]:
+        numeric_id = int(node_id)
+        ring.nodes[numeric_id] = Node(node_id=numeric_id)
+        ring.join(numeric_id, known_node_id=first_id)
+        ring.run_protocol(rounds=ring._default_convergence_rounds)
+
+    ring.run_protocol(rounds=ring._default_convergence_rounds)
+
+    for source in resources:
+        route = ring._route_key(
+            source.key,
+            start_node_id=first_id,
+            operation="MetricPut",
+            requested_id=source.resource_id,
+            collect_trace=False,
+        )
+        resource = ResourceRecord(
+            source.resource_id,
+            source.hashed_resource_id,
+            int(source.key),
+            int(route["owner_id"]),
+        )
+        ring.resources[resource.resource_id] = resource
+        ring._place_resource_copies(resource)
+
+    return ring
+
+
 def _build_metric_point(
     *,
     node_count: int,
@@ -103,7 +191,7 @@ def _build_metric_point(
     message_overhead = sum(hops)
 
     # Tính hop lớn nhất
-    max_hops = max(hops) if hops else 0
+    max_hops = int(accumulator["max_hops"])
 
     # Đọc trace có hop lớn nhất
     max_trace = accumulator["max_lookup_trace"]
@@ -156,14 +244,14 @@ def run_current_ring_metrics(
     active_ids = ring.active_node_ids
 
     # Lấy danh sách resource hiện có
-    resource_ids = list(ring.resources.keys())
+    resources = list(ring.resources.values())
 
     # Chặn benchmark khi không có node
     if not active_ids:
         raise ValueError("metrics require at least one active node")
 
     # Chặn benchmark khi không có resource
-    if not resource_ids:
+    if not resources:
         raise ValueError("metrics require at least one resource")
 
     # Tạo bộ sinh ngẫu nhiên độc lập
@@ -172,18 +260,40 @@ def run_current_ring_metrics(
     # Khởi tạo bộ tích lũy
     accumulator = _empty_metric_accumulator()
 
+    for _ in range(trial_count):
+        for _ in range(lookups_per_trial):
+            start_node_id = rng.choice(active_ids)
+            resource = rng.choice(resources)
+            _record_lookup_sample(accumulator, ring, resource, start_node_id)
+
+    node_count = len(active_ids)
+    point = _build_metric_point(
+        node_count=node_count,
+        lookups_per_trial=lookups_per_trial,
+        trial_count=trial_count,
+        accumulator=accumulator,
+    )
+
+    chart_path = None
+    if output_path is not None:
+        chart_path = _save_metric_chart([point], Path(output_path))
+
+    return {
+        "points": [point],
+        "chart_path": str(chart_path) if chart_path else None,
+        "message": "Metrics completed successfully.",
+    }
+
     # Lặp qua từng trial
     for _ in range(trial_count):
-        # Lặp qua từng lookup trong trial
-        for _ in range(lookups_per_trial):
-            # Chọn resource ngẫu nhiên
-            resource_id = rng.choice(resource_ids)
+        # Mỗi node độc lập thực hiện đúng lookups_per_trial lookup trong mỗi trial
+        for start_node_id in active_ids:
+            for _ in range(lookups_per_trial):
+                # Chọn resource ngẫu nhiên
+                resource = rng.choice(resources)
 
-            # Chọn node xuất phát ngẫu nhiên
-            start_node_id = rng.choice(active_ids)
-
-            # Ghi nhận một mẫu lookup
-            _record_lookup_sample(accumulator, ring, resource_id, start_node_id)
+                # Ghi nhận một mẫu lookup từ chính node đó
+                _record_lookup_sample(accumulator, ring, resource, start_node_id)
 
     # Tính số node hiện tại
     node_count = len(active_ids)
@@ -219,6 +329,9 @@ def run_lookup_metrics(
     trial_count: int = 5,
     lookups_per_size: int = 100,
     resource_count: int = 1000,
+    resource_records: list[ResourceRecord] | None = None,
+    node_ids: list[int] | None = None,
+    replication_count: int = 1,
     m: int = 16,
     seed: int = 61,
     fixed_points: dict[int, dict[str, Any]] | None = None,
@@ -236,60 +349,143 @@ def run_lookup_metrics(
     if node_sizes is None:
         node_sizes = build_growth_node_sizes(max_node_count)
 
-    # Khi duyệt nhiều kích thước (sweep), giới hạn trials để tránh tăng trưởng O(N^2)
-    # vì mỗi trial tạo ring mới. Trials cao chỉ cần cho sweep nhỏ.
-    # Giảm từ 5 xuống 2 khi có >= 20 kích thước, giữ nguyên khi < 20 kích thước.
-    sweep_mode = len(node_sizes) >= 20
-    effective_trial_count = 2 if (sweep_mode and trial_count > 2) else trial_count
-
-    # Giới hạn lookups_per_size khi đang ở chế độ sweep nhiều kích thước
+    # Dùng đúng tham số người dùng nhập: mỗi node chạy lookups_per_size lookup trong mỗi trial.
+    effective_trial_count = trial_count
     effective_lookups = lookups_per_size
-    if sweep_mode and lookups_per_size > 50:
-        effective_lookups = 50
 
     # Tạo bộ sinh ngẫu nhiên chọn resource và node
     rng = random.Random(seed + 2)
 
     # Khởi tạo bảng điểm cố định
     fixed_points = fixed_points or {}
+    source_resources = _copy_resource_records(resource_records or [])
+    if not source_resources:
+        bootstrap = ChordRing(m=m, seed=seed, replication_count=replication_count)
+        bootstrap.initialize_network(
+            node_count=max_node_count,
+            resource_count=resource_count,
+            seed=seed,
+            replication_count=replication_count,
+        )
+        source_resources = _copy_resource_records(list(bootstrap.resources.values()))
+
+    source_node_ids = [int(node_id) for node_id in (node_ids or [])]
+    if not source_node_ids:
+        source_node_ids = ChordRing(m=m, seed=seed)._generate_unique_ids("node", max_node_count)
 
     # Khởi tạo danh sách điểm metric
     points: list[dict[str, Any]] = []
 
+    total_sizes = len(node_sizes)
+
     # Duyệt từng kích thước mạng
-    for node_count in node_sizes:
+    for size_index, node_count in enumerate(node_sizes, start=1):
         # Dùng điểm cố định nếu đã có sẵn
         if node_count in fixed_points:
+            logger.info(
+                "Metrics sweep %s/%s: N=%s uses cached current-ring point",
+                size_index,
+                total_sizes,
+                node_count,
+            )
             points.append(fixed_points[node_count])
             continue
 
         # Khởi tạo bộ tích lũy
         accumulator = _empty_metric_accumulator()
 
-        # Chạy nhiều trial để giảm nhiễu topology
+        logger.info(
+            "Metrics sweep %s/%s: building strict ring N=%s resources=%s",
+            size_index,
+            total_sizes,
+            node_count,
+            len(source_resources),
+        )
+        started_at = time.perf_counter()
+
+        # Tạo ring bằng protocol initialize thật một lần cho mỗi N, không build lại theo từng trial
+        ring = _build_metric_ring_from_existing_resources(
+            node_ids=source_node_ids[:node_count],
+            resources=source_resources,
+            m=m,
+            seed=seed + node_count,
+            replication_count=replication_count,
+        )
+        logger.info(
+            "Metrics sweep %s/%s: N=%s ring built in %.3fs",
+            size_index,
+            total_sizes,
+            node_count,
+            time.perf_counter() - started_at,
+        )
+
+        # Lấy danh sách resource
+        resources = list(ring.resources.values())
+
+        # Lấy danh sách node đang hoạt động
+        node_ids = ring.active_node_ids
+
         for trial_index in range(effective_trial_count):
-            # Tạo ring mới cho trial
-            ring = ChordRing(m=m, seed=seed + node_count + trial_index * 997)
-
-            # Khởi tạo network với số node và resource
-            ring.initialize_network(node_count=node_count, resource_count=resource_count)
-
-            # Lấy danh sách resource
-            resource_ids = list(ring.resources.keys())
-
-            # Lấy danh sách node đang hoạt động
-            node_ids = ring.active_node_ids
-
-            # Lặp qua số lookup cần đo
+            logger.info(
+                "Metrics sweep %s/%s: N=%s trial %s/%s running %s lookup(s)",
+                size_index,
+                total_sizes,
+                node_count,
+                trial_index + 1,
+                effective_trial_count,
+                effective_lookups,
+            )
             for _ in range(effective_lookups):
-                # Chọn resource ngẫu nhiên
-                resource_id = rng.choice(resource_ids)
-
-                # Chọn node xuất phát ngẫu nhiên
                 start_node_id = rng.choice(node_ids)
+                resource = rng.choice(resources)
+                _record_lookup_sample(accumulator, ring, resource, start_node_id)
 
-                # Ghi nhận mẫu lookup
-                _record_lookup_sample(accumulator, ring, resource_id, start_node_id)
+        logger.info(
+            "Metrics sweep %s/%s: N=%s completed %s attempted lookup(s)",
+            size_index,
+            total_sizes,
+            node_count,
+            effective_lookups * effective_trial_count,
+        )
+
+        points.append(
+            _build_metric_point(
+                node_count=node_count,
+                lookups_per_trial=effective_lookups,
+                trial_count=effective_trial_count,
+                accumulator=accumulator,
+            )
+        )
+        continue
+
+        # Chạy nhiều trial trên cùng topology đã khởi tạo
+        for trial_index in range(effective_trial_count):
+            logger.info(
+                "Metrics sweep %s/%s: N=%s trial %s/%s running %s lookup(s) per node",
+                size_index,
+                total_sizes,
+                node_count,
+                trial_index + 1,
+                effective_trial_count,
+                effective_lookups,
+            )
+
+            # Mỗi node độc lập thực hiện đúng effective_lookups lookup trong trial này
+            for start_node_id in node_ids:
+                for _ in range(effective_lookups):
+                    # Chọn resource ngẫu nhiên
+                    resource = rng.choice(resources)
+
+                    # Ghi nhận mẫu lookup từ chính node đó
+                    _record_lookup_sample(accumulator, ring, resource, start_node_id)
+
+        logger.info(
+            "Metrics sweep %s/%s: N=%s completed %s attempted lookup(s)",
+            size_index,
+            total_sizes,
+            node_count,
+            node_count * effective_lookups * effective_trial_count,
+        )
 
         # Tạo điểm metric cho kích thước mạng
         # Dùng trial_count và lookups_per_size gốc (params đầu vào) cho heading
