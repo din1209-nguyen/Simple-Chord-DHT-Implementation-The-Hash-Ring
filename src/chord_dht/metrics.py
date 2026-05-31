@@ -144,6 +144,7 @@ def _build_metric_ring_from_existing_resources(
         ring.run_protocol(rounds=ring._default_convergence_rounds)
 
     ring.run_protocol(rounds=ring._default_convergence_rounds)
+    ring.refresh_all_finger_tables()
 
     for source in resources:
         route = ring._route_key(
@@ -163,6 +164,41 @@ def _build_metric_ring_from_existing_resources(
         ring._place_resource_copies(resource)
 
     return ring
+
+
+def _join_metric_node(ring: ChordRing, node_id: int, *, known_node_id: int) -> None:
+    numeric_id = int(node_id)
+    ring.nodes[numeric_id] = Node(node_id=numeric_id)
+    ring.join(numeric_id, known_node_id=known_node_id)
+    ring.run_protocol(rounds=ring._default_convergence_rounds)
+    ring.refresh_all_finger_tables()
+
+
+def _place_existing_resources_on_metric_ring(
+    ring: ChordRing,
+    resources: list[ResourceRecord],
+) -> None:
+    for node in ring.nodes.values():
+        node.local_resources.clear()
+    ring.resources.clear()
+
+    start_node_id = ring.active_node_ids[0]
+    for source in resources:
+        route = ring._route_key(
+            source.key,
+            start_node_id=start_node_id,
+            operation="MetricPut",
+            requested_id=source.resource_id,
+            collect_trace=False,
+        )
+        resource = ResourceRecord(
+            source.resource_id,
+            source.hashed_resource_id,
+            int(source.key),
+            int(route["owner_id"]),
+        )
+        ring.resources[resource.resource_id] = resource
+        ring._place_resource_copies(resource)
 
 
 def _build_metric_point(
@@ -377,6 +413,85 @@ def run_lookup_metrics(
     points: list[dict[str, Any]] = []
 
     total_sizes = len(node_sizes)
+    ordered_sizes = tuple(sorted({int(size) for size in node_sizes if int(size) >= 1}))
+    max_requested_nodes = max(ordered_sizes) if ordered_sizes else max_node_count
+    if len(source_node_ids) < max_requested_nodes:
+        generator = ChordRing(m=m, seed=seed)
+        used = set(source_node_ids)
+        for candidate in generator._generate_unique_ids("node", max_requested_nodes * 2):
+            if candidate in used:
+                continue
+            source_node_ids.append(candidate)
+            used.add(candidate)
+            if len(source_node_ids) >= max_requested_nodes:
+                break
+
+    ring = ChordRing(m=m, seed=seed, replication_count=replication_count)
+    first_id = int(source_node_ids[0])
+    ring.nodes[first_id] = Node(node_id=first_id, predecessor=first_id, successor=first_id)
+    ring.refresh_all_finger_tables()
+    built_count = 1
+
+    for size_index, node_count in enumerate(ordered_sizes, start=1):
+        logger.info(
+            "Metrics sweep %s/%s: converging incremental ring to N=%s",
+            size_index,
+            total_sizes,
+            node_count,
+        )
+        started_at = time.perf_counter()
+        while built_count < node_count:
+            _join_metric_node(ring, source_node_ids[built_count], known_node_id=first_id)
+            built_count += 1
+
+        _place_existing_resources_on_metric_ring(ring, source_resources)
+        logger.info(
+            "Metrics sweep %s/%s: N=%s ready in %.3fs",
+            size_index,
+            total_sizes,
+            node_count,
+            time.perf_counter() - started_at,
+        )
+
+        if node_count in fixed_points:
+            points.append(fixed_points[node_count])
+            continue
+
+        accumulator = _empty_metric_accumulator()
+        resources = list(ring.resources.values())
+        active_ids = ring.active_node_ids
+        for trial_index in range(effective_trial_count):
+            logger.info(
+                "Metrics sweep %s/%s: N=%s trial %s/%s running %s lookup(s)",
+                size_index,
+                total_sizes,
+                node_count,
+                trial_index + 1,
+                effective_trial_count,
+                effective_lookups,
+            )
+            for _ in range(effective_lookups):
+                _record_lookup_sample(accumulator, ring, rng.choice(resources), rng.choice(active_ids))
+
+        points.append(
+            _build_metric_point(
+                node_count=node_count,
+                lookups_per_trial=effective_lookups,
+                trial_count=effective_trial_count,
+                accumulator=accumulator,
+            )
+        )
+
+    chart_path = None
+    if output_path is not None:
+        chart_path = _save_metric_chart(points, Path(output_path))
+
+    return {
+        "points": points,
+        "node_counts": [int(p["nodes"]) for p in points],
+        "chart_path": str(chart_path) if chart_path else None,
+        "message": "Metrics completed successfully.",
+    }
 
     # Duyệt từng kích thước mạng
     for size_index, node_count in enumerate(node_sizes, start=1):
@@ -529,6 +644,22 @@ def build_growth_node_sizes(max_node_count: int, row_limit: int = 50) -> tuple[i
         return tuple(range(1, max_node_count + 1))
 
     # Tạo danh sách kích thước theo bước đều
+    step = (max_node_count - 1) / (row_limit - 1)
+    even_sizes: list[int] = []
+    used_sizes: set[int] = set()
+    for index in range(row_limit):
+        value = int(round(1 + step * index))
+        value = max(1, min(max_node_count, value))
+        while value in used_sizes and value < max_node_count:
+            value += 1
+        while value in used_sizes and value > 1:
+            value -= 1
+        even_sizes.append(value)
+        used_sizes.add(value)
+    even_sizes[0] = 1
+    even_sizes[-1] = max_node_count
+    return tuple(sorted(even_sizes))
+
     sizes = [
         int(round(1 + (max_node_count - 1) * (i / (row_limit - 1))))
         for i in range(row_limit)

@@ -349,6 +349,22 @@ class ChordRing:
             node_id=successor_id,
         )
 
+    # Refresh đầy đủ finger table của tất cả node active sau khi topology đã hội tụ.
+    def refresh_all_finger_tables(self) -> None:
+        for node_id in self.active_node_ids:
+            self.nodes[node_id].finger_table = [
+                FingerEntry(
+                    index=index,
+                    start=(node_id + 2 ** (index - 1)) % self.identifier_space,
+                    interval_end=(node_id + 2**index) % self.identifier_space,
+                    node_id=self._find_successor_by_links(
+                        (node_id + 2 ** (index - 1)) % self.identifier_space,
+                        start_node_id=node_id,
+                    ),
+                )
+                for index in range(1, self.m + 1)
+            ]
+
 
     # Sinh ra một danh sách các ID duy nhất dựa trên chuỗi tiền tố và seed để đảm bảo tính tái lập
     def _generate_unique_ids(self, prefix: str, count: int) -> list[int]:
@@ -498,6 +514,8 @@ class ChordRing:
             self.nodes[new_node_id].successor = new_node_id
             self.nodes[new_node_id].predecessor = new_node_id
             self.run_protocol(rounds=1)
+
+        self.refresh_all_finger_tables()
 
         for resource in self.resources.values():
             route = self._route_key(
