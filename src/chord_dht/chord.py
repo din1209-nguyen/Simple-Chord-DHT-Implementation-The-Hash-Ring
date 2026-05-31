@@ -5,7 +5,7 @@ import bisect
 import random
 from typing import Any, Iterable
 
-from .identifiers import hash_identifier, in_clockwise_interval
+from .identifiers import hash_identifier, hash_resource, in_clockwise_interval
 from .models import FingerEntry, LookupResult, Node, ResourceRecord
 
 # ChordRing là lớp chính để mô phỏng vòng Chord
@@ -16,7 +16,7 @@ class ChordRing:
         self,
         m: int = 16,
         seed: int = 61,
-        replication_count: int = 3,
+        replication_count: int = 1,
     ) -> None:
         # Kiểm tra số bit định danh
         if not 1 <= m <= 160:
@@ -166,7 +166,8 @@ class ChordRing:
             owner_id = route["owner_id"]
 
             # Tạo bản ghi resource
-            resource = ResourceRecord(resource_id, key, owner_id)
+            digest, key = hash_resource(resource_id, self.m)
+            resource = ResourceRecord(resource_id, digest, key, owner_id)
 
             # Lưu resource vào bảng metadata
             self.resources[resource_id] = resource
@@ -548,11 +549,11 @@ class ChordRing:
         if normalized_id in self.resources:
             raise ValueError(f"Resource {normalized_id} already exists")
 
-        # Băm tên tài nguyên thành key rồi định tuyến put qua Finger Table để tìm owner
-        key = hash_identifier(normalized_id, self.m)
+        # Băm tên tài nguyên thành digest SHA-1 và key rồi định tuyến put qua Finger Table để tìm owner
+        digest, key = hash_resource(normalized_id, self.m)
         route = self._route_key(key, operation="Put", requested_id=normalized_id)
         owner_id = route["owner_id"]
-        resource = ResourceRecord(normalized_id, key, owner_id)
+        resource = ResourceRecord(normalized_id, digest, key, owner_id)
         self.resources[normalized_id] = resource
         self._place_resource_copies(resource)
         
@@ -591,11 +592,11 @@ class ChordRing:
         self.resources.pop(old_id)
         self._remove_resource_copies(old_id)
         
-        # Băm tên mới rồi định tuyến put qua Finger Table để tìm owner mới
-        key = hash_identifier(new_id, self.m)
+        # Băm tên mới thành digest SHA-1 và key rồi định tuyến put qua Finger Table để tìm owner mới
+        digest, key = hash_resource(new_id, self.m)
         route = self._route_key(key, operation="Put", requested_id=new_id)
         owner_id = route["owner_id"]
-        resource = ResourceRecord(new_id, key, owner_id)
+        resource = ResourceRecord(new_id, digest, key, owner_id)
         self.resources[new_id] = resource
         self._place_resource_copies(resource)
         
@@ -743,14 +744,19 @@ class ChordRing:
             # Điểm kết thúc của khoảng chịu trách nhiệm cho finger này
             interval_end = (node_id + 2**index) % self.identifier_space
 
-            # Thêm thông tin dòng định tuyến vào mảng
+            # Tìm successor của start: dùng link-walk trước,
+            # fallback sang oracle khi ring chưa ổn định (trong quá trình join/stabilize).
+            try:
+                finger_node = self._find_successor_by_links(start, start_node_id=node_id)
+            except RuntimeError:
+                finger_node = self._find_active_successor(start)
+
             table.append(
                 FingerEntry(
                     index=index,
                     start=start,
                     interval_end=interval_end,
-                    # Node đích của finger này chính là successor của điểm start tìm bằng successor links
-                    node_id=self._find_successor_by_links(start, start_node_id=node_id),
+                    node_id=finger_node,
                 )
             )
 
@@ -856,7 +862,7 @@ class ChordRing:
         logs: list[str] = []
 
         # Xác định node bắt đầu định tuyến
-        current = self._resolve_start_node(start_node_id, logs)
+        current = self._resolve_start_node(start_node_id)
 
         # Lưu node bắt đầu để trả về
         start_node = current
@@ -875,8 +881,8 @@ class ChordRing:
 
         # Ghi log bắt đầu thao tác
         logs.append(
-            f"{operation} starts at {self._node_label(current)} for {label} "
-            f"with key {normalized_key} over {self.communication_layer}."
+            f"[0] {operation} begins: starting from node {current}, searching for key {normalized_key} "
+            f"(resource '{label}') via {self.communication_layer}."
         )
 
         # Xác định thao tác thuộc nhóm hội tụ
@@ -906,7 +912,11 @@ class ChordRing:
             # Dừng định tuyến khi node hiện tại sở hữu key
             if self._node_owns_key(current, normalized_key):
                 owner_id = current
-                logs.append(f"Node {current} owns key {normalized_key}; routing stops locally.")
+                logs.append(
+                    f"[{hops}] Node {current} owns key {normalized_key} directly "
+                    f"(its interval [{current}, {self._successor_id(current)})); "
+                    f"routing stops here (no hop taken)."
+                )
                 break
 
             # Dừng khi vượt giới hạn hop
@@ -914,48 +924,53 @@ class ChordRing:
                 if is_fix_fingers:
                     owner_id = self._find_successor_by_links(normalized_key, start_node_id=current)
                     logs.append(
-                        f"Fallback link-walk resolved owner {self._node_label(owner_id)} for key {normalized_key}"
+                        f"[{hops + 1}] Safety limit reached ({max_steps} hops). "
+                        f"Link-walk fallback locates owner node {owner_id} for key {normalized_key}."
                     )
                     break
                 raise RuntimeError(f"{operation} exceeded the safety hop limit")
 
-            # Chọn bước nhảy kế tiếp
-            next_node, reason, reaches_owner = self._select_next_hop(
+            # Chọn bước nhảy kế tiếp (log được ghi trong hàm)
+            next_node, reaches_owner = self._select_next_hop(
                 current,
                 normalized_key,
                 logs,
+                hop=hops,
             )
 
-            # Sửa view node khi phát hiện vòng lặp
-            if next_node in visited and not reaches_owner:
+            # Phát hiện vòng lặp: node đã thăm lặp lại
+            if next_node in visited:
                 repair_report = self._repair_node_after_failure(current)
-                next_node, reason, reaches_owner = self._select_next_hop(
+                logs.append(
+                    f"[{hops}] Loop detected: node {next_node} already visited on this route. "
+                    f"Node {current} repairs its view; {repair_report['message']}"
+                )
+                next_node, reaches_owner = self._select_next_hop(
                     current,
                     normalized_key,
                     logs,
-                )
-                logs.append(
-                    "Repair triggered because a repeated node was detected; "
-                    f"{repair_report['message']}"
+                    hop=hops,
                 )
 
             # Cưỡng bức tiến tới successor khi không tiến triển
             if next_node == current:
                 successor = self.nodes[current].successor
                 if successor is None:
-                    raise RuntimeError(f"{operation} cannot make progress from the current node")
+                    raise RuntimeError(f"{operation} cannot make progress from node {current}")
                 next_node = successor
-                reason = (
-                    f"{self._node_label(current)} forwards to successor "
-                    f"{self._node_label(successor)} to make progress"
+                logs.append(
+                    f"[{hops}] Node {current} has no finger entry closer to key {normalized_key}; "
+                    f"fallback to successor node {successor}."
                 )
                 reaches_owner = False
 
             # Tăng số hop đã đi
             hops += 1
-
-            # Ghi log bước nhảy
-            logs.append(f"Hop {hops}: {reason}")
+            dist_to_target = (self.identifier_space + normalized_key - next_node) % self.identifier_space
+            logs.append(
+                f"[{hops}] Routing: forwarded from node {current} to node {next_node} "
+                f"(distance from {next_node} to target: {dist_to_target})."
+            )
 
             # Cập nhật node hiện tại
             current = next_node
@@ -972,7 +987,8 @@ class ChordRing:
 
         # Ghi log kết thúc định tuyến
         logs.append(
-            f"{operation} routed to owner {self._node_label(owner_id)} in {hops} hop(s)."
+            f"[{hops}] {operation} COMPLETE: owner node = {owner_id}, "
+            f"total hops = {hops}, nodes visited = {len(path)}."
         )
 
         # Trả về kết quả định tuyến
@@ -987,9 +1003,6 @@ class ChordRing:
 
     # Tìm chủ sở hữu của một resource theo cơ chế định tuyến nhiều hop
     def lookup(self, resource_id: str | int, start_node_id: int | None = None) -> LookupResult:
-        # Quy đổi đầu vào thành id yêu cầu
-        # Quy đổi đầu vào thành key trên vòng
-        # Quy đổi đầu vào thành cờ lookup theo key trực tiếp
         requested_id, key, direct_key = self._resolve_lookup_key(resource_id)
 
         # Định tuyến lookup để tìm owner
@@ -1000,64 +1013,42 @@ class ChordRing:
             requested_id=requested_id,
         )
 
-        # Trích xuất owner_id từ route
-        owner_id = route["owner_id"]
-
-        # Trích xuất logs từ route
+        # Logs từ _route_key đã bao gồm log khởi đầu
         logs = route["logs"]
 
-        # Trích xuất path từ route
+        owner_id = route["owner_id"]
         path = route["path"]
-
-        # Trích xuất hops từ route
         hops = route["hops"]
 
-        # Trích xuất start_node_id từ route
-        start_node = route["start_node_id"]
-
-        # Đọc node owner
+        # Kiểm tra resource có tồn tại tại owner không
         owner_node = self.nodes[owner_id]
-
-        # Xác định resource được tìm thấy
         found = direct_key or requested_id in owner_node.local_resources
 
-        # Trích xuất danh sách replica khi resource tồn tại
-        replica_node_ids = (
-            self.resources[requested_id].replica_node_ids
-            if requested_id in self.resources
-            else []
-        )
-
-        # Ghi log kết thúc lookup
-        logs.append(f"Lookup finished at owner node {owner_id} in {hops} hop(s).")
-
-        # Ghi log khi lookup theo key trực tiếp
+        # Log kết quả kiểm tra resource
         if direct_key:
-            logs.append(f"Node {owner_id} is responsible for numeric key {key}.")
+            logs.append(f"[{hops}] Direct key lookup: key {key} maps to node {owner_id}.")
         elif found:
-            logs.append(f"Owner node {owner_id} confirms it stores resource {requested_id}.")
-            if replica_node_ids:
-                logs.append(
-                    f"Replica copies are available on successor node(s): {replica_node_ids}."
-                )
+            logs.append(f"[{hops}] Resource '{requested_id}' FOUND at owner node {owner_id}.")
         else:
-            logs.append(
-                f"Owner node {owner_id} does not store resource {requested_id}; "
-                "the data is unavailable on the current ring."
-            )
+            logs.append(f"[{hops}] Resource '{requested_id}' NOT FOUND at owner node {owner_id}.")
 
-        # Trả về kết quả lookup
+        # Log replicas nếu có
+        if requested_id in self.resources:
+            replica_node_ids = self.resources[requested_id].replica_node_ids
+            if replica_node_ids:
+                logs.append(f"[{hops}] Replica copies stored on node(s): {replica_node_ids}.")
+
         return LookupResult(
             requested_id=requested_id,
             key=key,
             owner_id=owner_id,
-            start_node_id=start_node,
+            start_node_id=route["start_node_id"],
             path=path,
             hops=hops,
             logs=logs,
             found=found,
             direct_key=direct_key,
-            replica_node_ids=replica_node_ids,
+            replica_node_ids=self.resources[requested_id].replica_node_ids if requested_id in self.resources else [],
         )
 
     # Chuẩn hóa đầu vào lookup thành bộ ba requested_id, key, direct_key
@@ -1072,8 +1063,8 @@ class ChordRing:
         # Băm resource_id để lấy key khi đầu vào là chuỗi
         return requested_id, hash_identifier(requested_id, self.m), False
 
-    # Chọn node bắt đầu cho quá trình định tuyến
-    def _resolve_start_node(self, start_node_id: int | None, logs: list[str]) -> int:
+    # Chọn node bắt đầu cho quá trình định tuyến.
+    def _resolve_start_node(self, start_node_id: int | None) -> int:
         # Lấy danh sách node active
         active_ids = self.active_node_ids
 
@@ -1095,9 +1086,6 @@ class ChordRing:
         # Báo lỗi khi node không tồn tại
         raise ValueError(f"Start node {normalized_start} does not exist")
 
-    def _node_label(self, node_id: int) -> str:
-        return f"node {node_id}"
-
     # Kiểm tra node hiện tại có sở hữu key không
     def _node_owns_key(self, node_id: int, key: int) -> bool:
         # Đọc trạng thái node
@@ -1110,85 +1098,85 @@ class ChordRing:
         # Kiểm tra key thuộc khoảng (predecessor, node]
         return in_clockwise_interval(key, node.predecessor, node_id, include_end=True)
 
-    # Chọn node kế tiếp cho một bước định tuyến
+    # Chọn node kế tiếp cho một bước định tuyến.
+    # Trả về tuple (next_node, reaches_owner). Log được ghi trực tiếp vào danh sách logs.
     def _select_next_hop(
         self,
         current_id: int,
         key: int,
-        logs: list[str] | None = None,
-    ) -> tuple[int, str, bool]:
-        # Đọc node hiện tại
+        logs: list[str],
+        hop: int = 0,
+    ) -> tuple[int, bool]:
         node = self.nodes[current_id]
-
-        # Đọc successor hiện tại
         successor = node.successor
 
         # Sửa view khi successor thiếu hoặc đã chết
         if successor is None or successor not in self.nodes or not self.nodes[successor].active:
             failed_id = successor if successor in self.nodes else None
             repair_report = self._repair_node_after_failure(current_id, failed_id)
-            if logs is not None:
-                logs.append(
-                    f"Node {current_id} detected failed successor {successor}; "
-                    f"{repair_report['message']}"
-                )
+            logs.append(
+                f"[{hop}] Node {current_id} detected failed successor {successor}; "
+                f"{repair_report['message']}"
+            )
             successor = self.nodes[current_id].successor
 
-        # Báo lỗi khi node vẫn không có successor
         if successor is None:
             raise RuntimeError("Current node has no successor")
 
-        # Chuyển thẳng tới successor khi key nằm trong (current, successor]
-        if in_clockwise_interval(key, current_id, successor, include_end=True):
-            return (
-                successor,
-                f"Key {key} is in ({current_id}, {successor}], forwarding to successor {self._node_label(successor)}.",
-                True,
+        # Khi successor trỏ về chính mình (self-loop): dùng link-walk để tìm successor thực sự.
+        # Phải advance bằng link-walk result (candidate) chứ không phải successor pointer,
+        # vì successor pointer có thể trỏ về chính nó gây infinite loop.
+        if successor == current_id:
+            real_successor = self._find_successor_by_links(
+                (current_id + 1) % self.identifier_space,
+                start_node_id=current_id,
             )
-
-        # Chọn finger gần key nhất khi successor chưa phải hướng tối ưu
-        candidate, failed_finger = self._closest_preceding_finger(current_id, key)
-
-        # Sửa view khi phát hiện finger trỏ tới node chết
-        if failed_finger is not None:
-            repair_report = self._repair_node_after_failure(current_id, failed_finger)
-            if logs is not None:
-                logs.append(
-                    f"Node {current_id} detected failed finger {failed_finger}; "
-                    f"{repair_report['message']}"
-                )
-            successor = self.nodes[current_id].successor
-            candidate, _ = self._closest_preceding_finger(current_id, key)
-
-        # Tiến tới successor khi không có finger tốt hơn
-        if candidate == successor:
-            return (
-                successor,
-                f"No closer finger is available at {self._node_label(current_id)}; forwarding to successor {self._node_label(successor)}.",
-                False,
+            logs.append(
+                f"[{hop}] Node {current_id} successor is self-loop; "
+                f"link-walk finds real successor [{real_successor}] for key {key}."
             )
+            return real_successor, False
 
-        # Trả về node finger được chọn
-        return (
-            candidate,
-            f"{self._node_label(current_id)} selects finger {self._node_label(candidate)}, the closest known predecessor of key {key}.",
-            False,
+        # Tìm finger entry gần key nhất
+        finger_entry, first_failed = self._closest_preceding_finger(current_id, key)
+
+        # Sửa view khi finger trỏ tới node chết
+        if first_failed is not None:
+            repair_report = self._repair_node_after_failure(current_id, first_failed)
+            logs.append(
+                f"[{hop}] Node {current_id} detected failed finger [{first_failed}]; "
+                f"{repair_report['message']}"
+            )
+            finger_entry, _ = self._closest_preceding_finger(current_id, key)
+
+        # Không tìm thấy finger entry phù hợp -> nhảy tới successor
+        if finger_entry is None:
+            logs.append(
+                f"[{hop}] Node {current_id} selects successor [{successor}] "
+                f"(no finger covers key {key})."
+            )
+            return successor, False
+
+        # Tìm thấy finger entry phù hợp -> nhảy tới node_id của finger
+        logs.append(
+            f"[{hop}] Node {current_id} selects finger #{finger_entry.index} "
+            f"[start={finger_entry.start}] -> node {finger_entry.node_id}."
         )
+        return finger_entry.node_id, False
 
-    # Chọn node finger nằm trước key và gần nhất theo chiều kim đồng hồ
-    def _closest_preceding_finger(self, current_id: int, key: int) -> tuple[int, int | None]:
-        # Đọc node hiện tại
+    # Chọn finger entry gần key nhất trong finger table của node hiện tại.
+    # Trả về tuple (finger_entry, first_failed_finger) hoặc (None, first_failed_finger).
+    # Thuật toán: duyệt từ mũi lớn xuống, chọn entry có start lớn nhất mà start <= key < interval_end.
+    def _closest_preceding_finger(
+        self, current_id: int, key: int
+    ) -> tuple[FingerEntry | None, int | None]:
         node = self.nodes[current_id]
-
-        # Khởi tạo finger chết đầu tiên để báo cáo
         first_failed_finger: int | None = None
 
-        # Duyệt finger table theo thứ tự giảm dần index
         for entry in reversed(node.finger_table):
-            # Trích xuất candidate từ finger entry
             candidate = entry.node_id
 
-            # Bỏ qua finger trỏ về chính nó
+            # Bỏ qua chính mình
             if candidate == current_id:
                 continue
 
@@ -1198,22 +1186,17 @@ class ChordRing:
                     first_failed_finger = candidate
                 continue
 
-            # Chọn candidate khi candidate nằm giữa (current, key)
+            # Chọn finger khi key nằm trong khoảng [start, interval_end)
             if in_clockwise_interval(
-                candidate,
-                current_id,
                 key,
-                include_start=False,
+                entry.start,
+                entry.interval_end,
+                include_start=True,
                 include_end=False,
             ):
-                return candidate, first_failed_finger
+                return entry, first_failed_finger
 
-        # Báo lỗi khi không có successor để fallback
-        if node.successor is None:
-            raise RuntimeError("Current node has no successor")
-
-        # Fallback về successor để đảm bảo tiến triển
-        return node.successor, first_failed_finger
+        return None, first_failed_finger
 
     # Sửa cục bộ view của một node khi nó phát hiện thông tin định tuyến đã cũ
     # Không rebuild toàn mạng; chỉ cập nhật predecessor/successor/finger table của node phát hiện lỗi.
@@ -1245,53 +1228,35 @@ class ChordRing:
         }
     
     # Tìm successor kế tiếp đang hoạt động trên vòng định danh.
-    # Phiên bản mức 1: chỉ dùng successor pointer (không dùng active_node_ids/bisect).
+    # Dùng active_node_ids (danh sách sorted) làm oracle để tìm successor/predecessor đúng nhất.
+    # Đây là hàm repair/safety, không phải overlay routing.
     def _find_active_successor(self, node_id: int) -> int:
-        if node_id not in self.nodes or not self.nodes[node_id].active:
-            raise RuntimeError("Start node is inactive or missing")
-
         active_ids = self.active_node_ids
         if not active_ids:
             raise RuntimeError("No active nodes are available")
+        if len(active_ids) == 1:
+            return node_id
 
-        current = node_id
-        for _ in range(len(active_ids) + 1):
-            successor = self.nodes[current].successor
-            if successor is not None and successor in self.nodes and self.nodes[successor].active:
-                if successor != node_id:
-                    return successor
-                # successor==node_id means ring of 1 node, fall through
-            # advance using link-walk fallback
-            successor = self._find_successor_by_links(node_id + 1, start_node_id=current)
-            if successor != node_id:
-                return successor
-            current = successor
-
-        raise RuntimeError("Unable to find an active successor")
+        # Tìm node nhỏ nhất lớn hơn node_id, wrap về node đầu tiên nếu không có
+        for nid in active_ids:
+            if nid > node_id:
+                return nid
+        return active_ids[0]
 
     # Tìm predecessor kế tiếp đang hoạt động trên vòng định danh.
-    # Phiên bản mức 1: đi vòng ngược bằng predecessor pointer (không dùng active_node_ids/bisect).
     def _find_active_predecessor(self, node_id: int) -> int:
-        if node_id not in self.nodes or not self.nodes[node_id].active:
-            raise RuntimeError("Start node is inactive or missing")
-
         active_ids = self.active_node_ids
         if not active_ids:
             raise RuntimeError("No active nodes are available")
+        if len(active_ids) == 1:
+            return node_id
 
-        current = node_id
-        for _ in range(len(active_ids) + 1):
-            predecessor = self.nodes[current].predecessor
-            if predecessor is not None and predecessor in self.nodes and self.nodes[predecessor].active:
-                if predecessor != node_id:
-                    return predecessor
-            # If predecessor pointer missing, approximate by link-walking to find owner of node_id-1
-            predecessor = self._find_successor_by_links(node_id - 1, start_node_id=current)
-            if predecessor != node_id:
-                return predecessor
-            current = predecessor
-
-        raise RuntimeError("Unable to find an active predecessor")
+        # Tìm node lớn nhất nhỏ hơn node_id, wrap về node cuối cùng nếu không có
+        predecessor = None
+        for nid in active_ids:
+            if nid < node_id:
+                predecessor = nid
+        return predecessor if predecessor is not None else active_ids[-1]
 
     # Nhận lại các resource đang trỏ tới owner đã chết nếu còn replica sống
     def _adopt_resources_from_failed_nodes(self) -> int:

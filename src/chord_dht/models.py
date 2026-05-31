@@ -78,7 +78,10 @@ class ResourceRecord:
     # Lưu id tài nguyên
     resource_id: str
 
-    # Lưu key băm của tài nguyên
+    # Lưu chuỗi SHA-1 digest gốc 40 ký tự hex (resource_id được băm SHA-1)
+    hashed_resource_id: str
+
+    # Lưu key băm của tài nguyên (digest mod 2^m, dùng cho Chord routing)
     key: int
 
     # Lưu owner_id chịu trách nhiệm chính
@@ -92,6 +95,7 @@ class ResourceRecord:
         # Trả về metadata dạng dict
         return {
             "resource_id": self.resource_id,
+            "hashed_resource_id": self.hashed_resource_id,
             "key": self.key,
             "owner_id": self.owner_id,
             "replica_node_ids": self.replica_node_ids,

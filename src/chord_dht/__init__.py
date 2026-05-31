@@ -2,7 +2,7 @@
 from .chord import ChordRing, build_default_ring, validate_lookup_batch
 
 # Import hàm định danh để người dùng dùng trực tiếp
-from .identifiers import hash_identifier, in_clockwise_interval
+from .identifiers import hash_identifier, hash_resource, in_clockwise_interval
 
 # Import hàm metrics để UI và API gọi
 from .metrics import build_growth_node_sizes, run_current_ring_metrics, run_lookup_metrics
@@ -23,6 +23,7 @@ __all__ = [
     "build_default_ring",
     "build_growth_node_sizes",
     "hash_identifier",
+    "hash_resource",
     "in_clockwise_interval",
     "run_current_ring_metrics",
     "run_lookup_metrics",

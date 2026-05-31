@@ -42,7 +42,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(app, "STATE_PATH", tmp_path / "state.json")
 
     # Reset ring để mỗi test chạy độc lập
-    app.ring = app.ChordRing(m=16, seed=61, replication_count=3)
+    app.ring = app.ChordRing(m=16, seed=61, replication_count=1)
 
     # Reset cờ autoload để endpoint tự load lại từ file
     app.ring_startup_completed = False
@@ -102,7 +102,7 @@ def test_state_endpoint_autoloads_json(client, tmp_path):
     )
 
     # Reset ring trong bộ nhớ để bắt buộc autoload từ file
-    app.ring = app.ChordRing(m=16, seed=61, replication_count=3)
+    app.ring = app.ChordRing(m=16, seed=61, replication_count=1)
 
     # Reset cờ autoload để lần gọi sau sẽ load state.json
     app.ring_startup_completed = False

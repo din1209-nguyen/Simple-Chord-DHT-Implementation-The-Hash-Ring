@@ -320,13 +320,15 @@ function applyResourceTableFilter() {
       });
   const renderResourceRow = (item) => {
     const replicas = Array.isArray(item.replica_node_ids) ? item.replica_node_ids.join(", ") : "";
-    return `
+    const hash = item.hashed_resource_id || "";
+        return `
       <tr class="resource-row ${item.resource_id === selectedResourceId ? "is-selected" : ""}" data-resource-id="${escapeHtml(item.resource_id)}">
-        <td>${escapeHtml(item.resource_id)}</td>
-        <td>${escapeHtml(item.key)}</td>
-        <td><code>${escapeHtml(item.owner_id)}</code></td>
-        <td class="resource-replicas">${escapeHtml(replicas || "-")}</td>
-        <td>
+        <td class="col-resource-id">${escapeHtml(item.resource_id)}</td>
+        <td class="col-hashed hashed-resource"><code>${escapeHtml(hash)}</code></td>
+        <td class="col-key"><code>${escapeHtml(item.key)}</code></td>
+        <td class="col-owner"><code>${escapeHtml(item.owner_id)}</code></td>
+        <td class="col-replicas resource-replicas">${escapeHtml(replicas || "-")}</td>
+        <td class="col-action">
           <button type="button" class="delete-resource-btn danger" data-resource-id="${escapeHtml(item.resource_id)}" title="Delete resource">Delete</button>
         </td>
       </tr>
@@ -334,7 +336,7 @@ function applyResourceTableFilter() {
   };
   els.resourcesOutput.innerHTML = searchedRows.length
     ? searchedRows.map(renderResourceRow).join("")
-    : `<tr><td colspan="5" class="empty-cell">No resources match the current filter.</td></tr>`;
+    : `<tr><td colspan="6" class="empty-cell">No resources match the current filter.</td></tr>`;
   els.resourcesOutput.querySelectorAll(".resource-row").forEach((row) => {
     row.addEventListener("click", (e) => {
       if (e.target.closest(".delete-resource-btn")) return;
@@ -584,48 +586,124 @@ function renderMetricTrace(point) {
 
   const trace = point?.max_lookup_trace || point;
 
+  const n = Number(point.nodes ?? trace.nodes ?? 0);
+  const avgHops = finiteMetricNumber(point.average_hops ?? trace.hops ?? 0);
+  const log2N = n > 0 ? Math.log2(n).toFixed(3) : "0.000";
+  const latency = finiteMetricNumber(point.average_latency_ms ?? 0);
+  const totalLookups = finiteMetricNumber(point.total_lookups ?? point.attempted_lookups ?? 0);
+  const success = finiteMetricNumber(point.successful_lookups ?? 0);
+  const failed = finiteMetricNumber(point.failed_lookups ?? 0);
+  const msgOverhead = finiteMetricNumber(point.message_overhead ?? avgHops * totalLookups);
+  const msgsPerLookup = finiteMetricNumber(point.messages_per_lookup ?? 0);
+  const traceHops = finiteMetricNumber(trace.hops ?? 0);
   const path = Array.isArray(trace.path) ? trace.path : [];
-  const routeHTML = path.map((nodeId, i) => {
-    const n = formatNumber(nodeId);
-    const arrow = i < path.length - 1
-      ? `<span class="route-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>`
-      : "";
-    return `<span class="route-node">${n}${arrow}</span>`;
+  const key = trace.key ?? "--";
+  const ownerId = trace.owner_id ?? "--";
+
+  const routeHTML = path.length
+    ? path.map((nodeId, i) => {
+        const num = formatNumber(nodeId);
+        const arrow = i < path.length - 1
+          ? `<span class="route-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>`
+          : "";
+        const cls = i === 0 ? "route-pill--start" : i === path.length - 1 ? "route-pill--end" : "route-pill--mid";
+        const badge = i === 0
+          ? '<span class="route-pill__badge route-pill__badge--start">Start</span>'
+          : i === path.length - 1
+          ? '<span class="route-pill__badge route-pill__badge--end">Owner</span>'
+          : `<span class="route-pill__badge">Hop ${i + 1}</span>`;
+        return `<span class="route-pill ${cls}"><span class="route-pill__node">${num}</span>${badge}${arrow}</span>`;
+      }).join("")
+    : "";
+
+  const logs = Array.isArray(trace.logs) && trace.logs.length ? trace.logs : [];
+  const logRowsHTML = logs.map((l, i) => {
+    const step = i + 1;
+    const text = l.replace(/^\[?\d+\]?[\s:]+/, "").trim();
+    const isMiss = /not found|does not store/i.test(text);
+    const rowClass = isMiss ? "lookup-log-row lookup-log-row--miss" : "lookup-log-row";
+    return `<tr class="${rowClass}">
+      <td class="lookup-log-cell lookup-log-cell--step"><span class="step-badge">${step}</span></td>
+      <td class="lookup-log-cell lookup-log-cell--text">${escapeHtml(text)}</td>
+      <td class="lookup-log-cell lookup-log-cell--finger"></td>
+    </tr>`;
   }).join("");
 
-  const logsHTML = Array.isArray(trace.logs) && trace.logs.length
-    ? trace.logs.map((l, i) => `<li class="trace-log-item"><span class="trace-log-num">${i + 1}</span>${escapeHtml(l)}</li>`).join("")
-    : "<li class=\"trace-empty\">No hop logs.</li>";
-
   return `
-    <div class="trace-cards">
-      <div class="trace-card"><span class="trace-label">N</span><strong>${formatNumber(point.nodes ?? trace.nodes)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Avg Hops</span><strong>${formatNumber(point.average_hops ?? trace.hops)}</strong></div>
-      <div class="trace-card"><span class="trace-label">log2(N)</span><strong>${formatNumber(point.log2_nodes ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Latency (ms)</span><strong>${formatNumber(point.average_latency_ms ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Total Lookups</span><strong>${formatNumber(point.total_lookups ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Success</span><strong>${formatNumber(point.successful_lookups ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Failed</span><strong>${formatNumber(point.failed_lookups ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Msg Overhead</span><strong>${formatNumber(point.message_overhead ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Msgs/Lookup</span><strong>${formatNumber(point.messages_per_lookup ?? "")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Trace Hops</span><strong>${escapeHtml(trace.hops ?? "--")}</strong></div>
-      <div class="trace-card"><span class="trace-label">Route nodes</span><strong>${path.length}</strong></div>
-      <div class="trace-card"><span class="trace-label">Requested Key</span><strong>${formatNumber(trace.key)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Owner</span><strong>${formatNumber(trace.owner_id)}</strong></div>
-    </div>
-    <div class="trace-section">
-      <h4 class="trace-section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
-        Lookup Route (${path.length} hop${path.length !== 1 ? "s" : ""})
-      </h4>
-      <div class="trace-route">${routeHTML || "<span class=\"trace-empty\">No route.</span>"}</div>
-    </div>
-    <div class="trace-section">
-      <h4 class="trace-section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Hop-by-Hop Logs
-      </h4>
-      <ul class="trace-log">${logsHTML}</ul>
+    <div class="lookup-result">
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Metric Point Details
+        </h4>
+        <div class="lookup-summary-table-wrap">
+          <table class="lookup-summary-table">
+            <thead>
+              <tr>
+                <th>N</th>
+                <th>Avg Hops</th>
+                <th>log2(N)</th>
+                <th>Latency (ms)</th>
+                <th>Total Lookups</th>
+                <th>Success</th>
+                <th>Failed</th>
+                <th>Msg Overhead</th>
+                <th>Msgs/Lookup</th>
+                <th>Trace Hops</th>
+                <th>Route Nodes</th>
+                <th>Key</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="lookup-result-row">
+                <td><code class="val-primary">${formatNumber(n)}</code></td>
+                <td><code>${avgHops}</code></td>
+                <td><code>${log2N}</code></td>
+                <td><code>${latency}</code></td>
+                <td><code>${formatNumber(totalLookups)}</code></td>
+                <td><code>${formatNumber(success)}</code></td>
+                <td><code>${formatNumber(failed)}</code></td>
+                <td><code>${formatNumber(msgOverhead)}</code></td>
+                <td><code>${msgsPerLookup}</code></td>
+                <td><code>${traceHops}</code></td>
+                <td><code>${path.length}</code></td>
+                <td><code>${formatNumber(key)}</code></td>
+                <td><code>${formatNumber(ownerId)}</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
+          Lookup Route <span class="lookup-section__count">(${path.length} hop${path.length !== 1 ? "s" : ""})</span>
+        </h4>
+        <div class="lookup-route-track">${routeHTML || "<span class=\"muted\">No route.</span>"}</div>
+      </div>
+
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Hop-by-Hop Logs <span class="lookup-section__count">(${logs.length} step${logs.length !== 1 ? "s" : ""})</span>
+        </h4>
+        <div class="lookup-log-table-wrap">
+          <table class="lookup-log-table">
+            <thead>
+              <tr>
+                <th class="lookup-log-th--step">#</th>
+                <th class="lookup-log-th--text">Action / Reason</th>
+                <th class="lookup-log-th--finger">Finger</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logRowsHTML || `<tr><td colspan="3" class="lookup-log-empty">No hop logs.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1140,52 +1218,114 @@ async function initializeNetwork() {
 
 function renderLookupResult(result) {
   const path = Array.isArray(result.path) ? result.path : [];
+  const foundClass = result.found ? "" : " lookup-result-row--miss";
+  const latency = result.latency_ms != null ? result.latency_ms : 0;
+
+  const replicas = Array.isArray(result.replica_node_ids) && result.replica_node_ids.length
+    ? result.replica_node_ids.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")
+    : '<span class="muted">None</span>';
+
+  // ── Lookup Route pills ─────────────────────────────────────────────────────
   const routeHTML = path.map((nodeId, i) => {
     const n = formatNumber(nodeId);
-    const arrow = i < path.length - 1
-      ? `<span class="route-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>`
-      : "";
-    return `<span class="route-node">${n}${arrow}</span>`;
+    const arrow =
+      i < path.length - 1
+        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`
+        : "";
+    const badge =
+      i === 0
+        ? '<span class="route-pill__badge route-pill__badge--start">Start</span>'
+        : i === path.length - 1
+        ? '<span class="route-pill__badge route-pill__badge--end">Owner</span>'
+        : `<span class="route-pill__badge">Hop ${i + 1}</span>`;
+    return `<span class="route-pill route-pill--${i === 0 ? "start" : i === path.length - 1 ? "end" : "mid"}"><span class="route-pill__node">${n}</span>${badge}${arrow}</span>`;
   }).join("");
 
-  const foundClass = result.found ? "" : " lookup-found--no";
-  const logsHTML = Array.isArray(result.logs) && result.logs.length
-    ? result.logs.map((l, i) => {
-        const isLast = i === result.logs.length - 1;
-        const cls = isLast && !result.found
-          ? "trace-log-item trace-log-item--miss"
-          : "trace-log-item";
-        return `<li class="${cls}"><span class="trace-log-num">${i + 1}</span>${escapeHtml(l)}</li>`;
-      }).join("")
-    : "<li class=\"trace-empty\">No hop logs.</li>";
+  // ── Hop-by-Hop Logs ───────────────────────────────────────────────────────
+  const logs = Array.isArray(result.logs) && result.logs.length ? result.logs : [];
 
-  const replicaText =
-    Array.isArray(result.replica_node_ids) && result.replica_node_ids.length
-      ? result.replica_node_ids.map((nodeId) => escapeHtml(nodeId)).join(", ")
-      : "None";
+  // Each log line: strip the "[N] " or "Hop N: " prefix if present, then render in table
+  const logRowsHTML = logs.map((l, i) => {
+    const step = i + 1;
+    const text = l.replace(/^\[?\d+\]?[\s:]+/, "").trim();
+    const isMiss = /not found|does not store/i.test(text);
+    const rowClass = isMiss ? "lookup-log-row lookup-log-row--miss" : "lookup-log-row";
+
+    // Try to extract finger index from log text
+    const fingerMatch = text.match(/finger\s*#?(\d+)/i);
+    const fingerIdx = fingerMatch ? fingerMatch[1] : null;
+    const fingerLabel = fingerIdx != null ? `<code class="finger-tag">finger #${fingerIdx}</code>` : "";
+
+    return `<tr class="${rowClass}">
+      <td class="lookup-log-cell lookup-log-cell--step"><span class="step-badge">${step}</span></td>
+      <td class="lookup-log-cell lookup-log-cell--text">${escapeHtml(text)}</td>
+      <td class="lookup-log-cell lookup-log-cell--finger">${fingerLabel}</td>
+    </tr>`;
+  }).join("");
 
   return `
-    <div class="trace-cards">
-      <div class="trace-card"><span class="trace-label">Owner</span><strong>${formatNumber(result.owner_id)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Requested Key</span><strong>${formatNumber(result.key)}</strong></div>
-      <div class="trace-card${foundClass}"><span class="trace-label">Found</span><strong>${result.found ? "Yes" : "No"}</strong></div>
-      <div class="trace-card"><span class="trace-label">Replica Nodes</span><strong>${escapeHtml(replicaText)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Hops</span><strong>${escapeHtml(result.hops)}</strong></div>
-      <div class="trace-card"><span class="trace-label">Route nodes</span><strong>${path.length}</strong></div>
-    </div>
-    <div class="trace-section">
-      <h4 class="trace-section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
-        Lookup Route (${path.length} hop${path.length !== 1 ? "s" : ""})
-      </h4>
-      <div class="trace-route">${routeHTML || "<span class=\"trace-empty\">No route.</span>"}</div>
-    </div>
-    <div class="trace-section">
-      <h4 class="trace-section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Hop-by-Hop Logs
-      </h4>
-      <ul class="trace-log">${logsHTML}</ul>
+    <div class="lookup-result">
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Lookup Summary
+        </h4>
+        <div class="lookup-summary-table-wrap">
+          <table class="lookup-summary-table">
+            <thead>
+              <tr>
+                <th>Owner</th>
+                <th>Requested Key</th>
+                <th>Found</th>
+                <th>Replicas</th>
+                <th>Hops</th>
+                <th>Route</th>
+                <th>Latency (ms)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="lookup-result-row${foundClass}">
+                <td><code class="val-primary">${formatNumber(result.owner_id)}</code></td>
+                <td><code>${formatNumber(result.key)}</code></td>
+                <td><span class="val-found ${result.found ? "val-found--yes" : "val-found--no"}">${result.found ? "Yes" : "No"}</span></td>
+                <td class="val-replicas">${replicas}</td>
+                <td><code>${escapeHtml(result.hops)}</code></td>
+                <td><code>${path.length} nodes</code></td>
+                <td><code>${typeof latency === "number" ? latency.toFixed(3) : latency}</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><line x1="7" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="17" y2="12"/></svg>
+          Lookup Route <span class="lookup-section__count">(${path.length} hop${path.length !== 1 ? "s" : ""})</span>
+        </h4>
+        <div class="lookup-route-track">${routeHTML || "<span class=\"muted\">No route.</span>"}</div>
+      </div>
+
+      <div class="lookup-section">
+        <h4 class="lookup-section__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Hop-by-Hop Logs <span class="lookup-section__count">(${logs.length} step${logs.length !== 1 ? "s" : ""})</span>
+        </h4>
+        <div class="lookup-log-table-wrap">
+          <table class="lookup-log-table">
+            <thead>
+              <tr>
+                <th class="lookup-log-th--step">#</th>
+                <th class="lookup-log-th--text">Action / Reason</th>
+                <th class="lookup-log-th--finger">Finger</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logRowsHTML || `<tr><td colspan="3" class="lookup-log-empty">No hop logs.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   `;
 }

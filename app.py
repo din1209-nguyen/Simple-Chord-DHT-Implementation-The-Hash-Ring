@@ -25,6 +25,7 @@ if str(SRC_DIR) not in sys.path:
 
 from chord_dht import (
     ChordRing,
+    ResourceRecord,
     build_growth_node_sizes,
     run_lookup_metrics,
     save_topology_graph,
@@ -68,7 +69,10 @@ def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
             {"node_id": node.node_id, "active": bool(node.active)}  # Danh sách node và trạng thái hoạt động
             for node in ring.nodes.values()
         ],
-        "resources": sorted(list(ring.resources.keys())),  # Danh sách resource đã được sắp xếp
+        "resources": [
+            resource.to_dict()
+            for resource in sorted(ring.resources.values(), key=lambda r: r.resource_id)
+        ],  # Lưu đầy đủ metadata từng resource bao gồm hashed_resource_id (SHA-1)
         "metrics": last_metrics_payload,  # Metrics đã lưu trước đó
     }
 
@@ -83,7 +87,7 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
     ring = ChordRing(
         m=int(config.get("m", 16)),  # Số bit không gian ID, mặc định 16
         seed=int(config.get("seed", 61)),  # Seed random, mặc định 61
-        replication_count=int(config.get("replication_count", 3))  # Số bản sao, mặc định 3
+        replication_count=int(config.get("replication_count", 1))  # Số bản sao, mặc định 1
     )
     for node_info in payload.get("nodes") or []:  # Duyệt qua danh sách node từ JSON
         node_id = int(node_info["node_id"])  # Lấy node_id
@@ -99,10 +103,28 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
 
     ring.stabilize()  # Tính toán lại liên kết và finger tables
 
-    for resource_id in payload.get("resources") or []:  # Duyệt qua danh sách resource từ JSON
-        rid = str(resource_id).strip()  # Chuẩn hóa resource_id
-        if rid and rid not in ring.resources:  # Nếu resource hợp lệ và chưa tồn tại
-            ring.add_resource(rid)  # Thêm resource vào ring
+    # Khôi phục resource metadata đầy đủ (bao gồm hashed_resource_id SHA-1)
+    # mà không cần gọi add_resource (để giữ nguyên hashed_resource_id đã lưu)
+    for res in payload.get("resources") or []:
+        if not isinstance(res, dict):
+            res = {"resource_id": str(res).strip()}
+        rid = str(res.get("resource_id", "")).strip()
+        if rid and rid not in ring.resources:
+            record = ResourceRecord(
+                resource_id=rid,
+                hashed_resource_id=str(res.get("hashed_resource_id", "")),
+                key=int(res.get("key", 0)),
+                owner_id=int(res.get("owner_id", 0)),
+                replica_node_ids=list(res.get("replica_node_ids") or []),
+            )
+            ring.resources[rid] = record
+            # Ghi vào local storage của owner
+            if record.owner_id in ring.nodes and ring.nodes[record.owner_id].active:
+                ring.nodes[record.owner_id].local_resources[rid] = record
+            # Ghi vào local storage của các replica
+            for rep_id in record.replica_node_ids:
+                if rep_id in ring.nodes and ring.nodes[rep_id].active:
+                    ring.nodes[rep_id].local_resources[rid] = record
 
     ring.stabilize()  # Stabilize lần cuối sau khi khôi phục resources
     return ring
@@ -136,6 +158,73 @@ def _save_ring_state(ring: ChordRing) -> None:
         raise last_exc
 
 
+# Đường dẫn file dataset riêng cho node IDs và resource IDs
+NODE_IDS_PATH = PROJECT_ROOT / "data" / "node_ids.json"
+RESOURCE_IDS_PATH = PROJECT_ROOT / "data" / "resource_ids.json"
+
+
+# Ghi danh sách node_ids ra file JSON (dùng cho dataset mô phỏng)
+def _save_node_ids(ring: ChordRing) -> None:
+    import json
+
+    NODE_IDS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    data = sorted([int(n.node_id) for n in ring.nodes.values()])
+    tmp = NODE_IDS_PATH.with_suffix(f".json.tmp-{os.getpid()}-{time.time_ns()}")
+    with tmp.open("w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    last_exc: OSError | None = None
+    for attempt in range(8):
+        try:
+            tmp.replace(NODE_IDS_PATH)
+            return
+        except PermissionError as exc:
+            last_exc = exc
+            time.sleep(0.05 * (attempt + 1))
+    try:
+        if tmp.exists():
+            tmp.unlink()
+    except OSError:
+        pass
+    if last_exc is not None:
+        raise last_exc
+
+
+# Ghi danh sách resource_id + hashed_resource_id ra file JSON (dùng cho dataset mô phỏng)
+def _save_resource_ids(ring: ChordRing) -> None:
+    import json
+
+    RESOURCE_IDS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    data = [
+        {
+            "resource_id": r.resource_id,
+            "hashed_resource_id": r.hashed_resource_id,
+        }
+        for r in sorted(ring.resources.values(), key=lambda x: x.resource_id)
+    ]
+    tmp = RESOURCE_IDS_PATH.with_suffix(f".json.tmp-{os.getpid()}-{time.time_ns()}")
+    with tmp.open("w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    last_exc: OSError | None = None
+    for attempt in range(8):
+        try:
+            tmp.replace(RESOURCE_IDS_PATH)
+            return
+        except PermissionError as exc:
+            last_exc = exc
+            time.sleep(0.05 * (attempt + 1))
+    try:
+        if tmp.exists():
+            tmp.unlink()
+    except OSError:
+        pass
+    if last_exc is not None:
+        raise last_exc
+
+
 # Đọc và khôi phục trạng thái ring từ file JSON
 def _load_ring_state() -> ChordRing | None:
     import json
@@ -151,7 +240,7 @@ def _load_ring_state() -> ChordRing | None:
 
 # ==================== Biến toàn cục ====================
 
-ring = ChordRing(m=16, seed=61, replication_count=3)  # Khởi tạo ring mặc định với m=16, seed=61, 3 bản sao
+ring = ChordRing(m=16, seed=61, replication_count=1)  # Khởi tạo ring mặc định với m=16, seed=61, 1 bản sao
 ring_startup_completed = False  # Cờ đánh dấu đã khởi động xong chưa
 startup_lock = Lock()  # Lock cho quá trình khởi động
 last_metrics_payload: dict[str, Any] | None = None  # Lưu metrics gần nhất
@@ -295,7 +384,7 @@ def state():
 def list_resources():
     with coordinator_lock:  # Lock để đồng bộ truy cập ring
         _autoload_once()  # Đảm bảo đã autoload
-        summary = ring.summary(sample_size=200)  # Lấy summary với giới hạn 200 resources
+        summary = ring.summary(sample_size=None)  # Lấy summary với đầy đủ resources để hiển thị dataset đặc tả
     return jsonify({"ok": True, "count": summary["resource_count"], "resources": summary["sample_resources"]})  # Trả về danh sách resource
 
 
@@ -318,12 +407,14 @@ def initialize_network():
             resources = parse_int_field(payload, "resources", 1000)  # Trích xuất số resource, mặc định 1000
             m = parse_int_field(payload, "m", 16)  # Trích xuất số bit m, mặc định 16
             seed = parse_int_field(payload, "seed", 61)  # Trích xuất seed, mặc định 61
-            replication_count = parse_int_field(payload, "replication_count", 3)  # Trích xuất số bản sao, mặc định 3
+            replication_count = parse_int_field(payload, "replication_count", 1)  # Trích xuất số bản sao, mặc định 1
 
             global ring  # Khai báo sử dụng biến ring toàn cục
             ring = ChordRing(m=m, seed=seed, replication_count=replication_count)  # Tạo ring mới với cấu hình
             state_payload = ring.initialize_network(node_count=nodes, resource_count=resources, seed=seed, replication_count=replication_count)  # Khởi tạo network
             _save_ring_state(ring)  # Lưu trạng thái ring
+            _save_node_ids(ring)  # Lưu danh sách node_ids
+            _save_resource_ids(ring)  # Lưu danh sách resource_id + hashed_resource_id
 
         return jsonify({"ok": True, "message": "Chord ring initialized and persisted to JSON.", "state": state_payload})  # Trả về kết quả thành công
     except Exception as exc:
@@ -499,6 +590,14 @@ def metrics_current_ring():
 
         with plot_lock:  # Lock để đồng bộ vẽ biểu đồ
             active_nodes = int(ring.summary(sample_size=None).get("active_node_count", 0) or 0)  # Lấy số node đang hoạt động
+            if active_nodes < 1:
+                return jsonify({
+                    "ok": False,
+                    "message": "No active nodes. Please initialize the ring first.",
+                    "sweep_points": [],
+                    "charts": {},
+                })
+
             row_count = max(1, min(active_nodes, 50))  # Giới hạn số hàng tối đa 50
             node_sizes = build_growth_node_sizes(active_nodes, row_limit=row_count)  # Xây dựng danh sách kích thước node để đo
             sweep_result = run_lookup_metrics(  # Chạy metrics lookup

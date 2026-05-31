@@ -236,6 +236,17 @@ def run_lookup_metrics(
     if node_sizes is None:
         node_sizes = build_growth_node_sizes(max_node_count)
 
+    # Khi duyệt nhiều kích thước (sweep), giới hạn trials để tránh tăng trưởng O(N^2)
+    # vì mỗi trial tạo ring mới. Trials cao chỉ cần cho sweep nhỏ.
+    # Giảm từ 5 xuống 2 khi có >= 20 kích thước, giữ nguyên khi < 20 kích thước.
+    sweep_mode = len(node_sizes) >= 20
+    effective_trial_count = 2 if (sweep_mode and trial_count > 2) else trial_count
+
+    # Giới hạn lookups_per_size khi đang ở chế độ sweep nhiều kích thước
+    effective_lookups = lookups_per_size
+    if sweep_mode and lookups_per_size > 50:
+        effective_lookups = 50
+
     # Tạo bộ sinh ngẫu nhiên chọn resource và node
     rng = random.Random(seed + 2)
 
@@ -256,7 +267,7 @@ def run_lookup_metrics(
         accumulator = _empty_metric_accumulator()
 
         # Chạy nhiều trial để giảm nhiễu topology
-        for trial_index in range(trial_count):
+        for trial_index in range(effective_trial_count):
             # Tạo ring mới cho trial
             ring = ChordRing(m=m, seed=seed + node_count + trial_index * 997)
 
@@ -270,7 +281,7 @@ def run_lookup_metrics(
             node_ids = ring.active_node_ids
 
             # Lặp qua số lookup cần đo
-            for _ in range(lookups_per_size):
+            for _ in range(effective_lookups):
                 # Chọn resource ngẫu nhiên
                 resource_id = rng.choice(resource_ids)
 
@@ -281,11 +292,12 @@ def run_lookup_metrics(
                 _record_lookup_sample(accumulator, ring, resource_id, start_node_id)
 
         # Tạo điểm metric cho kích thước mạng
+        # Dùng trial_count và lookups_per_size gốc (params đầu vào) cho heading
         points.append(
             _build_metric_point(
                 node_count=node_count,
-                lookups_per_trial=lookups_per_size,
-                trial_count=trial_count,
+                lookups_per_trial=effective_lookups,
+                trial_count=effective_trial_count,
                 accumulator=accumulator,
             )
         )

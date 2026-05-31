@@ -20,6 +20,19 @@ def hash_identifier(value: str | int, m: int = 16) -> int:
     return int(digest, 16) % (2**m)
 
 
+# Băm một resource_id thành SHA-1 digest gốc (40 ký tự hex)
+# và trả về tuple (digest, key) trong đó:
+#   - digest: chuỗi SHA-1 hex 40 ký tự (giá trị hashed_resource_id)
+#   - key: giá trị băm mod 2^m dùng cho Chord routing
+def hash_resource(resource_id: str, m: int = 16) -> tuple[str, int]:
+    if not 1 <= m <= 160:
+        raise ValueError("m must be between 1 and 160")
+    text = str(resource_id).encode("utf-8")
+    digest = hashlib.sha1(text).hexdigest()
+    key = int(digest, 16) % (2**m)
+    return digest, key
+
+
 # Kiểm tra một giá trị có thuộc khoảng theo chiều kim đồng hồ trên vòng hay không
 def in_clockwise_interval(
     value: int,

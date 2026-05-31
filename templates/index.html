@@ -7,10 +7,9 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chord DHT - Distributed Hash Ring</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=105" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='busy.css') }}?v=105" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=106" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='busy.css') }}?v=106" />
   </head>
-  <body>
   <body>
     <header class="topbar">
       <div class="topbar-brand">
@@ -74,7 +73,7 @@
             </label>
             <label>
               Replicas
-              <input id="replicationInput" type="number" min="0" value="3" />
+              <input id="replicationInput" type="number" min="0" value="1" />
             </label>
           </div>
           <div class="deployment-actions">
@@ -121,11 +120,12 @@
               <table class="data-table resources-table">
                 <thead>
                   <tr>
-                    <th>Resource ID</th>
-                    <th>Key</th>
-                    <th>Owner</th>
-                    <th>Replicas</th>
-                    <th>Action</th>
+                    <th class="col-resource-id">Resource ID</th>
+                    <th class="col-hashed">Hashed</th>
+                    <th class="col-key">Key</th>
+                    <th class="col-owner">Owner</th>
+                    <th class="col-replicas">Replicas</th>
+                    <th class="col-action">Action</th>
                   </tr>
                 </thead>
                 <tbody id="resourcesOutput"></tbody>
@@ -139,10 +139,10 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>start</th>
-                    <th>end</th>
-                    <th>node</th>
+                    <th class="col-ft-index">#</th>
+                    <th class="col-ft-start">start</th>
+                    <th class="col-ft-end">end</th>
+                    <th class="col-ft-node">node</th>
                   </tr>
                 </thead>
                 <tbody id="fingerOutput"></tbody>
@@ -277,6 +277,6 @@
     <!-- Toast notification -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=105"></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=106"></script>
   </body>
 </html>
