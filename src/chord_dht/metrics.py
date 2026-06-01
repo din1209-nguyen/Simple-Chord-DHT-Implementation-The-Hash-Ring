@@ -261,8 +261,8 @@ def run_current_ring_metrics(
     # Lấy danh sách node active của ring hiện tại
     active_ids = ring.active_node_ids
 
-    # Lấy danh sách resource hiện có để chọn mẫu lookup
-    resources = list(ring.resources.values())
+    # Lấy resource từ local storage thật của các node active để chọn mẫu lookup
+    resources = list(ring._unique_active_local_resources().values())
 
     # Kiểm tra ring có ít nhất một node active để chạy metric
     if not active_ids:
@@ -505,8 +505,8 @@ def run_lookup_metrics(
         # Tạo bộ gom metric riêng cho kích thước mạng hiện tại
         accumulator = _empty_metric_accumulator()
 
-        # Lấy resource của ring metric sau khi phân phối lại
-        resources = list(ring.resources.values())
+        # Lấy resource từ local storage thật của ring metric sau khi phân phối lại
+        resources = list(ring._unique_active_local_resources().values())
 
         # Lấy node active làm nguồn lookup ngẫu nhiên
         active_ids = ring.active_node_ids

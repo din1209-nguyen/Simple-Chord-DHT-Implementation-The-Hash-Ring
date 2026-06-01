@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import bisect
 import random
 from typing import Any
 
@@ -148,6 +147,7 @@ class ChordRing:
 
         # Chạy thêm vòng hội tụ để ổn định finger table
         self.run_protocol(rounds=self._default_convergence_rounds)
+        self.refresh_all_finger_tables()
 
         # Duyệt từng resource để phân phối
         for index in range(1, resource_count + 1):
@@ -165,9 +165,6 @@ class ChordRing:
 
             # Đặt bản sao resource vào owner và replica
             self._place_resource_copies(resource)
-
-        # Đồng bộ kho local theo metadata
-        self._rebuild_local_resource_storage()
 
         # Trả về trạng thái tổng quan
         return self.summary(sample_size=None)
@@ -249,7 +246,7 @@ class ChordRing:
 
         # Sửa successor khi successor đã chết
         if successor_id not in self.nodes or not self.nodes[successor_id].active:
-            self.nodes[node_id].successor = self._find_successor_by_links(node_id, start_node_id=node_id)
+            self.nodes[node_id].successor = self._find_active_successor(node_id)
             successor_id = self.nodes[node_id].successor
 
         # Đọc predecessor của successor
@@ -348,12 +345,15 @@ class ChordRing:
         start = (node_id + 2 ** (finger_index - 1)) % self.identifier_space
 
         # Định tuyến để tìm successor của start
-        successor_id = self._route_key(
-            start,
-            start_node_id=node_id,
-            operation="FixFingers",
-            requested_id=str(start),
-        )["owner_id"]
+        try:
+            successor_id = self._route_key(
+                start,
+                start_node_id=node_id,
+                operation="FixFingers",
+                requested_id=str(start),
+            )["owner_id"]
+        except RuntimeError:
+            successor_id = self._find_active_successor(node_id)
 
         # Gán finger entry đã cập nhật
         self.nodes[node_id].finger_table[finger_index - 1] = FingerEntry(
@@ -366,18 +366,29 @@ class ChordRing:
     # Refresh đầy đủ finger table của tất cả node active sau khi topology đã hội tụ
     def refresh_all_finger_tables(self) -> None:
         for node_id in self.active_node_ids:
-            self.nodes[node_id].finger_table = [
-                FingerEntry(
-                    index=index,
-                    start=(node_id + 2 ** (index - 1)) % self.identifier_space,
-                    interval_end=(node_id + 2**index) % self.identifier_space,
-                    node_id=self._find_successor_by_links(
-                        (node_id + 2 ** (index - 1)) % self.identifier_space,
+            table: list[FingerEntry] = []
+            for index in range(1, self.m + 1):
+                start = (node_id + 2 ** (index - 1)) % self.identifier_space
+                try:
+                    finger_node = self._route_key(
+                        start,
                         start_node_id=node_id,
-                    ),
+                        operation="RefreshFinger",
+                        requested_id=str(start),
+                        collect_trace=False,
+                    )["owner_id"]
+                except RuntimeError:
+                    finger_node = self._find_active_successor(node_id)
+
+                table.append(
+                    FingerEntry(
+                        index=index,
+                        start=start,
+                        interval_end=(node_id + 2**index) % self.identifier_space,
+                        node_id=finger_node,
+                    )
                 )
-                for index in range(1, self.m + 1)
-            ]
+            self.nodes[node_id].finger_table = table
 
     # Sinh ra một danh sách các ID duy nhất dựa trên chuỗi tiền tố và seed để đảm bảo tính tái lập
     def _generate_unique_ids(self, prefix: str, count: int) -> list[int]:
@@ -409,61 +420,16 @@ class ChordRing:
             raise RuntimeError("Unable to generate enough unique identifiers")
         return generated
 
-    # Tìm successor bằng oracle dựa trên danh sách node active đã sắp xếp
-    def find_successor(self, key: int) -> int:
-        active_ids = self.active_node_ids
-        if not active_ids:
-            raise RuntimeError("No active nodes are available")
-
-        # Chuẩn hóa khóa để đảm bảo nó nằm gọn trong vòng m-bit (0 đến 2^m - 1)
-        normalized_key = key % self.identifier_space
-
-        # Dùng thuật toán tìm kiếm nhị phân (bisect_left) để tìm vị trí node >= normalized_key nhanh chóng
-        position = bisect.bisect_left(active_ids, normalized_key)
-
-        # Trả về node nhỏ nhất khi key vượt qua node lớn nhất trên vòng
-        if position == len(active_ids):
-            return active_ids[0]
-
-        # Trả về ID của node tìm được
-        return active_ids[position]
-
-    # Tìm successor của key bằng cách đi theo các liên kết successor trên vòng
-    def _find_successor_by_links(
-        self,
-        key: int,
-        *,
-        start_node_id: int | None = None,
-    ) -> int:
-        active_ids = self.active_node_ids
-
-        # Kiểm tra vòng không có node active thì không thể định tuyến tới successor
-        if not active_ids:
-            raise RuntimeError("No active nodes are available")
-
-        # Chọn node bắt đầu: nếu không truyền thì dùng node active đầu tiên của mô phỏng
-        current = active_ids[0] if start_node_id is None else int(start_node_id)
-        if current not in self.nodes or not self.nodes[current].active:
-            raise ValueError(f"Start node {current} is not active")
-
-        # Chuẩn hóa key về không gian định danh m-bit trước khi đi trên vòng
-        normalized_key = int(key) % self.identifier_space
-
-        # Đi tối đa một vòng để tránh lặp vô hạn nếu successor pointer bị hỏng
-        for _ in range(len(active_ids) + 1):
-            if self._node_owns_key(current, normalized_key):
-                return current
-
-            successor = self.nodes[current].successor
-            if successor is None or successor not in self.nodes or not self.nodes[successor].active:
-                raise RuntimeError(f"Node {current} has no active successor")
-
-            if in_clockwise_interval(normalized_key, current, successor, include_end=True):
-                return successor
-
-            current = successor
-
-        raise RuntimeError("Successor link walk exceeded one full ring")
+    # Tìm successor của key bằng định tuyến Chord qua finger table
+    def find_successor(self, key: int, start_node_id: int | None = None) -> int:
+        route = self._route_key(
+            key,
+            start_node_id=start_node_id,
+            operation="FindSuccessor",
+            requested_id=str(key),
+            collect_trace=False,
+        )
+        return route["owner_id"]
 
     # Kiểm tra tính hợp lệ của ID do người dùng nhập vào thông qua UI hoặc API
     def _validate_identifier(self, value: int) -> int:
@@ -528,62 +494,15 @@ class ChordRing:
 
         self.refresh_all_finger_tables()
 
-        for resource in self.resources.values():
-            route = self._route_key(
-                resource.key,
-                start_node_id=new_node_id,
-                operation="JoinRebalance",
-                requested_id=resource.resource_id,
-            )
-            resource.owner_id = route["owner_id"]
-            resource.replica_node_ids = self._replica_nodes_for_owner(resource.owner_id)
-
-        self._rebuild_local_resource_storage()
+        # Nhận primary/replica theo khoảng predecessor-successor mà node mới làm thay đổi
+        rebalanced_resources = self._rebalance_resources_after_node_join(new_node_id)
 
         return {
             "node_id": new_node_id,
             "active_nodes": len(self.active_node_ids),
             "known_node_id": known_node_id,
+            "rebalanced_resources": rebalanced_resources,
             "message": f"Node {new_node_id} joined the ring successfully.",
-        }
-
-    # Cập nhật (đổi) ID của một node đang hoạt động, tương đương với việc di chuyển vị trí node trên vòng
-    def update_node(self, old_node_id: int, new_node_id: int) -> dict[str, Any]:
-        # Chuẩn hóa đầu vào
-        old_id = self._validate_identifier(old_node_id)
-        new_id = self._validate_identifier(new_node_id)
-
-        # Gom các bước xác thực trạng thái trước khi cập nhật
-        if old_id not in self.nodes:
-            raise ValueError(f"Node {old_id} does not exist")
-        if not self.nodes[old_id].active:
-            raise ValueError(f"Node {old_id} is inactive")
-        if new_id != old_id and new_id in self.nodes and self.nodes[new_id].active:
-            raise ValueError(f"Node {new_id} already exists")
-
-        # Trả về kết quả luôn nếu người dùng cập nhật ID mới trùng với ID cũ
-        if new_id == old_id:
-            return {
-                "old_node_id": old_id,
-                "new_node_id": new_id,
-                "active_nodes": len(self.active_node_ids),
-                "message": "Node ID is unchanged.",
-            }
-
-        # Cách mô phỏng đổi ID: Xóa node ở vị trí cũ và tạo một node mới hoàn toàn tại vị trí mới
-        del self.nodes[old_id]
-        self.failed_nodes.discard(old_id)
-        self.nodes[new_id] = Node(node_id=new_id)
-        self.failed_nodes.discard(new_id)
-
-        # Tái cân bằng lại toàn bộ mạng lưới sau khi dời vị trí
-        stabilize_report = self.stabilize()
-
-        return {
-            "old_node_id": old_id,
-            "new_node_id": new_id,
-            "active_nodes": stabilize_report["active_nodes"],
-            "message": f"Node {old_id} updated to {new_id} and network stabilized successfully.",
         }
 
     # Thêm một tài nguyên (resource) mới vào mạng và gán cho node quản lý (owner) phù hợp
@@ -594,19 +513,23 @@ class ChordRing:
         # Xác thực đầu vào
         if not normalized_id:
             raise ValueError("resource_id is required")
-        if normalized_id in self.resources:
-            raise ValueError(f"Resource {normalized_id} already exists")
 
         # Băm tên tài nguyên thành digest SHA-1 và key rồi định tuyến put qua Finger Table để tìm owner
         digest, key = hash_resource(normalized_id, self.m)
         route = self._route_key(key, operation="Put", requested_id=normalized_id)
         owner_id = route["owner_id"]
+        owner_node = self.nodes[owner_id]
+        if normalized_id in owner_node.local_resources:
+            raise ValueError(f"Resource {normalized_id} already exists")
+
         resource = ResourceRecord(normalized_id, digest, key, owner_id)
+
+        # Cập nhật metadata UI sau khi owner thực tế đã được xác định qua route Chord
         self.resources[normalized_id] = resource
         self._place_resource_copies(resource)
 
         return {
-            "resource": self.resources[normalized_id].to_dict(),
+            "resource": resource.to_dict(),
             "put_path": route["path"],
             "put_hops": route["hops"],
             "put_logs": route["logs"],
@@ -624,33 +547,42 @@ class ChordRing:
             raise ValueError("old_resource_id is required")
         if not new_id:
             raise ValueError("new_resource_id is required")
-        if old_id not in self.resources:
+
+        # Route tới owner thực tế của resource cũ thay vì tin vào metadata UI
+        _, old_key = hash_resource(old_id, self.m)
+        old_route = self._route_key(old_key, operation="UpdateLookup", requested_id=old_id)
+        old_owner_id = old_route["owner_id"]
+        old_owner_node = self.nodes[old_owner_id]
+        if old_id not in old_owner_node.local_resources:
             raise ValueError(f"Resource {old_id} does not exist")
-        if new_id != old_id and new_id in self.resources:
-            raise ValueError(f"Resource {new_id} already exists")
 
         # Bỏ qua các bước xử lý nặng nếu ID không thực sự thay đổi
         if new_id == old_id:
             return {
-                "resource": self.resources[old_id].to_dict(),
+                "resource": old_owner_node.local_resources[old_id].to_dict(),
                 "message": "Resource ID is unchanged.",
             }
 
-        # Xóa record cũ khỏi index mô phỏng và khỏi mọi bản local/replica cũ
-        self.resources.pop(old_id)
-        self._remove_resource_copies(old_id)
-
-        # Băm tên mới thành digest SHA-1 và key rồi định tuyến put qua Finger Table để tìm owner mới
+        # Kiểm tra ID mới bằng cách route tới owner của key mới
         digest, key = hash_resource(new_id, self.m)
         route = self._route_key(key, operation="Put", requested_id=new_id)
         owner_id = route["owner_id"]
+        if new_id in self.nodes[owner_id].local_resources:
+            raise ValueError(f"Resource {new_id} already exists")
+
+        # Xóa record cũ khỏi metadata UI và khỏi mọi bản local/replica cũ
+        old_resource = old_owner_node.local_resources[old_id]
+        self.resources.pop(old_id, None)
+        self._remove_resource_copies(old_id, resource=old_resource)
+
+        # Tạo resource mới tại owner được route theo key mới
         resource = ResourceRecord(new_id, digest, key, owner_id)
         self.resources[new_id] = resource
         self._place_resource_copies(resource)
 
         return {
             "old_resource_id": old_id,
-            "resource": self.resources[new_id].to_dict(),
+            "resource": resource.to_dict(),
             "put_path": route["path"],
             "put_hops": route["hops"],
             "put_logs": route["logs"],
@@ -663,19 +595,19 @@ class ChordRing:
         normalized_id = str(resource_id).strip()
         if not normalized_id:
             raise ValueError("resource_id is required")
-        if normalized_id not in self.resources:
+
+        # Route bằng key của resource để tìm owner thực tế trước khi xóa
+        _, key = hash_resource(normalized_id, self.m)
+        route = self._route_key(key, operation="Delete", requested_id=normalized_id)
+        owner_id = route["owner_id"]
+        owner_node = self.nodes[owner_id]
+        if normalized_id not in owner_node.local_resources:
             raise ValueError(f"Resource {normalized_id} does not exist")
 
-        # Định tuyến delete tới owner hiện tại trước khi xóa dữ liệu khỏi các bản copy
-        route = self._route_key(
-            self.resources[normalized_id].key,
-            operation="Delete",
-            requested_id=normalized_id,
-        )
-
-        # Xử lý pop() vừa giúp xóa phần tử khỏi index, vừa trả về giá trị của nó để in ra message
-        removed = self.resources.pop(normalized_id)
-        self._remove_resource_copies(normalized_id)
+        # Lấy bản ghi từ owner local vì đây là nguồn dữ liệu thật trong mô phỏng P2P
+        removed = owner_node.local_resources[normalized_id]
+        self.resources.pop(normalized_id, None)
+        self._remove_resource_copies(normalized_id, resource=removed)
 
         return {
             "resource": removed.to_dict(),
@@ -685,37 +617,108 @@ class ChordRing:
             "message": f"Resource {normalized_id} deleted successfully.",
         }
 
-    # Chạy hội tụ protocol và cập nhật lại resource
+    # Chạy hội tụ protocol để cập nhật routing state mà không rebalance dữ liệu toàn cục
     def stabilize(self) -> dict[str, Any]:
         active_ids = self.active_node_ids
         if not active_ids:
             return {"active_nodes": 0, "message": "No active nodes are available."}
 
         self.run_protocol(rounds=self._default_convergence_rounds)
-
-        for resource in self.resources.values():
-            route = self._route_key(
-                resource.key,
-                operation="Stabilize",
-                requested_id=resource.resource_id,
-            )
-            resource.owner_id = route["owner_id"]
-            resource.replica_node_ids = self._replica_nodes_for_owner(resource.owner_id)
-
-        self._rebuild_local_resource_storage()
+        self.refresh_all_finger_tables()
 
         return {
             "active_nodes": len(active_ids),
-            "message": "Network stabilized successfully.",
+            "message": "Routing state stabilized successfully.",
         }
 
-    # Đồng bộ kho local của từng node từ metadata tài nguyên toàn cục
-    def _rebuild_local_resource_storage(self) -> None:
-        for node in self.nodes.values():
-            node.local_resources.clear()
+    # Cân bằng lại dữ liệu chịu ảnh hưởng trực tiếp khi node mới tham gia ring
+    def _rebalance_resources_after_node_join(self, new_node_id: int) -> int:
+        new_node = self.nodes[new_node_id]
 
-        for resource in self.resources.values():
+        # Xử lý trường hợp ring chỉ có node mới đang active
+        if new_node.predecessor == new_node_id or len(self.active_node_ids) == 1:
+            moved = 0
+            for resource in self._unique_active_local_resources().values():
+                if resource.owner_id != new_node_id:
+                    old_holder_ids = self._copy_holder_ids(resource)
+                    resource.owner_id = new_node_id
+                    self._place_resource_copies(resource, previous_holder_ids=old_holder_ids)
+                    moved += 1
+            return moved
+
+        # Bỏ qua cân bằng dữ liệu nếu node mới chưa có predecessor hợp lệ
+        if new_node.predecessor is None:
+            return 0
+
+        moved_primary_count = self._adopt_primary_resources_for_joined_node(new_node_id)
+
+        # Cập nhật replica cho các owner lân cận vì node mới chen vào successor chain
+        touched_resources = self._refresh_replica_sets_around_joined_node(new_node_id)
+
+        return moved_primary_count + touched_resources
+
+    # Chuyển primary cho các resource thuộc khoảng mà node mới nhận trách nhiệm
+    def _adopt_primary_resources_for_joined_node(self, new_node_id: int) -> int:
+        new_node = self.nodes[new_node_id]
+        predecessor_id = new_node.predecessor
+        if predecessor_id is None:
+            return 0
+
+        moved = 0
+        candidates: dict[str, ResourceRecord] = {}
+
+        # Lấy resource từ successor cũ vì theo Chord các key mới nhận trước đó thuộc successor
+        successor_id = new_node.successor
+        if successor_id in self.nodes and self.nodes[successor_id].active:
+            candidates.update(self.nodes[successor_id].local_resources)
+
+        for resource in candidates.values():
+            if not in_clockwise_interval(
+                resource.key,
+                predecessor_id,
+                new_node_id,
+                include_start=False,
+                include_end=True,
+            ):
+                continue
+            if resource.owner_id == new_node_id:
+                continue
+            old_holder_ids = self._copy_holder_ids(resource)
+            resource.owner_id = new_node_id
+            self.resources[resource.resource_id] = resource
+            self._place_resource_copies(resource, previous_holder_ids=old_holder_ids)
+            moved += 1
+
+        return moved
+
+    # Làm mới replica của các resource có owner gần node mới trong successor chain
+    def _refresh_replica_sets_around_joined_node(self, new_node_id: int) -> int:
+        affected_owner_ids = {new_node_id}
+
+        current = new_node_id
+        for _ in range(self.replication_count):
+            predecessor = self.nodes[current].predecessor
+            if (
+                predecessor is None
+                or predecessor == new_node_id
+                or predecessor not in self.nodes
+                or not self.nodes[predecessor].active
+            ):
+                break
+            affected_owner_ids.add(predecessor)
+            current = predecessor
+
+        touched = 0
+        for resource in self._unique_active_local_resources().values():
+            if resource.owner_id not in affected_owner_ids and new_node_id not in resource.replica_node_ids:
+                continue
+            old_replicas = list(resource.replica_node_ids)
             self._place_resource_copies(resource)
+            self.resources[resource.resource_id] = resource
+            if old_replicas != resource.replica_node_ids:
+                touched += 1
+
+        return touched
 
     # Tính danh sách node replica đứng sau owner trên vòng Chord
     def _replica_nodes_for_owner(self, owner_id: int) -> list[int]:
@@ -734,8 +737,14 @@ class ChordRing:
         for _ in range(self.replication_count):
             successor = self.nodes[current].successor
             if successor is None or successor not in self.nodes or not self.nodes[successor].active:
-                # Dùng fallback tìm successor bằng link-walk từ current
-                successor = self._find_successor_by_links(current + 1, start_node_id=current)
+                # Định tuyến qua finger table để tìm successor active kế tiếp
+                successor = self._route_key(
+                    (current + 1) % self.identifier_space,
+                    start_node_id=current,
+                    operation="ReplicaSuccessor",
+                    requested_id=str((current + 1) % self.identifier_space),
+                    collect_trace=False,
+                )["owner_id"]
             if successor == owner_id:
                 break
             if successor not in replicas:
@@ -754,25 +763,54 @@ class ChordRing:
         holders = [resource.owner_id, *resource.replica_node_ids]
         return list(dict.fromkeys(node_id for node_id in holders if node_id in self.nodes))
 
-    # Xóa mọi bản copy local của một resource khỏi tất cả node
-    def _remove_resource_copies(self, resource_id: str) -> None:
-        # Duyệt cả node active và inactive để dọn sạch dữ liệu cũ trong mô phỏng
-        for node in self.nodes.values():
-            node.local_resources.pop(resource_id, None)
+    # Xóa các bản copy local khỏi đúng owner và replica đã biết của resource
+    def _remove_resource_copies(
+        self,
+        resource_id: str,
+        *,
+        resource: ResourceRecord | None = None,
+    ) -> None:
+        record = resource or self._unique_active_local_resources().get(resource_id)
+        if record is None:
+            return
+
+        for node_id in self._copy_holder_ids(record):
+            self.nodes[node_id].local_resources.pop(resource_id, None)
 
     # Đặt resource vào owner và các replica hiện tại theo cấu hình replication_count
-    def _place_resource_copies(self, resource: ResourceRecord) -> None:
+    def _place_resource_copies(
+        self,
+        resource: ResourceRecord,
+        *,
+        previous_holder_ids: list[int] | None = None,
+    ) -> None:
+        old_holder_ids = (
+            list(dict.fromkeys(previous_holder_ids))
+            if previous_holder_ids is not None
+            else self._copy_holder_ids(resource)
+        )
+
         # Tính lại replica set mỗi lần owner thay đổi hoặc topology thay đổi
         resource.replica_node_ids = self._replica_nodes_for_owner(resource.owner_id)
-        self._sync_resource_copies(resource)
+        self._sync_resource_copies(resource, previous_holder_ids=old_holder_ids)
 
     # Đồng bộ dữ liệu local để chỉ owner/replica hợp lệ đang giữ resource
-    def _sync_resource_copies(self, resource: ResourceRecord) -> None:
-        # Xóa bản cũ trước để tránh node không còn là replica vẫn giữ dữ liệu
-        self._remove_resource_copies(resource.resource_id)
+    def _sync_resource_copies(
+        self,
+        resource: ResourceRecord,
+        *,
+        previous_holder_ids: list[int],
+    ) -> None:
+        current_holder_ids = self._copy_holder_ids(resource)
+
+        # Xóa bản cũ khỏi những node từng giữ resource nhưng không còn thuộc replica set mới
+        for node_id in previous_holder_ids:
+            if node_id in current_holder_ids or node_id not in self.nodes:
+                continue
+            self.nodes[node_id].local_resources.pop(resource.resource_id, None)
 
         # Ghi lại resource vào owner và các node replica còn active
-        for node_id in self._copy_holder_ids(resource):
+        for node_id in current_holder_ids:
             node = self.nodes[node_id]
             if node.active:
                 node.local_resources[resource.resource_id] = resource
@@ -790,11 +828,17 @@ class ChordRing:
             # Điểm kết thúc của khoảng chịu trách nhiệm cho finger này
             interval_end = (node_id + 2**index) % self.identifier_space
 
-            # Tìm successor bằng link-walk và fallback khi ring chưa ổn định
+            # Định tuyến qua finger table hiện có để tìm successor của điểm start
             try:
-                finger_node = self._find_successor_by_links(start, start_node_id=node_id)
+                finger_node = self._route_key(
+                    start,
+                    start_node_id=node_id,
+                    operation="BuildFinger",
+                    requested_id=str(start),
+                    collect_trace=False,
+                )["owner_id"]
             except RuntimeError:
-                finger_node = self._find_active_successor(start)
+                finger_node = self._find_active_successor(node_id)
 
             table.append(
                 FingerEntry(
@@ -931,7 +975,7 @@ class ChordRing:
             )
 
         # Xác định thao tác thuộc nhóm hội tụ
-        is_fix_fingers = operation in {"FixFingers", "Join"}
+        is_fix_fingers = operation in {"FixFingers", "Join", "RefreshFinger", "BuildFinger", "RepairFinger"}
 
         # Đọc hệ số giới hạn hop
         hop_multiplier = self._max_route_hops_multiplier
@@ -940,9 +984,9 @@ class ChordRing:
         active_count = max(1, sum(1 for node in self.nodes.values() if node.active))
         max_steps = max(1, active_count * (self.m + 1) * hop_multiplier)
 
-        # Nới giới hạn hop cho thao tác hội tụ
+        # Giữ giới hạn hop vừa đủ cho thao tác hội tụ để tránh vòng lặp kéo dài
         if is_fix_fingers:
-            max_steps = max(max_steps, 50000)
+            max_steps = max(max_steps, active_count * (self.m + 1))
 
         # Khởi tạo số hop đã đi
         hops = 0
@@ -966,14 +1010,6 @@ class ChordRing:
 
             # Dừng khi vượt giới hạn hop
             if hops >= max_steps:
-                if is_fix_fingers:
-                    owner_id = self._find_successor_by_links(normalized_key, start_node_id=current)
-                    if collect_trace:
-                        logs.append(
-                            f"[{hops + 1}] Safety limit reached ({max_steps} hops). "
-                            f"Link-walk fallback locates owner node {owner_id} for key {normalized_key}."
-                        )
-                    break
                 raise RuntimeError(f"{operation} exceeded the safety hop limit")
 
             # Chọn bước nhảy kế tiếp (log được ghi trong hàm)
@@ -1078,9 +1114,10 @@ class ChordRing:
         else:
             logs.append(f"[{hops}] Resource '{requested_id}' NOT FOUND at owner node {owner_id}.")
 
-        # Ghi log replicas nếu có
-        if requested_id in self.resources:
-            replica_node_ids = self.resources[requested_id].replica_node_ids
+        # Ghi log replicas dựa trên bản ghi đang nằm tại owner thực tế
+        replica_node_ids = []
+        if found and not direct_key:
+            replica_node_ids = owner_node.local_resources[requested_id].replica_node_ids
             if replica_node_ids:
                 logs.append(f"[{hops}] Replica copies stored on node(s): {replica_node_ids}.")
 
@@ -1094,7 +1131,7 @@ class ChordRing:
             logs=logs,
             found=found,
             direct_key=direct_key,
-            replica_node_ids=self.resources[requested_id].replica_node_ids if requested_id in self.resources else [],
+            replica_node_ids=replica_node_ids,
         )
 
     # Chuẩn hóa đầu vào lookup thành bộ ba requested_id, key, direct_key
@@ -1180,18 +1217,48 @@ class ChordRing:
         if successor is None:
             raise RuntimeError("Current node has no successor")
 
-        # Sửa self-loop successor bằng link-walk để tránh vòng lặp vô hạn
+        # Chuyển thẳng tới successor khi successor chịu trách nhiệm cho key
+        if successor != current_id and in_clockwise_interval(
+            key,
+            current_id,
+            successor,
+            include_start=False,
+            include_end=True,
+        ):
+            if collect_trace:
+                logs.append(
+                    f"[{hop}] Node {current_id} selects successor [{successor}] "
+                    f"because key {key} is in its ownership interval."
+                )
+            return successor, True
+
+        # Sửa self-loop successor bằng finger table để tránh vòng lặp vô hạn
         if successor == current_id:
-            real_successor = self._find_successor_by_links(
-                (current_id + 1) % self.identifier_space,
-                start_node_id=current_id,
-            )
+            finger_entry, _ = self._closest_preceding_finger(current_id, key)
+            if finger_entry is None:
+                predecessor = node.predecessor
+                if (
+                    predecessor is not None
+                    and predecessor != current_id
+                    and predecessor in self.nodes
+                    and self.nodes[predecessor].active
+                ):
+                    if collect_trace:
+                        logs.append(
+                            f"[{hop}] Node {current_id} successor is self-loop; "
+                            f"local predecessor [{predecessor}] is used while routing state converges."
+                        )
+                    return predecessor, False
+            if finger_entry is None:
+                raise RuntimeError(
+                    f"Node {current_id} has self-loop successor and no active finger"
+                )
             if collect_trace:
                 logs.append(
                     f"[{hop}] Node {current_id} successor is self-loop; "
-                    f"link-walk finds real successor [{real_successor}] for key {key}."
+                    f"finger table selects node [{finger_entry.node_id}] for key {key}."
                 )
-            return real_successor, False
+            return finger_entry.node_id, False
 
         # Tìm finger entry gần key nhất
         finger_entry, first_failed = self._closest_preceding_finger(current_id, key)
@@ -1243,12 +1310,12 @@ class ChordRing:
                     first_failed_finger = candidate
                 continue
 
-            # Chọn finger khi key nằm trong khoảng [start, interval_end)
+            # Chọn finger khi candidate nằm giữa node hiện tại và key theo chiều kim đồng hồ
             if in_clockwise_interval(
+                candidate,
+                current_id,
                 key,
-                entry.start,
-                entry.interval_end,
-                include_start=True,
+                include_start=False,
                 include_end=False,
             ):
                 return entry, first_failed_finger
@@ -1267,7 +1334,18 @@ class ChordRing:
         node = self.nodes[node_id]
         node.predecessor = self._find_active_predecessor(node_id)
         node.successor = self._find_active_successor(node_id)
-        node.finger_table = self._build_finger_table(node_id)
+        replacement = node.successor
+        node.finger_table = [
+            FingerEntry(
+                index=entry.index,
+                start=entry.start,
+                interval_end=entry.interval_end,
+                node_id=replacement
+                if entry.node_id not in self.nodes or not self.nodes[entry.node_id].active
+                else entry.node_id,
+            )
+            for entry in node.finger_table
+        ]
         moved_resources = self._adopt_resources_from_failed_nodes()
 
         detected = (
@@ -1283,34 +1361,38 @@ class ChordRing:
             ),
         }
 
-    # Tìm successor active kế tiếp bằng oracle dùng cho repair và safety
+    # Tìm successor active kế tiếp từ view cục bộ của node
     def _find_active_successor(self, node_id: int) -> int:
-        active_ids = self.active_node_ids
-        if not active_ids:
-            raise RuntimeError("No active nodes are available")
-        if len(active_ids) == 1:
-            return node_id
+        if node_id not in self.nodes or not self.nodes[node_id].active:
+            raise RuntimeError(f"Node {node_id} is not active")
 
-        # Tìm node nhỏ nhất lớn hơn node_id, wrap về node đầu tiên nếu không có
-        for nid in active_ids:
-            if nid > node_id:
-                return nid
-        return active_ids[0]
+        node = self.nodes[node_id]
+        candidates: list[int] = []
+        if node.successor is not None:
+            candidates.append(node.successor)
+        candidates.extend(entry.node_id for entry in node.finger_table)
+        if node.predecessor is not None:
+            candidates.append(node.predecessor)
 
-    # Tìm predecessor kế tiếp đang hoạt động trên vòng định danh
-    def _find_active_predecessor(self, node_id: int) -> int:
-        active_ids = self.active_node_ids
-        if not active_ids:
-            raise RuntimeError("No active nodes are available")
-        if len(active_ids) == 1:
-            return node_id
+        # Chọn node active đầu tiên mà node hiện tại đã biết qua successor hoặc finger table
+        for candidate in candidates:
+            if candidate == node_id:
+                continue
+            if candidate in self.nodes and self.nodes[candidate].active:
+                return candidate
 
-        # Tìm node lớn nhất nhỏ hơn node_id, wrap về node cuối cùng nếu không có
-        predecessor = None
-        for nid in active_ids:
-            if nid < node_id:
-                predecessor = nid
-        return predecessor if predecessor is not None else active_ids[-1]
+        # Giữ self-loop khi view cục bộ không biết node active nào khác
+        return node_id
+
+    # Tìm predecessor active từ view cục bộ của node
+    def _find_active_predecessor(self, node_id: int) -> int | None:
+        if node_id not in self.nodes or not self.nodes[node_id].active:
+            raise RuntimeError(f"Node {node_id} is not active")
+
+        predecessor = self.nodes[node_id].predecessor
+        if predecessor in self.nodes and self.nodes[predecessor].active:
+            return predecessor
+        return None
 
     # Nhận lại các resource đang trỏ tới owner đã chết nếu còn replica sống
     def _adopt_resources_from_failed_nodes(self) -> int:
@@ -1325,6 +1407,7 @@ class ChordRing:
                 continue
 
             old_owner_id = resource.owner_id
+            old_holder_ids = self._copy_holder_ids(resource)
             route = self._route_key(
                 resource.key,
                 operation="Recover",
@@ -1339,7 +1422,7 @@ class ChordRing:
             # Gán owner mới theo route Chord tới successor(key), rồi tạo lại replica set tương ứng
             resource.owner_id = new_owner_id
             self.resources[resource.resource_id] = resource
-            self._place_resource_copies(resource)
+            self._place_resource_copies(resource, previous_holder_ids=old_holder_ids)
             moved += 1
 
         # Dọn metadata UI cho các resource có owner chết nhưng không còn bản copy active
@@ -1353,7 +1436,8 @@ class ChordRing:
         # Chỉ đọc local storage của node còn sống, không đọc dữ liệu từ node đã chết
         for node_id in self.active_node_ids:
             for resource_id, resource in self.nodes[node_id].local_resources.items():
-                resources.setdefault(resource_id, resource)
+                if resource_id not in resources or resource.owner_id == node_id:
+                    resources[resource_id] = resource
 
         return resources
 
@@ -1370,7 +1454,7 @@ class ChordRing:
             if self._live_resource_copy_holders(resource):
                 continue
 
-            self._remove_resource_copies(resource_id)
+            self._remove_resource_copies(resource_id, resource=resource)
             self.resources.pop(resource_id, None)
             lost += 1
             lost_resource_ids.append(resource_id)
@@ -1413,6 +1497,7 @@ class ChordRing:
         for resource in local_resources.values():
             if resource.owner_id != failed_node_id:
                 continue
+            old_holder_ids = self._copy_holder_ids(resource)
 
             # Owner đúng sau khi node chết được tìm bằng route Chord tới successor mới của key
             route = self._route_key(
@@ -1433,7 +1518,7 @@ class ChordRing:
             # Có replica sống thì promote sang owner mới và tạo lại đủ replica
             resource.owner_id = new_owner_id
             self.resources[resource.resource_id] = resource
-            self._place_resource_copies(resource)
+            self._place_resource_copies(resource, previous_holder_ids=old_holder_ids)
             recovered += 1
             recovered_resource_ids.append(resource.resource_id)
 
@@ -1442,13 +1527,14 @@ class ChordRing:
             if failed_node_id not in resource.replica_node_ids:
                 continue
             replica_repaired_resource_ids.append(resource.resource_id)
+            old_holder_ids = self._copy_holder_ids(resource)
             resource.replica_node_ids = [
                 replica_id
                 for replica_id in resource.replica_node_ids
                 if replica_id != failed_node_id
             ]
             self.resources[resource.resource_id] = resource
-            self._place_resource_copies(resource)
+            self._place_resource_copies(resource, previous_holder_ids=old_holder_ids)
 
         # Sau cùng mới dọn metadata UI cho resource không còn replica sống nào để phục hồi
         lost, lost_resource_ids = self._drop_lost_resources_from_metadata()
@@ -1477,7 +1563,13 @@ class ChordRing:
                     index=entry.index,
                     start=entry.start,
                     interval_end=entry.interval_end,
-                    node_id=self._find_successor_by_links(entry.start, start_node_id=node_id)
+                    node_id=self._route_key(
+                        entry.start,
+                        start_node_id=node_id,
+                        operation="RepairFinger",
+                        requested_id=str(entry.start),
+                        collect_trace=False,
+                    )["owner_id"]
                     if entry.node_id == failed_node_id
                     else entry.node_id,
                 )
@@ -1509,8 +1601,10 @@ class ChordRing:
     def summary(self, *, sample_size: int | None = None) -> dict[str, Any]:
         active_ids = self.active_node_ids
 
-        # Rút trích và sắp xếp list resource theo ID để chống nhảy lộn xộn dòng trên UI
-        all_resources = sorted(self.resources.values(), key=lambda r: r.resource_id)
+        # Rút trích resource từ local storage thật của các node active để hiển thị UI
+        live_resources = self._unique_active_local_resources()
+        self.resources = dict(live_resources)
+        all_resources = sorted(live_resources.values(), key=lambda r: r.resource_id)
 
         # Kiểm tra có cắt mẫu (pagination/sampling) thì chỉ lấy theo sample_size
         if sample_size is None:
@@ -1531,7 +1625,7 @@ class ChordRing:
             "replication_count": self.replication_count,
             "active_node_count": len(active_ids),
             "failed_node_count": len(self.failed_nodes),
-            "resource_count": len(self.resources),
+            "resource_count": len(live_resources),
             "resource_table_row_count": len(sample_resources),
             "active_nodes": active_ids,
             "failed_nodes": sorted(self.failed_nodes),
@@ -1551,8 +1645,8 @@ class ChordRing:
 
     # Kiểm tra tính toàn vẹn của dữ liệu: đảm bảo mọi tài nguyên đều đang được sở hữu đúng bởi successor của khóa
     def verify_resource_mapping(self) -> bool:
-        # Route lại theo overlay để tránh phụ thuộc oracle find_successor
-        for resource in self.resources.values():
+        # Route lại theo overlay để tránh phụ thuộc metadata trung tâm
+        for resource in self._unique_active_local_resources().values():
             route = self._route_key(resource.key, operation="VerifyResource", requested_id=resource.resource_id)
             if route["owner_id"] != resource.owner_id:
                 return False
@@ -1589,10 +1683,11 @@ class ChordRing:
 
     # Chọn ngẫu nhiên một ID tài nguyên đang có trong hệ thống phục vụ cho các module giả lập truy cập
     def choose_random_resource(self) -> str:
-        if not self.resources:
+        resources = self._unique_active_local_resources()
+        if not resources:
             raise RuntimeError("No resources are available")
         # Sử dụng bộ sinh số đã seed để bốc ngẫu nhiên
-        return self._rng.choice(list(self.resources.keys()))
+        return self._rng.choice(list(resources.keys()))
 
     # Chọn ngẫu nhiên một Node ID đang còn sống phục vụ cho các yêu cầu xuất phát ngẫu nhiên
     def choose_random_node(self) -> int:

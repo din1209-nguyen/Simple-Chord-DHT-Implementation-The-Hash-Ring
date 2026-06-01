@@ -814,24 +814,27 @@ def metrics_current_ring():
         # Chuẩn hóa số lookup trong mỗi trial từ payload
         lookups = parse_int_field(payload, "lookups", 100)
 
+        # Sinh seed metric mới mỗi lần chạy nếu người dùng không truyền metric_seed
+        metric_seed = parse_int_field(payload, "metric_seed", time.time_ns())
+
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi chạy metric
             _autoload_once()
 
+            # Lấy resource thật từ local storage của các node active cho benchmark
+            live_resources = list(ring._unique_active_local_resources().values())
+
             # Lấy số resource hiện có để dùng lại cho sweep tăng trưởng
-            resource_count = len(ring.resources) or 1000
+            resource_count = len(live_resources) or 1000
 
             # Sao chép bản ghi resource để benchmark không phụ thuộc mutation trực tiếp
-            resource_records = list(ring.resources.values())
+            resource_records = live_resources
 
             # Ghi nhận danh sách node hiện tại làm nguồn cho ring metric
             metric_node_ids = ring.active_node_ids
 
             # Lưu cấu hình không gian định danh của ring hiện tại
             m = ring.m
-
-            # Lưu seed để benchmark có thể tái lập kết quả
-            seed = ring.seed
 
             # Lưu số bản sao resource để sweep giữ đúng cấu hình ring
             replication_count = ring.replication_count
@@ -853,7 +856,7 @@ def metrics_current_ring():
                 ring,
                 trial_count=trials,
                 lookups_per_trial=lookups,
-                seed=seed,
+                seed=metric_seed,
                 output_path=None,
             )
 
@@ -876,7 +879,7 @@ def metrics_current_ring():
                 node_ids=metric_node_ids,
                 replication_count=replication_count,
                 m=m,
-                seed=seed,
+                seed=metric_seed,
                 fixed_points={active_nodes: current_point},
                 output_path=None,
             )
@@ -891,6 +894,7 @@ def metrics_current_ring():
         response_payload = {
             "ok": True,
             "message": "Metrics completed successfully.",
+            "metric_seed": metric_seed,
             "sweep_points": sweep_points,
             "node_counts": [int(p["nodes"]) for p in sweep_points],
             "charts": charts,
@@ -902,6 +906,7 @@ def metrics_current_ring():
             "saved_at": time.time(),
             "trials": trials,
             "lookups": lookups,
+            "metric_seed": metric_seed,
             "active_nodes": active_nodes,
             "sweep_points": response_payload["sweep_points"],
             "charts": response_payload["charts"],

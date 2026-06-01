@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 # Nạp các hàm định danh để kiểm thử
-from chord_dht import hash_identifier, in_clockwise_interval
+from chord_dht import ChordRing, Node, ResourceRecord, hash_identifier, in_clockwise_interval
 
 # Kiểm thử hàm băm luôn trả về trong không gian m bit
 def test_hash_identifier_stays_inside_m_bit_space():
@@ -168,3 +168,44 @@ def test_resource_crud_updates_json(client, tmp_path):
 
     # Kiểm tra resource đã bị xóa khỏi danh sách persist
     assert "student-score" not in payload.get("resources", [])
+
+# Kiểm thử node join chỉ chuyển primary trong khoảng node mới nhận và cập nhật replica kế cận
+def test_add_node_rebalances_primary_interval_and_successor_replicas():
+    # Tạo ring thủ công để kiểm soát chính xác thứ tự node trên vòng
+    ring = ChordRing(m=8, seed=61, replication_count=2)
+
+    # Tạo ba node active ban đầu
+    ring.nodes[50] = Node(node_id=50, active=True, predecessor=220, successor=150)
+    ring.nodes[150] = Node(node_id=150, active=True, predecessor=50, successor=220)
+    ring.nodes[220] = Node(node_id=220, active=True, predecessor=150, successor=50)
+
+    # Làm mới finger table cho topology ban đầu
+    ring.refresh_all_finger_tables()
+
+    # Tạo resource có key thuộc khoảng (50, 130] nên sẽ chuyển primary sang node mới
+    moving_resource = ResourceRecord("moving-resource", "hash-moving", 120, 150)
+    ring.resources[moving_resource.resource_id] = moving_resource
+    ring._place_resource_copies(moving_resource)
+
+    # Tạo resource nằm ngoài khoảng primary mới nhưng replica chain sẽ bị ảnh hưởng
+    stable_resource = ResourceRecord("stable-resource", "hash-stable", 180, 220)
+    ring.resources[stable_resource.resource_id] = stable_resource
+    ring._place_resource_copies(stable_resource)
+
+    # Thêm node mới vào giữa node 50 và node 150
+    ring.add_node(130)
+
+    # Kiểm tra resource trong khoảng (50, 130] chuyển primary sang node mới
+    assert ring.resources["moving-resource"].owner_id == 130
+
+    # Kiểm tra replica của resource mới đi theo successor chain sau primary
+    assert ring.resources["moving-resource"].replica_node_ids == [150, 220]
+
+    # Kiểm tra resource ngoài khoảng không bị đổi primary
+    assert ring.resources["stable-resource"].owner_id == 220
+
+    # Kiểm tra replica của resource ngoài khoảng vẫn được cập nhật khi node mới chen vào successor chain
+    assert ring.resources["stable-resource"].replica_node_ids == [50, 130]
+
+    # Kiểm tra toàn bộ mapping resource vẫn hợp lệ sau node join
+    assert ring.verify_resource_mapping()
