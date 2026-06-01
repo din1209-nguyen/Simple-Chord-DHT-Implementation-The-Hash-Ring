@@ -1,4 +1,4 @@
-  /* Busy state: show per-section loading feedback */
+  /* Hiển thị trạng thái bận theo từng khu vực */
 button.is-busy {
   position: relative;
   padding-right: 34px;

@@ -1,29 +1,28 @@
 from __future__ import annotations
 
-# Import dataclass để định nghĩa cấu trúc dữ liệu
 from dataclasses import dataclass, field
 from typing import Any
 
-
-# Đóng gói một dòng trong finger table
+# Mô tả một dòng trong finger table
 @dataclass(frozen=True)
 class FingerEntry:
 
-    # Lưu chỉ số của finger
+    # Lưu vị trí finger trong bảng định tuyến
     index: int
 
-    # Lưu vị trí start của finger
+    # Lưu điểm bắt đầu của khoảng định danh finger
     start: int
 
-    # Lưu vị trí kết thúc khoảng finger
+    # Lưu điểm kết thúc của khoảng định danh finger
     interval_end: int
 
     # Lưu node_id mà finger trỏ tới
     node_id: int
 
-    # Chuyển FingerEntry sang dict để trả về cho API
+    # Chuyển đối tượng sang dictionary
     def to_dict(self) -> dict[str, int]:
-        # Trả về dữ liệu theo dạng dict
+
+        # Trả về dữ liệu finger entry dạng dictionary
         return {
             "index": self.index,
             "start": self.start,
@@ -31,35 +30,35 @@ class FingerEntry:
             "node_id": self.node_id,
         }
 
-
-# Đóng gói trạng thái của một node trong ring
+# Mô tả trạng thái một node trong vòng Chord
 @dataclass
 class Node:
 
-    # Lưu định danh node trên vòng
+    # Lưu định danh của node trên vòng Chord
     node_id: int
 
-    # Lưu trạng thái active của node
+    # Đánh dấu node còn hoạt động hay đã bị lỗi
     active: bool = True
 
-    # Lưu predecessor hiện tại
+    # Lưu predecessor hiện tại của node
     predecessor: int | None = None
 
-    # Lưu successor hiện tại
+    # Lưu successor hiện tại của node
     successor: int | None = None
 
-    # Lưu finger table của node
+    # Lưu bảng finger phục vụ định tuyến nhanh
     finger_table: list[FingerEntry] = field(default_factory=list)
 
-    # Lưu kho resource cục bộ mà node đang giữ
+    # Lưu các resource mà node đang giữ cục bộ
     local_resources: dict[str, ResourceRecord] = field(default_factory=dict)
 
-    # Chuyển Node sang dict để phục vụ hiển thị và API
+    # Chuyển đối tượng sang dictionary
     def to_dict(self) -> dict[str, Any]:
-        # Chuyển finger table sang danh sách dict
+
+        # Chuyển từng dòng finger table sang dictionary
         finger_rows = [entry.to_dict() for entry in self.finger_table]
 
-        # Trả về snapshot node theo dạng dict
+        # Trả về trạng thái node kèm finger table và tài nguyên local
         return {
             "node_id": self.node_id,
             "active": self.active,
@@ -70,29 +69,29 @@ class Node:
             "resources": [resource.to_dict() for resource in self.local_resources.values()],
         }
 
-
-# Đóng gói metadata của một tài nguyên trong ring
+# Mô tả metadata và replica của tài nguyên
 @dataclass
 class ResourceRecord:
 
-    # Lưu id tài nguyên
+    # Lưu ID gốc của resource do người dùng hoặc hệ thống tạo
     resource_id: str
 
-    # Lưu chuỗi SHA-1 digest gốc 40 ký tự hex (resource_id được băm SHA-1)
+    # Lưu giá trị hash đầy đủ của resource_id
     hashed_resource_id: str
 
-    # Lưu key băm của tài nguyên (digest mod 2^m, dùng cho Chord routing)
+    # Lưu khóa resource sau khi đưa vào không gian định danh Chord
     key: int
 
-    # Lưu owner_id chịu trách nhiệm chính
+    # Lưu node owner chịu trách nhiệm chính cho resource
     owner_id: int
 
-    # Lưu danh sách node giữ bản sao
+    # Lưu danh sách node đang giữ bản sao resource
     replica_node_ids: list[int] = field(default_factory=list)
 
-    # Chuyển ResourceRecord sang dict để trả về cho UI
+    # Chuyển đối tượng sang dictionary
     def to_dict(self) -> dict[str, int | str]:
-        # Trả về metadata dạng dict
+
+        # Trả về metadata resource kèm owner và danh sách replica
         return {
             "resource_id": self.resource_id,
             "hashed_resource_id": self.hashed_resource_id,
@@ -101,44 +100,44 @@ class ResourceRecord:
             "replica_node_ids": self.replica_node_ids,
         }
 
-
-# Đóng gói kết quả lookup để trả về UI
+# Mô tả kết quả truy vấn tài nguyên
 @dataclass
 class LookupResult:
 
-    # Lưu id người dùng yêu cầu lookup
+    # Lưu ID resource được yêu cầu lookup
     requested_id: str
 
-    # Lưu key tương ứng trên vòng
+    # Lưu khóa định danh đã dùng để route lookup
     key: int
 
-    # Lưu owner_id được định tuyến tới
+    # Lưu owner được tìm thấy sau khi định tuyến
     owner_id: int
 
-    # Lưu node bắt đầu lookup
+    # Lưu node bắt đầu truy vấn lookup
     start_node_id: int
 
-    # Lưu đường đi qua các node
+    # Lưu đường đi qua các node trong quá trình lookup
     path: list[int]
 
-    # Lưu số hop đã đi
+    # Lưu số hop của truy vấn lookup
     hops: int
 
-    # Lưu log theo từng bước định tuyến
+    # Lưu log chi tiết từng bước định tuyến
     logs: list[str]
 
-    # Lưu cờ tìm thấy dữ liệu
+    # Đánh dấu resource có được tìm thấy tại owner hay không
     found: bool = True
 
-    # Lưu cờ lookup theo key trực tiếp
+    # Đánh dấu lookup có dùng trực tiếp khóa số hay không
     direct_key: bool = False
 
-    # Lưu danh sách replica liên quan
+    # Lưu danh sách replica đi kèm kết quả lookup
     replica_node_ids: list[int] = field(default_factory=list)
 
-    # Chuyển LookupResult sang dict để trả về cho API
+    # Chuyển đối tượng sang dictionary
     def to_dict(self) -> dict[str, Any]:
-        # Trả về dữ liệu lookup theo dạng dict
+
+        # Trả về kết quả lookup kèm đường đi và log từng hop
         return {
             "requested_id": self.requested_id,
             "key": self.key,

@@ -30,7 +30,7 @@ body {
   line-height: 1.35;
 }
 
-/* Full-screen loading overlay shown while app auto-restores / auto-loads data */
+/* Hiển thị overlay toàn màn hình khi ứng dụng tự nạp dữ liệu */
 .app-loading-overlay {
   position: fixed;
   inset: 0;
@@ -157,7 +157,7 @@ body {
   line-height: 1.15;
 }
 
-/* Main layout: two rows - Ring State takes most space, Lookup+Topology below */
+/* Sắp xếp layout chính thành hai hàng với Ring State chiếm phần lớn */
 .layout {
   width: 100%;
   display: grid;
@@ -188,7 +188,7 @@ body {
   grid-column: 1 / -1;
 }
 
-/* Lookup + Topology in one row */
+/* Đặt Lookup và Topology trên cùng một hàng */
 .lookup-and-topology {
   grid-column: 1 / -1;
   display: grid;
@@ -204,12 +204,12 @@ body {
   flex-direction: column;
 }
 
-/* Metrics section at the very bottom, full width */
+/* Đặt khu vực Metrics ở cuối trang và chiếm toàn chiều rộng */
 .metrics-panel {
   grid-column: 1 / -1;
 }
 
-/* Ring State internal grid */
+/* Sắp xếp lưới nội bộ cho khu vực Ring State */
 .ring-state-panel .state-grid {
   display: grid;
   grid-template-columns: 75fr 25fr;
@@ -285,7 +285,7 @@ h3 {
 }
 
 .form-grid {
-  /* Grid giúp các input thẳng hàng nhưng vẫn co được khi màn hình hẹp */
+  /* Sắp xếp input thẳng hàng nhưng vẫn co được khi màn hình hẹp */
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
@@ -511,7 +511,7 @@ button.secondary[hidden] {
   letter-spacing: 0;
 }
 
-/* Summary table */
+/* Hiển thị bảng tóm tắt */
 .lookup-summary-table-wrap {
   overflow-x: auto;
   border: 1px solid #e2e8f0;
@@ -599,7 +599,7 @@ button.secondary[hidden] {
   color: #0369a1;
 }
 
-/* Route track */
+/* Hiển thị tuyến đường lookup */
 .lookup-route-track {
   display: flex;
   align-items: center;
@@ -677,7 +677,7 @@ button.secondary[hidden] {
   opacity: 0.6;
 }
 
-/* Log table */
+/* Hiển thị bảng log */
 .lookup-log-table-wrap {
   overflow-x: auto;
   border: 1px solid #e2e8f0;
@@ -786,7 +786,7 @@ button.secondary[hidden] {
   padding: 20px;
 }
 
-/* Legacy classes for older render paths (kept for compatibility) */
+/* Giữ class cũ để tương thích với nhánh render cũ */
 
 .node-pill {
   display: inline-flex;
@@ -883,13 +883,13 @@ button.secondary[hidden] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Finger Table column widths */
+/* Cố định chiều rộng cột Finger Table */
 .col-ft-index { width: 36px; text-align: center; }
 .col-ft-start { width: 24%; }
 .col-ft-end   { width: 24%; }
 .col-ft-node  { width: 38%; }
 
-/* Hash color override */
+/* Ghi đè màu hiển thị hash */
 .hashed-resource code {
   font-size: 0.6rem;
   color: var(--accent);
@@ -911,7 +911,7 @@ button.secondary[hidden] {
   background: #ffffff;
 }
 
-/* Denser node grid */
+/* Tăng mật độ hiển thị lưới node */
 .state-col-nodes .pill-list--fill {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
@@ -2041,7 +2041,7 @@ th {
   background: #f0fdfa;
 }
 
-/* Make topology image fill the entire frame */
+/* Cho ảnh topology phủ kín khung hiển thị */
 .topology-frame {
   position: relative;
   display: none;
@@ -2074,7 +2074,7 @@ th {
 }
 
 #toast {
-  /* Toast dùng cho phản hồi ngắn của các thao tác API */
+  /* Hiển thị toast dùng cho phản hồi ngắn của các thao tác API */
   position: fixed;
   right: 18px;
   bottom: 18px;
@@ -2372,7 +2372,7 @@ th {
   }
 }
 
-/* ======================== MODAL OVERLAY ======================== */
+/* Định dạng overlay modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -2511,7 +2511,7 @@ th {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ======================== TRACE DETAILS ======================== */
+/* Định dạng chi tiết trace */
 .trace-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

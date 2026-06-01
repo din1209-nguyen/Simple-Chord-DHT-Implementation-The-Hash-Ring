@@ -27,7 +27,7 @@
         </div>
         <div class="brand-text">
           <h1>Chord DHT</h1>
-          <p>Topic 61: Distributed Hash Ring</p>
+          <p>Topic: Distributed Hash Ring</p>
         </div>
       </div>
       <div class="status-strip">
@@ -203,7 +203,7 @@
 
         <div id="metricsOutput" class="metrics-content"></div>
 
-        <!-- Table above charts -->
+        <!-- Hiển thị bảng phía trên các biểu đồ -->
         <div id="hopsChartSweep" class="hops-chart-sweep" hidden>
           <div class="hops-chart-sweep-table-wrap">
             <table class="data-table hops-chart-sweep-table">
@@ -238,7 +238,7 @@
           </div>
         </div>
 
-        <!-- 3 matplotlib charts below table -->
+        <!-- Hiển thị ba biểu đồ matplotlib dưới bảng -->
         <div id="metricsSweepCharts" class="metrics-sweep-charts" hidden>
           <div class="chart-placeholder" hidden>Click "Run Metrics" to generate charts (N=1..50).</div>
           <div class="sweep-chart-item">
@@ -254,7 +254,7 @@
       </section>
     </main>
 
-    <!-- Form modal for add/edit operations -->
+    <!-- Hiển thị modal nhập liệu cho thao tác thêm và sửa -->
     <div id="formModal" class="form-modal" aria-hidden="true">
       <div class="form-dialog">
         <div class="modal-header">
@@ -280,13 +280,13 @@
       </div>
     </div>
 
-    <!-- Image modal for topology zoom -->
+    <!-- Hiển thị modal phóng to ảnh topology -->
     <div id="topologyModal" class="image-modal" aria-hidden="true">
       <button id="topologyCloseBtn" type="button" class="image-modal-close icon-btn">✕</button>
       <img id="topologyModalImage" class="modal-image" alt="Topology graph" />
     </div>
 
-    <!-- Toast notification -->
+    <!-- Hiển thị thông báo toast -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
     <script src="{{ url_for('static', filename='app.js') }}?v=120"></script>

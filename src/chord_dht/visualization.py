@@ -1,93 +1,83 @@
-# Vẽ đồ thị NetworkX và lưu ảnh PNG mô tả topology của Chord ring
-# Hỗ trợ highlight đường đi lookup để quan sát từng hop định tuyến
-
 from __future__ import annotations
 
-# Import math để tính tọa độ tròn
 import math
 
-# Import Path để thao tác đường dẫn lưu ảnh
 from pathlib import Path
 
-# Import Any để mô tả kiểu dữ liệu trả về
 from typing import Any
 
-# Import matplotlib để vẽ ảnh
 import matplotlib
 
-# Chọn backend không cần GUI để sinh ảnh trong nền
 matplotlib.use("Agg")
 
-# Import pyplot để tạo figure và lưu ảnh
 import matplotlib.pyplot as plt
 
-# Import networkx để dựng đồ thị định tuyến
 import networkx as nx
 
-# Import ChordRing để lấy trạng thái topology
 from .chord import ChordRing
 
-
-# Dựng graph có hướng từ trạng thái ring hiện tại
+# Dựng đồ thị topology từ trạng thái ring
 def build_topology_graph(ring: ChordRing) -> nx.DiGraph:
-    # Khởi tạo graph có hướng
+
+    # Tạo đồ thị có hướng để biểu diễn quan hệ successor và finger
     graph = nx.DiGraph()
 
-    # Lấy danh sách node active
+    # Lấy danh sách node active đang tham gia ring
     active_ids = ring.active_node_ids
 
-    # Thêm node trước để đảm bảo node luôn được vẽ
+    # Thêm toàn bộ node active vào đồ thị topology
     for node_id in active_ids:
         graph.add_node(node_id)
 
     # Duyệt từng node để thêm cạnh successor và finger
     for node_id in active_ids:
-        # Đọc node từ ring
+
+        # Lấy node hiện tại từ ring
         node = ring.nodes[node_id]
 
-        # Thêm cạnh successor để biểu diễn vòng chính
+        # Thêm cạnh successor khi successor còn active
         if node.successor is not None and node.successor in active_ids:
             graph.add_edge(node_id, node.successor, edge_type="successor")
 
-        # Duyệt finger table để thêm cạnh shortcut
+        # Duyệt finger table để thêm cạnh định tuyến nhanh
         for entry in node.finger_table:
-            # Bỏ qua finger trỏ về chính nó
-            # Bỏ qua finger trỏ tới node không active
+
+            # Bỏ qua finger trỏ tới node chết hoặc trỏ về chính nó
             if entry.node_id in active_ids and entry.node_id != node_id:
-                # Đọc edge_type hiện tại nếu cạnh đã tồn tại
+
                 existing_type = graph.get_edge_data(node_id, entry.node_id, {}).get("edge_type")
 
-                # Đánh dấu both khi cạnh vừa là successor vừa là finger
+                # Gộp loại cạnh khi successor cũng đồng thời là finger
                 edge_type = "both" if existing_type in {"successor", "both"} else "finger"
 
-                # Thêm cạnh finger vào graph
+                # Thêm cạnh finger hoặc cạnh gộp vào đồ thị
                 graph.add_edge(node_id, entry.node_id, edge_type=edge_type)
 
-    # Trả về graph đã dựng
+    # Trả về đồ thị đã gắn node và cạnh successor/finger
     return graph
 
-
-# Tính tọa độ node trên đường tròn theo tỉ lệ id trong không gian định danh
+# Tính tọa độ node trên vòng định danh
 def circular_identifier_positions(ring: ChordRing) -> dict[int, tuple[float, float]]:
-    # Khởi tạo dict lưu vị trí theo node_id
+
+    # Tạo map tọa độ cho từng node active
     positions: dict[int, tuple[float, float]] = {}
 
-    # Cố định bán kính vòng tròn
+    # Dùng bán kính cố định để đặt node trên vòng tròn đơn vị
     radius = 1.0
 
-    # Duyệt node active để tính vị trí
+    # Duyệt từng node active để tính góc theo không gian định danh
     for node_id in ring.active_node_ids:
-        # Tính góc theo tỉ lệ node_id trên vòng
+
+        # Tính góc của node dựa trên node_id và kích thước identifier space
         angle = -2 * math.pi * (node_id / ring.identifier_space)
 
-        # Đổi góc sang tọa độ x y
+        # Lưu tọa độ Descartes tương ứng với góc trên vòng tròn
         positions[node_id] = (radius * math.cos(angle), radius * math.sin(angle))
 
-    # Trả về bảng vị trí
+    # Trả về map node_id sang tọa độ hình tròn
     return positions
 
-
-# Vẽ topology ra PNG và highlight lookup path nếu được truyền vào
+# Lưu ảnh topology graph ra thư mục static
 def save_topology_graph(
     ring: ChordRing,
     output_path: str | Path,
@@ -95,64 +85,81 @@ def save_topology_graph(
     lookup_path: list[int] | None = None,
     title: str = "Chord Ring Topology",
 ) -> dict[str, Any]:
-    # Chuẩn hóa output_path sang Path
+
+    # Chuẩn hóa đường dẫn output thành Path
     output_path = Path(output_path)
 
-    # Tạo thư mục chứa ảnh nếu chưa có
+    # Tạo thư mục chứa ảnh topology nếu chưa tồn tại
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Dựng graph từ ring
+    # Dựng đồ thị topology từ ring hiện tại
     graph = build_topology_graph(ring)
 
-    # Tính vị trí node theo vòng
+    # Tính vị trí vẽ của từng node trên vòng định danh
     positions = circular_identifier_positions(ring)
 
-    # Lấy danh sách node active
+    # Lấy danh sách node active để vẽ node và tính kích thước ảnh
     active_ids = ring.active_node_ids
 
-    # Chuẩn hóa lookup_path thành list rỗng
+    # Chuẩn hóa lookup_path rỗng khi caller không truyền trace
     lookup_path = lookup_path or []
 
-    # Tạo danh sách cạnh trong lookup path
+    # Chuyển lookup_path thành danh sách cạnh liên tiếp để highlight
     lookup_edges = list(zip(lookup_path, lookup_path[1:]))
 
-    # Tạo set node thuộc path
+    # Tạo tập node nằm trên đường lookup để tô màu nổi bật
     path_set = set(lookup_path)
 
-    # Tô màu node thuộc path
+    # Chọn màu node theo trạng thái có nằm trên đường lookup hay không
     node_colors = [
         "#c2410c" if node_id in path_set else "#134e4a" for node_id in active_ids
     ]
 
-    # Lọc các cạnh successor để vẽ vòng chính
+    # Lọc các cạnh successor từ đồ thị
     successor_edges = [
         (source, target)
         for source, target, data in graph.edges(data=True)
         if data.get("edge_type") in {"successor", "both"}
     ]
 
-    # Lọc các cạnh finger để vẽ shortcut
+    # Lọc các cạnh finger từ đồ thị
     finger_edges = [
         (source, target)
         for source, target, data in graph.edges(data=True)
         if data.get("edge_type") in {"finger", "both"}
     ]
 
-    # Tính tham số hiển thị theo số node
+    # Đếm số node để điều chỉnh kích thước hình
     n = len(active_ids)
+
+    # Tính cạnh hình theo số node để giảm chồng lấn khi mạng lớn
     side = min(22.0, 13.0 + n * 0.09)
+
+    # Chọn DPI thấp hơn khi mạng lớn để giảm dung lượng ảnh
     dpi = 180 if n <= 40 else 150 if n <= 70 else 120
+
+    # Tính kích thước node theo mật độ mạng
     node_size = max(230.0, 860.0 - 4.6 * n)
+
+    # Tính độ dày cạnh finger theo mật độ mạng
     finger_w = max(0.7, 1.55 - 0.006 * n)
+
+    # Tính độ dày cạnh successor theo mật độ mạng
     succ_w = max(1.35, 2.15 - 0.007 * n)
+
+    # Tính độ mờ cạnh finger để ảnh bớt rối khi nhiều node
     finger_alpha = max(0.2, 0.36 - 0.002 * n)
 
-    # Tạo figure và tắt trục
+    # Tạo figure vuông cho topology ring
     plt.figure(figsize=(side, side), dpi=dpi)
+
+    # Tắt trục tọa độ để ảnh chỉ tập trung vào topology
     plt.axis("off")
+
+    # Giảm lề ngoài của hình
     plt.margins(0.005)
 
-    # Vẽ cạnh finger trước để nằm dưới
+    # Vẽ các cạnh finger bằng màu nhạt
     nx.draw_networkx_edges(
         graph,
         positions,
@@ -163,7 +170,7 @@ def save_topology_graph(
         width=finger_w,
     )
 
-    # Vẽ cạnh successor sau để nổi bật vòng chính
+    # Vẽ các cạnh successor bằng mũi tên rõ hơn
     nx.draw_networkx_edges(
         graph,
         positions,
@@ -175,7 +182,7 @@ def save_topology_graph(
         width=succ_w,
     )
 
-    # Vẽ node active lên trên cạnh
+    # Vẽ các node active trên vòng định danh
     nx.draw_networkx_nodes(
         graph,
         positions,
@@ -186,7 +193,7 @@ def save_topology_graph(
         edgecolors="#e2e8f0",
     )
 
-    # Vẽ cạnh lookup path khi có path
+    # Vẽ nổi bật đường lookup khi có cạnh lookup cần highlight
     if lookup_edges:
         nx.draw_networkx_edges(
             graph,
@@ -203,12 +210,13 @@ def save_topology_graph(
             min_target_margin=18,
         )
 
-    # Vẽ label khi số node không quá lớn
+    # Vẽ nhãn node khi số node đủ nhỏ để đọc được
     if n <= 60:
-        # Chọn font lớn để đọc trên UI
+
+        # Chọn cỡ chữ nhãn node
         label_font = 18.0
 
-        # Tạo bbox nền cho label thường
+        # Tạo nền nhãn cho node thông thường
         label_bbox = {
             "boxstyle": "round,pad=0.36",
             "facecolor": "#fafafa",
@@ -217,7 +225,7 @@ def save_topology_graph(
             "alpha": 0.97,
         }
 
-        # Tạo bbox nền cho label thuộc path
+        # Tạo nền nhãn nổi bật cho node nằm trên lookup path
         path_label_bbox = {
             "boxstyle": "round,pad=0.4",
             "facecolor": "#fff7ed",
@@ -226,24 +234,24 @@ def save_topology_graph(
             "alpha": 1.0,
         }
 
-        # Tạo set node thuộc path để lọc label
+        # Tạo tập node cần vẽ nhãn highlight
         path_nodes = set(lookup_path)
 
-        # Tạo label cho node thường
+        # Tạo nhãn cho các node không thuộc lookup path
         normal_labels = {
             node_id: str(node_id)
             for node_id in active_ids
             if node_id not in path_nodes
         }
 
-        # Tạo label cho node thuộc path theo thứ tự xuất hiện
+        # Tạo nhãn cho các node thuộc lookup path theo thứ tự trace
         path_labels = {
             node_id: str(node_id)
             for node_id in dict.fromkeys(lookup_path)
             if node_id in positions
         }
 
-        # Vẽ label cho node thường
+        # Vẽ nhãn node thông thường
         nx.draw_networkx_labels(
             graph,
             positions,
@@ -254,7 +262,7 @@ def save_topology_graph(
             bbox=label_bbox,
         )
 
-        # Vẽ label cho node thuộc path
+        # Vẽ nhãn node nằm trên lookup path
         nx.draw_networkx_labels(
             graph,
             positions,
@@ -265,7 +273,7 @@ def save_topology_graph(
             bbox=path_label_bbox,
         )
 
-    # Vẽ viền ngoài cho node thuộc path để nổi bật
+    # Khoanh nổi các node nằm trên đường lookup khi có trace
     if lookup_edges:
         nx.draw_networkx_nodes(
             graph,
@@ -277,16 +285,16 @@ def save_topology_graph(
             edgecolors="#dc2626",
         )
 
-    # Căn sát nội dung vào khung ảnh
+    # Căn hình sát khung ảnh để tận dụng diện tích hiển thị
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
-    # Lưu ảnh ra PNG
+    # Lưu ảnh topology ra đường dẫn output
     plt.savefig(output_path, bbox_inches="tight", pad_inches=0.01)
 
-    # Đóng figure để tránh rò bộ nhớ
+    # Đóng figure để giải phóng bộ nhớ matplotlib
     plt.close()
 
-    # Trả về report tóm tắt cho UI
+    # Trả về metadata ảnh topology vừa sinh
     return {
         "node_count": len(active_ids),
         "successor_edges": len(successor_edges),

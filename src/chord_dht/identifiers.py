@@ -1,39 +1,38 @@
 from __future__ import annotations
 
-# Import hashlib để băm định danh theo SHA1
 import hashlib
 
-
-# Băm một định danh đầu vào thành key nằm trong không gian định danh m bit
+# Băm định danh vào không gian m bit
 def hash_identifier(value: str | int, m: int = 16) -> int:
-    # Kiểm tra số bit m hợp lệ
+
+    # Kiểm tra số bit định danh nằm trong miền SHA-1 hỗ trợ
     if not 1 <= m <= 160:
         raise ValueError("m must be between 1 and 160")
 
-    # Chuẩn hóa value sang chuỗi để băm nhất quán
+    # Chuẩn hóa giá trị đầu vào thành bytes UTF-8
     text = str(value).encode("utf-8")
 
-    # Tính digest SHA1 dưới dạng hex
+    # Tính digest SHA-1 dạng hex cho định danh
     digest = hashlib.sha1(text).hexdigest()
 
-    # Quy đổi digest sang số nguyên và co lại theo không gian m bit
+    # Co digest về không gian định danh m bit
     return int(digest, 16) % (2**m)
 
-
-# Băm một resource_id thành SHA-1 digest gốc (40 ký tự hex)
-# và trả về tuple (digest, key) trong đó:
-#   - digest: chuỗi SHA-1 hex 40 ký tự (giá trị hashed_resource_id)
-#   - key: giá trị băm mod 2^m dùng cho Chord routing
+# Băm mã tài nguyên thành digest và key
 def hash_resource(resource_id: str, m: int = 16) -> tuple[str, int]:
+    # Kiểm tra số bit định danh nằm trong miền SHA-1 hỗ trợ
     if not 1 <= m <= 160:
         raise ValueError("m must be between 1 and 160")
+    # Chuẩn hóa resource_id thành bytes UTF-8
     text = str(resource_id).encode("utf-8")
+    # Tính digest SHA-1 đầy đủ để hiển thị hashed_resource_id
     digest = hashlib.sha1(text).hexdigest()
+    # Co digest về key Chord trong không gian m bit
     key = int(digest, 16) % (2**m)
+    # Trả về digest đầy đủ và key dùng để định tuyến
     return digest, key
 
-
-# Kiểm tra một giá trị có thuộc khoảng theo chiều kim đồng hồ trên vòng hay không
+# Kiểm tra giá trị nằm trong khoảng theo chiều kim đồng hồ
 def in_clockwise_interval(
     value: int,
     start: int,
@@ -42,19 +41,22 @@ def in_clockwise_interval(
     include_start: bool = False,
     include_end: bool = True,
 ) -> bool:
-    # Trả True khi start trùng end vì khoảng bao phủ toàn vòng
+
+    # Xem khoảng trùng điểm đầu cuối là bao phủ toàn vòng
     if start == end:
+        # Trả về True vì mọi giá trị đều thuộc toàn vòng
         return True
 
-    # Kiểm tra điều kiện biên trái
+    # Kiểm tra biên trái theo tùy chọn include_start
     left_ok = value > start or (include_start and value == start)
 
-    # Kiểm tra điều kiện biên phải
+    # Kiểm tra biên phải theo tùy chọn include_end
     right_ok = value < end or (include_end and value == end)
 
-    # Trả về điều kiện trong trường hợp khoảng không bị wrap
+    # Kiểm tra khoảng không bị wrap qua điểm 0
     if start < end:
+        # Trả về kết quả khi giá trị thỏa cả hai biên
         return left_ok and right_ok
 
-    # Trả về điều kiện trong trường hợp khoảng bị wrap qua điểm 0
+    # Trả về kết quả khi khoảng bị wrap qua điểm 0
     return left_ok or right_ok

@@ -1,5 +1,4 @@
-// Gom toàn bộ DOM reference vào một object để các handler bên dưới không phải
-// query lặp lại nhiều lần
+// Gom toàn bộ DOM reference vào một object để các handler bên dưới không phải query lặp lại nhiều lần
 const els = {
   nodesInput: document.querySelector("#nodesInput"),
   resourcesInput: document.querySelector("#resourcesInput"),
@@ -74,8 +73,7 @@ const fingerPlaceholder = `
   </tr>
 `;
 
-// Thoát dữ liệu nhận từ API trước khi nhúng vào HTML để tránh lỗi hiển thị và
-// tránh chèn HTML ngoài ý muốn
+// Thoát dữ liệu nhận từ API trước khi nhúng vào HTML để tránh lỗi hiển thị và tránh chèn HTML ngoài ý muốn
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -95,8 +93,7 @@ function showToast(message) {
   window.toastTimer = window.setTimeout(() => els.toast.classList.remove("show"), 3200);
 }
 
-// Gọi API dùng chung cho GET/POST/PUT/DELETE. Nếu backend trả lỗi, hàm ném exception
-// để các handler hiển thị lỗi thống nhất
+// Gọi API dùng chung cho GET/POST/PUT/DELETE. Nếu backend trả lỗi, hàm ném exception để các handler hiển thị lỗi thống nhất
 async function api(path, payload, method = "POST") {
   const hasPayload = payload !== undefined;
   const response = await fetch(path, {
@@ -217,8 +214,7 @@ async function submitFormModal() {
   }
 }
 
-// Cập nhật metrics và topology tuần tự để tránh matplotlib lỗi khi hai request song song
-// và tránh race trên nút Run Metrics / Topology
+// Cập nhật metrics và topology tuần tự để tránh matplotlib lỗi khi hai request song song và tránh race trên nút Run Metrics / Topology
 async function refreshArtifacts() {
   const activeNodes = Number(currentActiveNodeCount) || 0;
   if (activeNodes > 60) {
@@ -265,7 +261,7 @@ let artifactGeneration = 0;
 let showPrimaryOnly = true;
 let showReplicaOnly = true;
 
-// Single-process: no per-node site metadata.
+// Ghi nhận chế độ single-process không dùng metadata site riêng cho từng node
 function nodeSite(nodeId) {
   const numericId = Number(nodeId);
   const site = currentSites.find((s) => Number(s.node_id) === numericId);
@@ -705,9 +701,9 @@ function renderTopologyArtifact(topology, generation = artifactGeneration) {
   els.topologyFrame.classList.add("is-ready");
   els.topologyFrame.classList.remove("loading");
 
-  // Render overlay summary on top of the topology image (not below).
+  // Hiển thị tóm tắt topology đè trên ảnh đồ thị
 
-  // Keep legacy output text empty to avoid UI duplication.
+  // Giữ vùng output cũ rỗng để tránh trùng nội dung UI
   if (els.topologyOutput) {
     els.topologyOutput.innerHTML = "";
   }
@@ -767,7 +763,7 @@ function setMetricChartsReady(chartUrls, generation = artifactGeneration) {
       return;
     }
 
-    // Attach handlers BEFORE setting src to handle fast cached loads
+    // Gắn handler trước khi đặt src để bắt kịp ảnh đã cache
     image.onload = () => {
       if (generation !== artifactGeneration) return;
       image.style.display = "block";
@@ -777,7 +773,7 @@ function setMetricChartsReady(chartUrls, generation = artifactGeneration) {
       image.style.display = "none";
     };
 
-    // Set src last so the handlers are ready for any load outcome
+    // Đặt src sau cùng để handler sẵn sàng cho mọi kết quả tải ảnh
     if (generation === artifactGeneration) {
       image.src = url;
     }
@@ -815,15 +811,15 @@ function renderNodeRemovalReport(report) {
     ? report.replica_repaired_resource_ids
     : [];
 
-  // Resources with no replica to recover from
+  // Liệt kê resource không còn replica để phục hồi
   const lostCount = Number(report.lost_resource_total_count ?? 0);
   const lostSamples = Array.isArray(report.lost_resource_ids) ? report.lost_resource_ids : [];
 
-  // Finger table repair stats from backend
+  // Hiển thị thống kê sửa finger table từ backend
   const updatedFingerTables = Number(report.updated_finger_tables ?? 0);
   const updatedFingerEntries = Number(report.updated_finger_entries ?? 0);
 
-  // Helper to render a short resource list with "+N more" when truncated
+  // Rút gọn danh sách resource bằng hậu tố +N khi bị cắt
   const sampleList = (items, emptyText, totalCount = items.length) => {
     if (!items.length) {
       return `<div class="kill-resource-empty">${escapeHtml(emptyText)}</div>`;
@@ -834,7 +830,7 @@ function renderNodeRemovalReport(report) {
     return `<div class="kill-resource-samples">${shown}${more}</div>`;
   };
 
-  // Determine summary badge color
+  // Chọn màu badge tóm tắt theo kết quả phục hồi
   const totalLost = lostCount;
   const summaryStatus = totalLost === 0
     ? '<span class="kill-status-badge kill-status-ok">All resources safe</span>'
@@ -984,8 +980,7 @@ async function loadState() {
   renderState(data.state);
 }
 
-// Render số node, resource mẫu, danh sách node active và preview Finger Table
-// Hiển thị snapshot trạng thái do coordinator thu thập từ các node đang sống
+// Hiển thị số node, resource mẫu, danh sách node active và preview Finger Table
 function renderState(state) {
   currentActiveNodeCount = Number(state.active_node_count) || 0;
   currentActiveNodes = Array.isArray(state.active_nodes) ? state.active_nodes.map(Number) : [];
@@ -1082,7 +1077,7 @@ async function loadFingerPreview(nodeId) {
 // Gửi cấu hình lên backend để tạo lại mạng Chord từ đầu
 async function initializeNetwork() {
   const nodeCount = Number(els.nodesInput.value);
-  // Single-process mode: no base port / storage dir needed; inputs are readonly.
+  // Ghi nhận chế độ single-process không cần base port hoặc storage dir
   setBusy(els.initializeBtn, true, "Initializing...");
   try {
     const data = await api("/api/initialize", {
@@ -1140,7 +1135,7 @@ function renderLookupResult(result) {
   // ── Hop-by-Hop Logs ───────────────────────────────────────────────────────
   const logs = visibleHopLogs(result.logs);
 
-  // Each log line: strip the "[N] " or "Hop N: " prefix if present, then render in table
+  // Chuẩn hóa tiền tố log trước khi hiển thị trong bảng
   const logRowsHTML = logs.map((l, i) => {
     const step = i + 1;
     const text = normalizeLogText(l);
@@ -1427,7 +1422,7 @@ function buildHopsSweepRow(point, index) {
   `;
 }
 
-// Render toàn bộ hops_chart_sweep
+// Hiển thị toàn bộ hops_chart_sweep
 function renderHopsChartSweep(sweepPoints) {
   if (!els.hopsChartSweep || !els.hopsChartSweepOutput) return;
   const maxRows = 50;
@@ -1468,7 +1463,7 @@ async function runMetrics(silent = false) {
       return;
     }
 
-    // Clear old metrics output area (replaced by hops_chart_sweep)
+    // Xóa vùng metrics cũ vì đã thay bằng bảng hops_chart_sweep
     if (els.metricsOutput) {
       els.metricsOutput.innerHTML = "";
     }
@@ -1605,7 +1600,7 @@ bindClick(els.addResourceBtn, addResource);
 bindClick(els.metricsBtn, () => runMetrics(false));
 bindClick(els.metricsTraceClose, closeMetricsTrace);
 bindClick(els.resourceInfoClose, closeResourceInfoOverlay);
-// Topology expand/close
+// Gắn sự kiện mở và đóng cửa sổ topology
 bindClick(els.topologyExpandBtn, openTopologyModal);
 bindClick(els.topologyCloseBtn, closeTopologyModal);
 bindClick(els.formModalCancelBtn, closeFormModal);
@@ -1653,7 +1648,7 @@ if (els.resourceTableFilter) {
   els.resourceTableFilter.addEventListener("input", applyResourceTableFilter);
 }
 
-// Filter toggle handlers
+// Gắn sự kiện bật tắt bộ lọc tài nguyên
 if (els.showPrimaryBtn) {
   els.showPrimaryBtn.addEventListener("click", () => {
     showPrimaryOnly = !showPrimaryOnly;
@@ -1668,8 +1663,7 @@ if (els.showReplicaBtn) {
     applyResourceTableFilter();
   });
 }
-// Tải snapshot ban đầu, sinh topology và khôi phục metrics đã lưu nếu còn khớp ring hiện tại
-// No global loading overlay (use per-section loading only).
+// Tải snapshot ban đầu, sinh topology và khôi phục metrics đã lưu nếu còn khớp ring hiện tại No global loading overlay (use per-section loading only)
 function setAppLoadingStatus(_msg) {}
 
 function hideAppLoading() {}
@@ -1681,8 +1675,7 @@ loadState()
     clearGeneratedArtifacts();
     await generateTopology(true, false);
 
-    // Load persisted metrics from last /api/metrics run.
-    // Strict protocol metrics can be expensive, so run it only when the user clicks Run Metrics.
+    // Tải metrics đã lưu và chỉ chạy metrics protocol đầy đủ khi người dùng bấm Run Metrics
     let usedPersistedMetrics = false;
     try {
       const last = await api("/api/metrics/last");
@@ -1690,7 +1683,7 @@ loadState()
       if (saved && Array.isArray(saved.sweep_points) && saved.sweep_points.length > 0) {
         const savedActiveNodes = Number(saved.active_nodes) || 0;
         const currentNodes = Number(currentActiveNodeCount) || 0;
-        // Only reuse if node count matches (ring not resized since last metrics run)
+        // Chỉ tái sử dụng metrics khi số node khớp với ring hiện tại
         if (savedActiveNodes === currentNodes && currentNodes > 0) {
           renderHopsChartSweep(saved.sweep_points);
           setMetricChartsReady(
