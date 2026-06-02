@@ -180,7 +180,7 @@ def test_add_node_rebalances_primary_interval_and_successor_replicas():
     ring.nodes[220] = Node(node_id=220, active=True, predecessor=150, successor=50)
 
     # Làm mới finger table cho topology ban đầu
-    ring.refresh_all_finger_tables()
+    ring.run_protocol_until_stable()
 
     # Tạo resource có key thuộc khoảng (50, 130] nên sẽ chuyển primary sang node mới
     moving_resource = ResourceRecord("moving-resource", "hash-moving", 120, 150)
@@ -251,6 +251,52 @@ def test_recover_failed_node_repairs_fingers_and_resource_mapping():
     assert ring.verify_resource_mapping()
 
 
+def test_route_repair_does_not_move_resources_before_recovery():
+    ring = ChordRing(m=8, seed=61, replication_count=2)
+    ring.initialize_network(node_count=10, resource_count=20, seed=61, replication_count=2)
+    failed_node_id = next(iter(ring.resources.values())).owner_id
+
+    ring.mark_node_failed(failed_node_id)
+    owners_before_route_repair = {
+        resource_id: resource.owner_id
+        for resource_id, resource in ring.resources.items()
+    }
+
+    active_node_id = ring.active_node_ids[0]
+    ring._repair_node_after_failure(active_node_id, failed_node_id)
+
+    assert {
+        resource_id: resource.owner_id
+        for resource_id, resource in ring.resources.items()
+    } == owners_before_route_repair
+
+
+def test_fix_fingers_recomputes_successor_start_even_when_existing_finger_is_wrong():
+    ring = ChordRing(m=16, seed=61, replication_count=1)
+    for node_id in [18652, 19570, 21012, 24076, 30016, 37252, 51502]:
+        ring.nodes[node_id] = Node(node_id=node_id, active=True)
+
+    ordered = ring.active_node_ids
+    for index, node_id in enumerate(ordered):
+        ring.nodes[node_id].predecessor = ordered[(index - 1) % len(ordered)]
+        ring.nodes[node_id].successor = ordered[(index + 1) % len(ordered)]
+
+    ring.run_protocol_until_stable()
+    stale_entry = ring.nodes[18652].finger_table[13]
+    ring.nodes[18652].finger_table[13] = type(stale_entry)(
+        index=stale_entry.index,
+        start=stale_entry.start,
+        interval_end=stale_entry.interval_end,
+        node_id=19570,
+    )
+
+    ring._protocol_ticks = 13
+    ring.fix_fingers_one(18652)
+
+    assert ring.nodes[18652].finger_table[13].start == 26844
+    assert ring.nodes[18652].finger_table[13].node_id == 30016
+
+
 def test_recover_reconciles_resource_copies_with_wrong_active_owner():
     ring = ChordRing(m=16, seed=61, replication_count=1)
     ring.nodes[3265] = Node(node_id=3265, active=True, predecessor=60689, successor=4280)
@@ -258,7 +304,7 @@ def test_recover_reconciles_resource_copies_with_wrong_active_owner():
     ring.nodes[60689] = Node(node_id=60689, active=True, predecessor=4280, successor=3265)
     ring.nodes[199] = Node(node_id=199, active=False)
     ring.failed_nodes.add(199)
-    ring.refresh_all_finger_tables()
+    ring.run_protocol_until_stable()
 
     resource = ResourceRecord(
         resource_id="resource-0004",
@@ -308,6 +354,11 @@ def test_kill_endpoint_only_reports_impact_and_recover_endpoint_repairs(client):
 
     assert recovered["ok"] is True
     assert "recovered_resource_total_count" in recovered["report"]
+    recovered_impact = recovered["report"]["impact_report"]
+    assert any(
+        item["resource_id"] == resource["resource_id"] and item["failure_role"] == "owner"
+        for item in recovered_impact["affected_resources"]
+    )
     assert recovered["state"]["stale_finger_entries"] == []
     assert node_id not in recovered["state"]["failed_nodes"]
     assert node_id in recovered["state"]["retired_nodes"]
@@ -422,7 +473,7 @@ def test_recover_does_not_restore_metadata_only_resource():
     ring.nodes[60689] = Node(node_id=60689, active=True, predecessor=4280, successor=3265)
     ring.nodes[199] = Node(node_id=199, active=False)
     ring.failed_nodes.add(199)
-    ring.refresh_all_finger_tables()
+    ring.run_protocol_until_stable()
 
     resource = ResourceRecord(
         resource_id="metadata-only",

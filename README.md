@@ -1,222 +1,260 @@
-# Chord DHT Simulator
+# Simple Chord DHT Implementation
 
-Ứng dụng web mô phỏng **Chord Distributed Hash Table (DHT)** cho đề tài **Peer-to-Peer Data Management / Chord DHT**. Dự án minh họa cách một hệ thống P2P phân tán ánh xạ tài nguyên vào vòng định danh, định tuyến truy vấn bằng finger table, xử lý node join/leave/failure, sao lưu dữ liệu bằng replica và đo hiệu năng lookup theo số lượng node.
+Ung dung web mo phong **Chord Distributed Hash Table (DHT)** cho de tai **Topic 61 - Simple Chord DHT Implementation**. Du an minh hoa cach node va resource duoc anh xa vao vong dinh danh, cach lookup dung finger table, cach node join/failure anh huong toi topology, va cach replication giup phuc hoi du lieu khi node loi.
 
-## Thông Tin Dự Án
+> Day la mo phong single-process phuc vu hoc tap va demo. Moi node la mot object trong bo nho, khong phai mot process/may doc lap trong mang P2P that.
 
-| Mục | Nội dung |
+## Thong Tin Du An
+
+| Muc | Noi dung |
 | --- | --- |
-| Chủ đề | Topic 61 - Simple Chord DHT Implementation |
-| Thành viên | Nguyễn Đông Din |
-| Môn học | Cơ Sở Dữ Liệu Phân Tán |
-| Ngôn ngữ | Python, JavaScript, HTML, CSS |
+| Chu de | Topic 61 - Simple Chord DHT Implementation |
+| Mon hoc | Co So Du Lieu Phan Tan |
+| Ngon ngu | Python, JavaScript, HTML, CSS |
 | Backend | Flask |
 | Visualization | Matplotlib, NetworkX |
-| Kiểu triển khai | Single-process simulation |
+| Kieu trien khai | Single-process Chord simulator |
 
-## Mục Lục
+## Tinh Nang Chinh
 
-- [Tổng Quan](#tổng-quan)
-- [Mục Tiêu Dự Án](#mục-tiêu-dự-án)
-- [Kiến Thức Chord DHT](#kiến-thức-chord-dht)
-- [Tính Năng Chính](#tính-năng-chính)
-- [Kiến Trúc Hệ Thống](#kiến-trúc-hệ-thống)
-- [Luồng Hoạt Động](#luồng-hoạt-động)
-- [Cấu Trúc Thư Mục](#cấu-trúc-thư-mục)
-- [Cài Đặt](#cài-đặt)
-- [Chạy Ứng Dụng](#chạy-ứng-dụng)
-- [Hướng Dẫn Sử Dụng](#hướng-dẫn-sử-dụng)
-- [API Endpoints](#api-endpoints)
-- [Dữ Liệu Lưu Trữ](#dữ-liệu-lưu-trữ)
-- [Metrics Và Visualization](#metrics-và-visualization)
-- [Kiểm Thử](#kiểm-thử)
-- [Thuật Ngữ](#thuật-ngữ)
+- Khoi tao Chord ring voi so node, so resource, `m`, `seed` va `replication_count`.
+- Hash node/resource vao cung khong gian dinh danh `2^m`.
+- Xac dinh owner cua resource theo quy tac `successor(resource_key)`.
+- Hien thi `successor`, `predecessor`, finger table va local resource cua tung node.
+- Lookup resource bang Chord routing va `closest preceding finger`.
+- Them node moi va rebalance dung khoang key bi anh huong.
+- Kill node de mo phong failure, hien thi impact truoc recovery.
+- Recover node failure bang cach sua ring, sua finger table, promote primary tu replica song va dat lai replica.
+- Hien thi topology, lookup path, resource distribution va metrics.
+- Luu trang thai ring vao `data/state.json` de autoload sau khi restart server.
 
-## Tổng Quan
+## Ly Thuyet Chord Duoc Mo Phong
 
-Chord DHT là một giao thức quản lý dữ liệu P2P sử dụng vòng định danh để phân phối key và tài nguyên lên các node. Mỗi node chỉ cần biết một lượng nhỏ thông tin định tuyến thông qua successor, predecessor và finger table, nhưng vẫn có thể tìm owner của một key với độ phức tạp kỳ vọng **O(log N)**.
+### Vong dinh danh
 
-Dự án này mô phỏng đầy đủ các thành phần cốt lõi của Chord:
-
-- Sinh node ID và resource key bằng SHA-1 trong không gian `2^m`
-- Sắp xếp node trên vòng định danh
-- Xác định owner của resource bằng `successor(key)`
-- Xây dựng finger table cho từng node
-- Định tuyến lookup bằng thuật toán closest preceding finger
-- Thêm node, xóa node và mô phỏng node failure
-- Sao lưu resource qua các successor node
-- Sinh biểu đồ topology và biểu đồ hiệu năng lookup
-- Persist trạng thái ring xuống file JSON để khôi phục sau khi restart server
-
-## Mục Tiêu Dự Án
-
-Dự án được xây dựng để phục vụ học tập và trình bày trong môn Cơ Sở Dữ Liệu Phân Tán. Các mục tiêu chính gồm:
-
-1. Mô phỏng cách Chord DHT phân phối dữ liệu trong mạng ngang hàng
-2. Minh họa cơ chế lookup theo finger table thay vì duyệt tuyến tính toàn bộ node
-3. Thể hiện quá trình node tham gia, rời mạng và làm ổn định lại topology
-4. Mô phỏng fault tolerance thông qua replica và recovery khi node lỗi
-5. Cung cấp giao diện trực quan để quan sát ring, finger table, resource ownership và lookup path
-6. Đo lường số hop, latency mô phỏng và message overhead khi số node thay đổi
-
-## Kiến Thức Chord DHT
-
-### Không gian định danh
-
-Chord sử dụng không gian định danh dạng vòng với kích thước `2^m`. Trong dự án, giá trị mặc định thường dùng là `m = 16`, tương ứng không gian ID từ `0` đến `65535`.
+Chord dung khong gian dinh danh dang vong:
 
 ```text
 identifier_space = 2^m
-node_id = SHA1("node:<seed>:<attempt>") mod 2^m
+```
+
+Voi cau hinh thuong dung `m = 16`, ID nam trong khoang:
+
+```text
+0 -> 65535
+```
+
+Node ID va resource key duoc sinh bang SHA-1 roi rut gon vao khong gian `2^m`:
+
+```text
+node_id      = SHA1(...) mod 2^m
 resource_key = SHA1(resource_id) mod 2^m
 ```
 
-### Owner của resource
+### Seed
 
-Một resource được gán cho node đầu tiên có ID lớn hơn hoặc bằng key của resource theo chiều kim đồng hồ trên vòng. Node đó được gọi là successor của key.
+`seed` giup ket qua random co the tai lap. Neu dung cung mot seed, danh sach node ID/resource ID sinh ra se giong nhau giua cac lan chay. Dieu nay giup demo va debug on dinh, vi du loi o node `18652` co the tai hien lai chinh xac.
+
+### Owner cua resource
+
+Resource duoc luu chinh tai node `successor(resource_key)`:
 
 ```text
 owner(resource) = successor(resource_key)
 ```
 
-Nếu key lớn hơn tất cả node ID hiện có, owner sẽ quay vòng về node có ID nhỏ nhất.
+`successor(key)` la node active dau tien theo chieu kim dong ho co ID lon hon hoac bang key. Neu khong co node nao lon hon key, ket qua quay vong ve node nho nhat.
+
+Vi du:
+
+```text
+active nodes = [18652, 19570, 24076, 30016, 37252]
+resource_key = 26844
+owner = 30016
+```
+
+### Khoang so huu cua node
+
+Mot node `n` so huu cac key nam trong khoang:
+
+```text
+(predecessor(n), n]
+```
+
+Vi du node `3265` co predecessor la `60689`, thi khoang so huu la:
+
+```text
+(60689, 3265]
+```
+
+Khoang nay wrap qua 0, nen key `1202` thuoc ve node `3265`.
 
 ### Finger table
 
-Mỗi node có `m` finger entry. Entry thứ `i` của node `n` bắt đầu tại:
+Moi node co `m` dong finger table. Voi node `n`, dong thu `i` duoc tinh:
 
 ```text
 start_i = (n + 2^(i - 1)) mod 2^m
-finger_i = successor(start_i)
+end_i   = (n + 2^i) mod 2^m
+node_i  = successor(start_i)
 ```
 
-Finger table giúp node nhảy xa hơn trên vòng thay vì chỉ đi từng successor. Nhờ đó lookup có thể đạt độ phức tạp kỳ vọng `O(log N)`.
+Finger table khong chon node ngau nhien. Moi dong dai dien cho mot buoc nhay theo luy thua cua 2, giup lookup di nhanh hon thay vi duyet tung successor.
+
+Vi du voi node `18652`, `m = 16`:
+
+```text
+finger #14:
+start = 18652 + 2^13 = 26844
+node  = successor(26844)
+```
+
+Neu node active dau tien sau `26844` la `30016`, thi finger #14 phai tro toi `30016`.
 
 ### Lookup
 
-Khi một node cần tìm owner của key:
+Lookup dung finger table de dinh tuyen toi owner:
 
-1. Kiểm tra node hiện tại có sở hữu key không
-2. Nếu chưa sở hữu, chọn finger gần key nhất nhưng không vượt quá key
-3. Chuyển tiếp truy vấn tới finger đó
-4. Lặp lại cho đến khi tìm được owner
+```text
+1. Bat dau tu mot node active.
+2. Neu key thuoc (predecessor(current), current], current la owner.
+3. Neu key thuoc (current, successor], successor la owner.
+4. Neu chua toi owner, chon closest preceding finger gan key nhat.
+5. Lap lai cho toi khi tim duoc owner.
+```
 
-Trong giao diện, lookup path được hiển thị để người dùng thấy truy vấn đi qua những node nào.
+Diem quan trong:
 
-## Tính Năng Chính
+- `closest_preceding_finger` dung cho qua trinh lookup/routing.
+- Finger table duoc tinh bang `successor(start)`.
+- Verify finger table cung so voi `successor(start)`, khong dung route de tranh che loi khi bang dang stale.
 
-### Quản lý mạng Chord
+## Replication
 
-- Khởi tạo ring với số node, số resource, `m`, `seed` và số replica tùy chọn
-- Thêm node mới vào ring và tự động stabilize topology
-- Xóa node khỏi ring sau khi xử lý trạng thái active/inactive
-- Mô phỏng node failure bằng thao tác kill node
-- Cập nhật successor, predecessor và finger table sau các thay đổi topology
+Moi resource co:
 
-### Quản lý resource
+```text
+owner_id
+replica_node_ids
+```
 
-- Thêm resource mới vào ring bằng Chord routing
-- Lookup resource và trả về owner, key, số hop, path và log định tuyến
-- Cập nhật resource bằng cách xóa bản cũ và put bản mới
-- Xóa resource khỏi owner và các replica liên quan
-- Liệt kê toàn bộ resource đang được quản lý
+Owner la node chinh. Replica duoc dat tren cac successor ke tiep cua owner, khong trung owner.
 
-### Replication và recovery
+Vi du:
 
-- Lưu resource tại owner và các successor tiếp theo tùy theo `replication_count`
-- Theo dõi danh sách replica của từng resource
-- Khi node bị kill, hệ thống chạy recovery để giữ resource tiếp tục khả dụng nếu còn replica hợp lệ
-- Ghi nhận trạng thái node lỗi trong `failed_nodes`
+```text
+owner = 30016
+successor chain = 30016 -> 37252 -> 51502
+replication_count = 2
+replica_node_ids = [37252, 51502]
+```
 
-### Visualization
+Neu `replication_count` lon hon so node co the dat replica, he thong dung `effective_replica_count`:
 
-- Sinh ảnh topology của vòng Chord bằng NetworkX và Matplotlib
-- Hiển thị successor edge và finger edge
-- Highlight lookup path khi người dùng vừa tra cứu resource
-- Sinh biểu đồ metric gồm average hops, latency mô phỏng và message overhead
+```text
+effective_replica_count = min(replication_count, active_nodes - 1)
+```
 
-### Persist state
+## Node Join
 
-- Lưu toàn bộ trạng thái ring vào `data/state.json`
-- Lưu dataset node ban đầu vào `data/node_ids.json`
-- Lưu dataset resource ban đầu vào `data/resource_ids.json`
-- Tự động autoload state khi server nhận request đầu tiên
+Khi them node moi:
 
-## Kiến Trúc Hệ Thống
+```text
+1. Node moi duoc gan node_id.
+2. Node duoc chen vao dung vi tri tren vong.
+3. Successor/predecessor duoc stabilize lai.
+4. Finger table chay protocol toi khi stable.
+5. Resource thuoc khoang (predecessor(new_node), new_node] chuyen sang node moi.
+6. Replica placement duoc tinh lai.
+```
+
+Y nghia ly thuyet: nho consistent hashing, node join khong lam phan phoi lai toan bo du lieu, chi cac key trong khoang node moi chiu trach nhiem bi anh huong.
+
+## Node Failure Va Recovery
+
+Flow failure trong du an duoc tach thanh hai buoc de de demo.
+
+### 1. Kill node
+
+Khi bam **Kill**, node duoc danh dau inactive va them vao `failed_nodes`. He thong chua phuc hoi ngay, ma hien thi impact:
+
+- Failed node.
+- Old predecessor va old successor.
+- Cac finger entry dang tro toi failed node.
+- Primary resource do failed node lam owner.
+- Replica resource dang dat tren failed node.
+
+Node failed khong con duoc xem la nguon du lieu tin cay.
+
+### 2. Recover
+
+Khi bam **Recover**, he thong thuc hien:
+
+```text
+1. Xac nhan node failed.
+2. Noi old predecessor voi old successor de va ring.
+3. Sua finger table dang tro toi node chet bang successor(entry.start).
+4. Voi primary resource bi anh huong, promote tu replica con song.
+5. Voi replica resource bi anh huong, loai replica chet va dat replica moi.
+6. Don metadata resource bi mat neu khong con ban copy active.
+```
+
+Neu primary resource khong con replica song, resource duoc xem la lost.
+
+## Protocol Tick Va Stabilization
+
+Du an co hai ham chinh de mo phong protocol Chord:
+
+```text
+run_protocol_tick()
+run_protocol_until_stable()
+```
+
+Mot tick thuc hien tren toan bo node active:
+
+```text
+1. stabilize_one(node)
+2. check_predecessor_one(node)
+3. fix_fingers_one(node)
+```
+
+Moi tick chi sua mot dong finger table tren moi node. Vi finger table co `m` dong, `run_protocol_until_stable()` chay toi thieu `m` tick de quet du mot vong finger table, roi dung khi routing snapshot khong con thay doi.
+
+## Kien Truc
 
 ```text
 Browser
   |
-  | HTTP / REST API
+  | REST API
   v
 app.py
   |
-  | Điều phối request, validate payload, persist state
+  | Flask routes, validation, state persistence
   v
 ChordRing
   |
-  | Quản lý node, resource, routing, replication, metrics
+  | Chord protocol, lookup, join, failure, replication
   v
 src/chord_dht/*
   |
-  | Lưu snapshot JSON và ảnh biểu đồ
+  | JSON state + generated metric/topology images
   v
-data/* + static/metrics/*
+data/* + static/*
 ```
 
-### Vai trò các thành phần
-
-| Thành phần | Vai trò |
+| Thanh phan | Vai tro |
 | --- | --- |
-| `app.py` | Flask server, REST API, persist state, điều phối metric và topology |
-| `src/chord_dht/chord.py` | Cài đặt lớp `ChordRing`, routing, join, stabilize, lookup, replication |
-| `src/chord_dht/models.py` | Định nghĩa `Node`, `FingerEntry`, `ResourceRecord`, `LookupResult` |
-| `src/chord_dht/identifiers.py` | Hash identifier và xử lý interval trên vòng Chord |
-| `src/chord_dht/metrics.py` | Chạy benchmark lookup và sinh dữ liệu metric |
-| `src/chord_dht/visualization.py` | Dựng topology graph và lưu ảnh visualization |
-| `templates/index.html` | Giao diện chính |
-| `static/app.js` | Logic frontend gọi API và render dữ liệu |
-| `static/style.css`, `static/busy.css` | Style giao diện |
-| `tests/test_distributed_chord.py` | Bộ test cho hash, API, lookup, replication và recovery |
+| `app.py` | Flask server, API, persist state, dieu phoi metrics/topology |
+| `src/chord_dht/chord.py` | Lop `ChordRing`, core Chord logic, lookup, join, recovery, replication |
+| `src/chord_dht/models.py` | `Node`, `FingerEntry`, `ResourceRecord`, `LookupResult` |
+| `src/chord_dht/identifiers.py` | Hash ID va kiem tra interval tren vong Chord |
+| `src/chord_dht/metrics.py` | Benchmark lookup va du lieu metrics |
+| `src/chord_dht/visualization.py` | Sinh topology graph |
+| `templates/index.html` | Giao dien chinh |
+| `static/app.js` | Logic frontend va render UI |
+| `tests/test_distributed_chord.py` | Test API va logic Chord |
 
-## Luồng Hoạt Động
-
-### Khởi tạo ring
-
-1. Frontend gửi `POST /api/initialize`
-2. Backend đọc số node, resource, `m`, `seed` và replication count
-3. `ChordRing` sinh node ID duy nhất theo seed
-4. Ring sắp xếp node, nối predecessor/successor và build finger table
-5. Resource được hash thành key và đặt vào owner tương ứng
-6. Replica được đặt lên các successor tiếp theo
-7. State được persist xuống `data/state.json`
-
-### Lookup resource
-
-1. Frontend gửi `POST /api/lookup` với `resource_id`
-2. Backend chuẩn hóa resource ID và node bắt đầu nếu có
-3. `ChordRing` route key qua closest preceding finger
-4. Hệ thống trả về owner, path, hops, logs và replica node IDs
-5. Frontend có thể gọi topology để highlight path vừa lookup
-
-### Node failure
-
-1. Frontend gửi `POST /api/kill` với `node_id`
-2. Backend đánh dấu node inactive
-3. Ring chạy recovery để đảm bảo resource còn bản hợp lệ
-4. Finger table và topology được ổn định lại
-5. State mới được persist
-
-### Metrics
-
-1. Frontend gửi `POST /api/metrics`
-2. Backend chạy metric trên ring hiện tại
-3. Backend dựng sweep từ 1 node tới số node active hiện có
-4. Hệ thống đo average hops, latency mô phỏng và message overhead
-5. Biểu đồ được lưu trong `static/metrics`
-6. Payload metric gần nhất được cache để khôi phục sau refresh
-
-## Cấu Trúc Thư Mục
+## Cau Truc Thu Muc
 
 ```text
 Final Source Code/
@@ -229,11 +267,6 @@ Final Source Code/
 |   |-- node_ids.json
 |   |-- resource_ids.json
 |   `-- state.json
-|-- docs/
-|   |-- analysis.md
-|   |-- Topic 61.docx
-|   |-- Topic 61.md
-|   `-- project_proposal.md
 |-- src/
 |   `-- chord_dht/
 |       |-- __init__.py
@@ -246,8 +279,7 @@ Final Source Code/
 |-- static/
 |   |-- app.js
 |   |-- busy.css
-|   |-- style.css
-|   `-- metrics/
+|   `-- style.css
 |-- templates/
 |   `-- index.html
 `-- tests/
@@ -255,15 +287,15 @@ Final Source Code/
     `-- test_distributed_chord.py
 ```
 
-## Cài Đặt
+## Cai Dat
 
-### Yêu cầu môi trường
+Yeu cau:
 
-- Python 3.10 trở lên
+- Python 3.10 tro len
 - pip
-- Windows PowerShell hoặc terminal tương đương
+- Windows PowerShell hoac terminal tuong duong
 
-### Cài đặt bằng virtual environment
+Cai bang virtual environment:
 
 ```powershell
 py -3.10 -m venv .venv
@@ -272,37 +304,25 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
 
-Nếu không dùng editable install, có thể cài trực tiếp từ `requirements.txt`:
+Hoac cai tu `requirements.txt`:
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### Dependencies chính
-
-| Package | Mục đích |
-| --- | --- |
-| Flask | Xây dựng web server và REST API |
-| matplotlib | Sinh biểu đồ metric và topology |
-| networkx | Dựng graph topology Chord |
-| psutil | Hỗ trợ thu thập thông tin tiến trình nếu cần mở rộng |
-| pytest | Chạy bộ test trong môi trường dev |
-
-## Chạy Ứng Dụng
-
-Khởi động server:
+## Chay Ung Dung
 
 ```powershell
 .\.venv\Scripts\python.exe app.py
 ```
 
-Mặc định ứng dụng chạy tại:
+Mac dinh server chay tai:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-Có thể đổi host và port bằng biến môi trường:
+Co the doi host/port:
 
 ```powershell
 $env:HOST = "0.0.0.0"
@@ -310,217 +330,163 @@ $env:PORT = "8080"
 .\.venv\Scripts\python.exe app.py
 ```
 
-Sau khi server chạy, mở trình duyệt và truy cập URL tương ứng để sử dụng giao diện.
+## API Chinh
 
-## Hướng Dẫn Sử Dụng
+### State va resource
 
-### Khởi tạo mạng
+| Method | Endpoint | Mo ta |
+| --- | --- | --- |
+| `GET` | `/` | Giao dien web |
+| `GET` | `/api/state` | Lay trang thai ring hien tai |
+| `GET` | `/api/resources` | Lay danh sach resource |
+| `POST` | `/api/initialize` | Khoi tao lai ring |
 
-Trên giao diện, nhập số node, số resource, `m`, `seed` và số replica. Khi nhấn initialize, backend sẽ tạo lại ring mới và lưu state.
+### Node
 
-Ví dụ gọi API:
+| Method | Endpoint | Mo ta |
+| --- | --- | --- |
+| `GET` | `/api/node/<node_id>` | Chi tiet node, finger table va local resources |
+| `POST` | `/api/node` | Them node moi |
+| `DELETE` | `/api/node/<node_id>` | Xoa node khoi ring |
+| `POST` | `/api/kill` | Danh dau node failed va tra ve impact |
+| `POST` | `/api/recover` | Recover node failed |
+
+### Resource
+
+| Method | Endpoint | Mo ta |
+| --- | --- | --- |
+| `POST` | `/api/resource` | Them resource |
+| `PUT` | `/api/resource` | Doi resource ID |
+| `DELETE` | `/api/resource` | Xoa resource |
+| `POST` | `/api/lookup` | Lookup resource va tra ve trace |
+
+### Metrics va topology
+
+| Method | Endpoint | Mo ta |
+| --- | --- | --- |
+| `GET` | `/api/metrics` | Tra 405 de tranh chay benchmark bang GET |
+| `POST` | `/api/metrics` | Chay benchmark metrics |
+| `GET` | `/api/metrics/last` | Lay metrics gan nhat |
+| `POST` | `/api/topology` | Sinh topology graph |
+
+## Vi Du Goi API
+
+Khoi tao ring:
 
 ```powershell
 Invoke-RestMethod `
   -Method Post `
   -Uri "http://127.0.0.1:5000/api/initialize" `
   -ContentType "application/json" `
-  -Body '{"nodes":50,"resources":1000,"m":16,"seed":61,"replication_count":3}'
+  -Body '{"nodes":50,"resources":1000,"m":16,"seed":61,"replication_count":1}'
 ```
 
-### Lookup resource
+Lookup resource:
 
 ```powershell
 Invoke-RestMethod `
   -Method Post `
   -Uri "http://127.0.0.1:5000/api/lookup" `
   -ContentType "application/json" `
-  -Body '{"resource_id":"resource-1"}'
+  -Body '{"resource_id":"resource-0010"}'
 ```
 
-Kết quả lookup gồm key, owner, path, số hop, log định tuyến và danh sách replica.
-
-### Thêm node
-
-```powershell
-Invoke-RestMethod `
-  -Method Post `
-  -Uri "http://127.0.0.1:5000/api/node" `
-  -ContentType "application/json" `
-  -Body '{"node_id":12345}'
-```
-
-Nếu không truyền `node_id`, hệ thống sẽ tự sinh node ID mới.
-
-### Mô phỏng node lỗi
+Kill node:
 
 ```powershell
 Invoke-RestMethod `
   -Method Post `
   -Uri "http://127.0.0.1:5000/api/kill" `
   -ContentType "application/json" `
-  -Body '{"node_id":12345}'
+  -Body '{"node_id":9213}'
 ```
 
-### Chạy metrics
+Recover node:
 
 ```powershell
 Invoke-RestMethod `
   -Method Post `
-  -Uri "http://127.0.0.1:5000/api/metrics" `
+  -Uri "http://127.0.0.1:5000/api/recover" `
   -ContentType "application/json" `
-  -Body '{"trials":5,"lookups":100}'
+  -Body '{"node_id":9213}'
 ```
 
-## API Endpoints
+## Du Lieu Luu Tru
 
-### Giao diện
-
-| Method | Endpoint | Mô tả |
-| --- | --- | --- |
-| `GET` | `/` | Trả về giao diện web chính |
-
-### State và resource
-
-| Method | Endpoint | Mô tả |
-| --- | --- | --- |
-| `GET` | `/api/state` | Lấy snapshot trạng thái ring hiện tại |
-| `GET` | `/api/resources` | Lấy toàn bộ resource đang được quản lý |
-| `POST` | `/api/initialize` | Khởi tạo lại ring theo cấu hình truyền vào |
-
-### Node
-
-| Method | Endpoint | Mô tả |
-| --- | --- | --- |
-| `GET` | `/api/node/<node_id>` | Lấy chi tiết node, finger table và resource local |
-| `POST` | `/api/node` | Thêm node mới hoặc kích hoạt node theo ID |
-| `DELETE` | `/api/node/<node_id>` | Xóa node khỏi ring |
-| `POST` | `/api/kill` | Mô phỏng node failure và chạy recovery |
-
-### Resource
-
-| Method | Endpoint | Mô tả |
-| --- | --- | --- |
-| `POST` | `/api/resource` | Thêm resource mới vào ring |
-| `PUT` | `/api/resource` | Đổi resource ID bằng delete và put lại |
-| `DELETE` | `/api/resource` | Xóa resource khỏi owner và replica |
-| `POST` | `/api/lookup` | Lookup owner của resource và trả về trace |
-
-### Metrics và topology
-
-| Method | Endpoint | Mô tả |
-| --- | --- | --- |
-| `GET` | `/api/metrics` | Trả lỗi 405 để tránh chạy benchmark bằng GET |
-| `POST` | `/api/metrics` | Chạy benchmark hiện tại và sweep tăng trưởng |
-| `GET` | `/api/metrics/last` | Lấy metric đã lưu từ lần chạy gần nhất |
-| `POST` | `/api/topology` | Sinh ảnh topology và tùy chọn highlight lookup path |
-
-## Dữ Liệu Lưu Trữ
-
-### `data/state.json`
-
-File này lưu snapshot đầy đủ của hệ thống:
-
-- `schema_version`
-- Cấu hình ring như `m`, `seed`, `replication_count`
-- Danh sách node, trạng thái active, predecessor, successor và finger table
-- Danh sách resource, key, owner và replica
-- Danh sách node lỗi
-- Payload metric gần nhất nếu có
-
-Ứng dụng dùng cơ chế ghi file tạm rồi replace file chính để giảm rủi ro ghi dở khi server đang hoạt động.
-
-### `data/node_ids.json`
-
-Lưu danh sách node ID ban đầu sau khi initialize. File này hữu ích cho báo cáo, kiểm thử và tái hiện topology.
-
-### `data/resource_ids.json`
-
-Lưu danh sách resource ID và hash tương ứng sau khi initialize. File này giúp đối chiếu resource key và owner.
-
-## Metrics Và Visualization
-
-### Chỉ số đo lường
-
-| Metric | Ý nghĩa |
+| File | Mo ta |
 | --- | --- |
-| `average_hops` | Số hop trung bình để lookup thành công |
-| `max_hops` | Số hop lớn nhất trong các mẫu lookup |
-| `average_latency_ms` | Độ trễ lookup mô phỏng theo millisecond |
-| `message_overhead` | Tổng số message suy ra từ tổng số hop |
-| `messages_per_lookup` | Số message trung bình cho mỗi lookup |
-| `success_rate` | Tỷ lệ lookup thành công nếu payload có trường này |
+| `data/state.json` | Snapshot day du cua ring, nodes, resources, failed nodes va metrics gan nhat |
+| `data/node_ids.json` | Danh sach node ID sinh ra khi initialize |
+| `data/resource_ids.json` | Danh sach resource ID/hash/key sinh ra khi initialize |
 
-### Biểu đồ sinh ra
+Khi autoload state, neu khong co failed node dang pending recovery, he thong chay protocol de hoi tu lai routing/finger table tu snapshot da luu.
 
-Khi chạy metric, hệ thống lưu ảnh trong `static/metrics`:
+## Metrics
 
-- Biểu đồ average hops so với `log2(N)`
-- Biểu đồ latency trung bình
-- Biểu đồ message overhead
-- Ảnh topology graph của ring
+Metrics dung de quan sat hanh vi lookup:
 
-### Ý nghĩa thực nghiệm
+| Metric | Y nghia |
+| --- | --- |
+| `average_hops` | So hop trung binh |
+| `max_hops` | So hop lon nhat |
+| `average_latency_ms` | Latency mo phong |
+| `message_overhead` | Tong message suy ra tu lookup |
+| `messages_per_lookup` | Message trung binh tren moi lookup |
+| `success_rate` | Ty le lookup thanh cong |
 
-Với Chord, số hop lookup kỳ vọng tăng xấp xỉ theo `log2(N)`. Vì vậy biểu đồ average hops được đặt cạnh đường tham chiếu `log2(N)` để kiểm tra hành vi định tuyến có phù hợp lý thuyết hay không.
+Ve ly thuyet, Chord lookup ky vong khoang `O(log N)`, nen bieu do average hops duoc so voi `log2(N)`.
 
-## Kiểm Thử
+## Kiem Thu
 
-Chạy toàn bộ test:
+Chay toan bo test:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Chạy test với output chi tiết:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest -v
-```
-
-Chạy riêng file test chính:
+Chay file test chinh:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_distributed_chord.py -v
 ```
 
-Các nhóm test chính:
+Luu y: neu moi truong thieu `matplotlib`, pytest se loi o buoc import `chord_dht.metrics`. Cai dependency bang `python -m pip install -e ".[dev]"` hoac `python -m pip install -r requirements.txt`.
 
-- Hash identifier nằm đúng trong không gian `2^m`
-- Interval xử lý đúng trường hợp wraparound
-- Endpoint initialize ghi state đúng schema
-- Endpoint state autoload được dữ liệu persist
-- Lookup trả về trace đường đi
-- CRUD resource hoạt động đúng
-- Node join, delete, kill và recovery cập nhật ring hợp lệ
-- Finger table và resource ownership giữ tính nhất quán
+Nhom test chinh:
 
-## Ghi Chú Triển Khai
+- Hash ID nam dung trong khong gian `2^m`.
+- Interval xu ly dung wraparound.
+- Initialize ghi state dung.
+- Lookup tra ve owner/path/log.
+- Node join rebalance dung khoang key.
+- Kill/Recover sua ring, finger table va resource placement.
+- Finger table dung cong thuc `successor(start)`.
+- Resource owner dung cong thuc `successor(key)`.
 
-- Đây là mô phỏng single-process, không phải triển khai P2P thật trên nhiều máy
-- Mỗi node được biểu diễn bằng object trong bộ nhớ thay vì process độc lập
-- Latency trong metric là latency mô phỏng để phục vụ visualization
-- State JSON phục vụ demo và kiểm thử nhanh, chưa thay thế cho storage bền vững trong môi trường production
-- Flask app mặc định chạy `debug=False`
+## Luong Demo Goi Y
 
-## Thuật Ngữ
+1. Initialize mang voi 50 node, 1000 resource, `m = 16`, `seed = 61`.
+2. Mo mot node de giai thich predecessor, successor va finger table.
+3. Lookup `resource-0010`, chi path, hops va log.
+4. Them node moi, giai thich chi mot khoang key bi rebalance.
+5. Kill mot node, chi impact report: primary affected, replica affected, stale fingers.
+6. Bam Recover, giai thich va ring, sua finger, promote tu replica va dat lai replica.
+7. Chay metrics de so average hops voi `log2(N)`.
 
-| Thuật ngữ | Giải thích |
+## Thuat Ngu
+
+| Thuat ngu | Giai thich |
 | --- | --- |
-| Node | Peer trong mạng Chord |
-| Ring | Vòng định danh kích thước `2^m` |
-| Key | Giá trị hash của resource trong vòng định danh |
-| Owner | Node chịu trách nhiệm chính cho một key |
-| Successor | Node active đầu tiên đứng sau một ID trên vòng |
-| Predecessor | Node active đứng trước một node trên vòng |
-| Finger table | Bảng định tuyến giúp lookup nhanh theo bước nhảy lũy thừa |
-| Lookup path | Danh sách node mà truy vấn đi qua |
-| Replica | Bản sao resource được lưu trên successor node |
-| Stabilization | Quá trình cập nhật successor, predecessor và finger table sau thay đổi topology |
+| Node | Peer trong mang Chord |
+| Ring | Vong dinh danh kich thuoc `2^m` |
+| Key | ID hash cua resource |
+| Owner | Node chiu trach nhiem chinh cho resource |
+| Successor | Node active dau tien sau mot ID theo chieu kim dong ho |
+| Predecessor | Node active dung truoc mot node |
+| Finger table | Bang dinh tuyen gom cac moc nhay luy thua cua 2 |
+| Lookup path | Cac node ma truy van di qua |
+| Replica | Ban sao resource tren successor node |
+| Stabilization | Qua trinh cap nhat successor, predecessor va finger table |
+| Failed node | Node inactive do Kill va dang cho/da recovery |
+| Retired node | Node da bi loai khoi routing sau recovery |
 
-## Tài Liệu Liên Quan
-
-- `docs/analysis.md`: phân tích và đánh giá hệ thống
-- `docs/project_proposal.md`: đề xuất ban đầu của dự án
-- `docs/Topic 61.md`: nội dung đề tài và yêu cầu liên quan
-- `tests/test_distributed_chord.py`: các kịch bản kiểm thử chính

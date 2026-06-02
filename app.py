@@ -145,6 +145,9 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
             ring.nodes[node_id].predecessor = active_ids[(i - 1) % len(active_ids)]
 
         ring.stabilize()
+    elif active_ids and not ring.failed_nodes:
+        # State đã lưu có thể chứa finger table cũ; cho Chord protocol hội tụ lại khi không có recovery pending.
+        ring.run_protocol_until_stable()
 
     # Khôi phục metadata resource và bản copy local tương ứng
     for res in payload.get("resources") or []:

@@ -325,24 +325,55 @@ function selectedResourceOwnerId() {
   return selectedResource ? Number(selectedResource.owner_id) : null;
 }
 
+// Chuẩn hóa danh sách replica từ API hoặc chuỗi hiển thị thành mảng số node_id
+function normalizeReplicaIds(replicaNodeIds) {
+  if (Array.isArray(replicaNodeIds)) {
+    return replicaNodeIds.map(Number).filter((id) => Number.isFinite(id));
+  }
+  if (replicaNodeIds === null || replicaNodeIds === undefined || replicaNodeIds === "" || replicaNodeIds === "-") {
+    return [];
+  }
+  return String(replicaNodeIds)
+    .split(/[,\s]+/)
+    .map(Number)
+    .filter((id) => Number.isFinite(id));
+}
+
+// Chuẩn hóa một dòng resource để filter/tô màu không phụ thuộc kiểu dữ liệu từ API
+function normalizeResourceRow(resource) {
+  return {
+    ...resource,
+    owner_id: Number.isFinite(Number(resource.owner_id)) ? Number(resource.owner_id) : resource.owner_id,
+    replica_node_ids: normalizeReplicaIds(resource.replica_node_ids),
+  };
+}
+
+// Kiểm tra resource có phải primary trên node được chọn hay không
+function resourceIsPrimaryOnNode(resource, nodeId) {
+  return Number(resource.owner_id) === Number(nodeId);
+}
+
+// Kiểm tra resource có bản replica trên node được chọn hay không
+function resourceIsReplicaOnNode(resource, nodeId) {
+  return normalizeReplicaIds(resource.replica_node_ids).includes(Number(nodeId));
+}
+
+// Kiểm tra resource có liên quan tới node theo vai trò primary hoặc replica
+function resourceBelongsToNode(resource, nodeId) {
+  return resourceIsPrimaryOnNode(resource, nodeId) || resourceIsReplicaOnNode(resource, nodeId);
+}
+
 // Lọc bảng resource theo node và chuỗi tìm kiếm
 function applyResourceTableFilter() {
   const q = (els.resourceTableFilter?.value || "").trim().toLowerCase();
   const nodeFilteredRows =
     selectedNodeId === null
       ? cachedResourceRows
-      : cachedResourceRows.filter(
-          (item) =>
-            Number(item.owner_id) === Number(selectedNodeId) ||
-            (Array.isArray(item.replica_node_ids) &&
-              item.replica_node_ids.map(Number).includes(Number(selectedNodeId))),
-        );
+      : cachedResourceRows.filter((item) => resourceBelongsToNode(item, selectedNodeId));
   const scopeFilteredRows = nodeFilteredRows.filter((item) => {
     if (selectedNodeId === null) return true;
-    const isPrimary = Number(item.owner_id) === Number(selectedNodeId);
-    const isReplica =
-      Array.isArray(item.replica_node_ids) &&
-      item.replica_node_ids.map(Number).includes(Number(selectedNodeId));
+    const isPrimary = resourceIsPrimaryOnNode(item, selectedNodeId);
+    const isReplica = resourceIsReplicaOnNode(item, selectedNodeId);
     if (showPrimaryOnly && isPrimary) return true;
     if (showReplicaOnly && isReplica) return true;
     return false;
@@ -350,17 +381,24 @@ function applyResourceTableFilter() {
   const searchedRows = !q
     ? scopeFilteredRows
     : scopeFilteredRows.filter((item) => {
-        const replicas = Array.isArray(item.replica_node_ids) ? item.replica_node_ids.join(" ") : "";
+        const replicas = normalizeReplicaIds(item.replica_node_ids).join(" ");
         const hay = `${item.resource_id} ${item.key} ${item.owner_id} ${replicas}`.toLowerCase();
         return hay.includes(q);
       });
   const renderResourceRow = (item) => {
-    const replicas = Array.isArray(item.replica_node_ids) ? item.replica_node_ids.join(", ") : "";
+    const replicas = normalizeReplicaIds(item.replica_node_ids).join(", ");
     const hash = item.hashed_resource_id || "";
+    const isPrimaryForSelectedNode =
+      selectedNodeId !== null && resourceIsPrimaryOnNode(item, selectedNodeId);
+    const showFailureOnSelectedNode =
+      selectedNodeId !== null &&
+      currentFailedNodes.has(Number(selectedNodeId)) &&
+      resourceBelongsToNode(item, selectedNodeId);
     const rowClasses = [
       "resource-row",
       item.resource_id === selectedResourceId ? "is-selected" : "",
-      currentAffectedResourceIds.has(item.resource_id) ? "resource-row--failed" : "",
+      isPrimaryForSelectedNode ? "resource-row--primary-owner" : "",
+      showFailureOnSelectedNode ? "resource-row--failed" : "",
     ].filter(Boolean).join(" ");
         return `
       <tr class="${rowClasses}" data-resource-id="${escapeHtml(item.resource_id)}">
@@ -665,8 +703,9 @@ function closeMetricsTrace() {
 
 function showResourceInfoOverlay(resource, trace = {}) {
   if (!els.resourceInfoPanel || !els.resourceInfoBody || !resource) return;
-  const replicas = Array.isArray(resource.replica_node_ids) && resource.replica_node_ids.length
-    ? resource.replica_node_ids.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")
+  const replicaIds = normalizeReplicaIds(resource.replica_node_ids);
+  const replicas = replicaIds.length
+    ? replicaIds.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")
     : '<span class="muted">None</span>';
   els.resourceInfoBody.innerHTML = `
     <div class="resource-info-grid">
@@ -861,12 +900,25 @@ function renderFailureImpactReport(report) {
   const fingerWarningCount = Number(report.finger_warning_node_count ?? 0);
   const staleFingerCount = Number(report.stale_finger_entry_count ?? 0);
   const affectedCount = Number(report.affected_resource_count ?? 0);
-  const affectedSamples = Array.isArray(report.affected_resources) ? report.affected_resources.slice(0, 10) : [];
-  const sampleList = affectedSamples.length
-    ? `<div class="kill-resource-samples">${affectedSamples
-        .map((item) => `<span>${escapeHtml(item.resource_id)} (${escapeHtml(item.failure_role || "affected")})</span>`)
-        .join("")}${affectedCount > affectedSamples.length ? `<span class="kill-resource-more">... +${affectedCount - affectedSamples.length} more</span>` : ""}</div>`
-    : `<div class="kill-resource-empty">No affected resources.</div>`;
+  const affectedResources = Array.isArray(report.affected_resources) ? report.affected_resources : [];
+  const primaryAffectedResources = affectedResources.filter((item) =>
+    ["owner", "owner_and_replica"].includes(String(item.failure_role || "")),
+  );
+  const replicaAffectedResources = affectedResources.filter((item) =>
+    ["replica", "owner_and_replica"].includes(String(item.failure_role || "")),
+  );
+  const resourceSampleList = (items, emptyText, totalCount = items.length) => {
+    const samples = items.slice(0, 10);
+    if (!samples.length) {
+      return `<div class="kill-resource-empty">${escapeHtml(emptyText)}</div>`;
+    }
+    const shown = samples
+      .map((item) => `<span>${escapeHtml(item.resource_id)} (${escapeHtml(item.failure_role || "affected")})</span>`)
+      .join("");
+    const remaining = Math.max(0, Number(totalCount || 0) - samples.length);
+    const more = remaining > 0 ? `<span class="kill-resource-more">... +${remaining} more</span>` : "";
+    return `<div class="kill-resource-samples">${shown}${more}</div>`;
+  };
 
   els.nodeRemovalReport.innerHTML = `
     <div class="kill-report-header">
@@ -905,18 +957,30 @@ function renderFailureImpactReport(report) {
         </table>
       </div>
       <ol class="kill-timeline">
-        <li class="kill-step-warning">
-          <strong>1. Node failure detected</strong>
-          <span>Node ${killedNode} is inactive and shown in red. Its old routing view is kept so the failure can be inspected before recovery.</span>
+        <li>
+          <strong>1. Confirm failed node</strong>
+          <span>Node ${killedNode} was marked failed by Kill. Recover skips this node and only uses active nodes as trusted data sources.</span>
         </li>
-        <li class="${fingerWarningCount > 0 ? "kill-step-warning" : ""}">
-          <strong>2. Finger table impact</strong>
-          <span>${fingerWarningCount} active node(s) still have ${staleFingerCount} finger entry/entries pointing to failed node ${killedNode}. These nodes are shown in orange.</span>
+        <li>
+          <strong>2. Ring links pending repair</strong>
+          <span>Old predecessor ${oldPredecessor} and old successor ${oldSuccessor} still show where the failed node sat in the ring.</span>
         </li>
-        <li class="${affectedCount > 0 ? "kill-step-warning" : ""}">
-          <strong>3. Resource impact</strong>
-          <span>${affectedCount} resource(s) reference node ${killedNode} as owner or replica. They are shown in red until Recover is pressed.</span>
-          ${sampleList}
+        <li class="${staleFingerCount > 0 ? "kill-step-warning" : ""}">
+          <strong>3. Finger entries pending repair</strong>
+          <span>${fingerWarningCount > 0
+            ? `${staleFingerCount} stale finger entry/entries in ${fingerWarningCount} active node(s) point to ${killedNode}.`
+            : `No active finger table entry points directly to ${killedNode}.`
+          }</span>
+        </li>
+        <li class="${primaryAffectedResources.length > 0 ? "kill-step-warning" : ""}">
+          <strong>4. Primary resources affected</strong>
+          <span>${primaryAffectedResources.length} primary resource(s) are owned by failed node ${killedNode} and need promotion during Recover.</span>
+          ${resourceSampleList(primaryAffectedResources, "No primary resources are owned by this failed node.")}
+        </li>
+        <li class="${replicaAffectedResources.length > 0 ? "kill-step-warning" : ""}">
+          <strong>5. Replica resources affected</strong>
+          <span>${replicaAffectedResources.length} resource(s) use ${killedNode} as a replica and need replacement placement during Recover.</span>
+          ${resourceSampleList(replicaAffectedResources, "No replica resources use this failed node.")}
         </li>
       </ol>
     </div>
@@ -960,6 +1024,14 @@ function renderNodeRemovalReport(report) {
   // Hiển thị thống kê sửa finger table từ backend
   const updatedFingerTables = Number(report.updated_finger_tables ?? 0);
   const updatedFingerEntries = Number(report.updated_finger_entries ?? 0);
+  const impact = report.impact_report || {};
+  const affectedResources = Array.isArray(impact.affected_resources) ? impact.affected_resources : [];
+  const primaryAffectedCount = affectedResources.filter((item) =>
+    ["owner", "owner_and_replica"].includes(String(item.failure_role || "")),
+  ).length;
+  const replicaAffectedCount = affectedResources.filter((item) =>
+    ["replica", "owner_and_replica"].includes(String(item.failure_role || "")),
+  ).length;
 
   // Rút gọn danh sách resource bằng hậu tố +N khi bị cắt
   const sampleList = (items, emptyText, totalCount = items.length) => {
@@ -982,7 +1054,7 @@ function renderNodeRemovalReport(report) {
     <div class="kill-report-header">
       <div>
         <h3>Node Recovery Report</h3>
-        <p>Node <strong>${killedNode}</strong> has been marked as stopped. The Chord system automatically repairs ring links and recovers data from surviving replica copies.</p>
+        <p>Node <strong>${killedNode}</strong> was failed, then removed from routing. Recovery repairs the ring using active nodes and surviving local replica copies.</p>
       </div>
       <div class="kill-report-header-actions">
         <span>${activeNodes} active node(s)</span>
@@ -1025,46 +1097,42 @@ function renderNodeRemovalReport(report) {
       </div>
       <ol class="kill-timeline">
         <li>
-          <strong>1. Mark node as stopped</strong>
-          <span>Node ${killedNode} is set to <em>active = false</em>, added to <em>failed_nodes</em>, and all its successor / predecessor / finger table entries are cleared so it no longer participates in routing.</span>
+          <strong>1. Confirm failed node</strong>
+          <span>Node ${killedNode} was marked failed by Kill. Recover skips this node and only uses active nodes as trusted data sources.</span>
         </li>
         <li>
-          <strong>2. Reconnect the Chord ring</strong>
-          <span>Old predecessor (${oldPredecessor}) and old successor (${oldSuccessor}) are linked directly: predecessor.successor = successor and successor.predecessor = predecessor. The circular ring is closed without scanning the entire network.</span>
+          <strong>2. Reconnect ring links</strong>
+          <span>Old predecessor ${oldPredecessor} is linked to old successor ${oldSuccessor}, so routing can bypass node ${killedNode}.</span>
         </li>
         <li>
-          <strong>3. Fix stale finger table entries</strong>
+          <strong>3. Repair stale finger entries</strong>
           <span>${updatedFingerTables > 0
-            ? `${updatedFingerTables} node(s) had ${updatedFingerEntries} finger entries pointing to node ${killedNode} (no longer valid). These entries are updated by finding a new valid successor through local Chord lookup.`
-            : `No finger table entries pointed directly to node ${killedNode} (or the predecessor/successor reconnection automatically covered them).`
+            ? `${updatedFingerEntries} stale finger entry/entries in ${updatedFingerTables} active node(s) pointed to ${killedNode}. They were replaced with active successors.`
+            : `No active finger table entry pointed directly to ${killedNode}.`
           }</span>
         </li>
         <li>
-          <strong>4. Classify resources affected by the stopped node</strong>
-          <span>The system scans all resources and separates them into 3 groups: (a) resources where node ${killedNode} is the owner — need promote from replica; (b) resources where node ${killedNode} is only a replica — need to remove dead replica and rebuild; (c) unrelated resources.</span>
-        </li>
-        <li>
-          <strong>5. Promote primary resources from replicas</strong>
+          <strong>4. Recover primary data</strong>
           ${recoveredCount > 0
-            ? `<span>${recoveredCount} resources owned by node ${killedNode} are recovered: the latest value is read from the nearest surviving replica (by successor order), assigned a new owner, and copied to the next ${effectiveReplicas} successor nodes.</span>
+            ? `<span>${recoveredCount} primary resource(s) owned by ${killedNode} were promoted from surviving replica copies.</span>
                ${sampleList(recoveredSamples, "No primary resource samples.", recoveredCount)}`
-            : `<span>No resources were promoted — all resources of node ${killedNode} either have surviving replicas, or no replicas are available.</span>`
+            : `<span>No primary resource was promoted. Primary resources affected: ${primaryAffectedCount}.</span>`
           }
         </li>
         <li>
-          <strong>6. Restore replica placement</strong>
+          <strong>5. Restore replica placement</strong>
           ${replicaRepairedCount > 0
-            ? `<span>${replicaRepairedCount} resources had node ${killedNode} as a replica only — the dead replica is removed and a new replica is created on the nearest valid successor.</span>
+            ? `<span>${replicaRepairedCount} resource(s) used ${killedNode} as a replica. The dead replica was removed and replacement replica(s) were placed on active successor nodes.</span>
                ${sampleList(replicaRepairedSamples, "No replica resource samples.", replicaRepairedCount)}`
-            : `<span>No resources needed replica restoration — no resources had a replica on node ${killedNode}.</span>`
+            : `<span>No replica placement needed repair. Replica resources affected: ${replicaAffectedCount}.</span>`
           }
         </li>
         <li class="${lostCount > 0 ? "kill-step-warning" : ""}">
-          <strong>7. Report data loss</strong>
+          <strong>6. Final result</strong>
           ${lostCount > 0
-            ? `<span>${lostCount} resources were lost completely — no surviving replica is available to recover from. Cause: replication_count is too low relative to the number of consecutively failed nodes.</span>
+            ? `<span>${lostCount} resource(s) could not be recovered because no active node still had a local copy.</span>
                ${sampleList(lostSamples, "No lost resource samples.", lostCount)}`
-            : `<span>No resources were lost — every resource has at least one surviving replica.</span>`
+            : `<span>No resource was lost. Node ${killedNode} is now retired and no longer participates in routing.</span>`
           }
         </li>
       </ol>
@@ -1098,13 +1166,13 @@ async function syncResourcesForRingTable(state) {
   }
 
   if (embedded.length === resourceTotalCount) {
-    cachedResourceRows = embedded.slice();
+    cachedResourceRows = embedded.map(normalizeResourceRow);
   } else {
     try {
       const data = await api("/api/resources");
-      cachedResourceRows = Array.isArray(data.resources) ? data.resources : [];
+      cachedResourceRows = Array.isArray(data.resources) ? data.resources.map(normalizeResourceRow) : [];
     } catch (error) {
-      cachedResourceRows = embedded.slice();
+      cachedResourceRows = embedded.map(normalizeResourceRow);
       showToast(error.message || "Could not load full resource list.");
     }
   }
@@ -1275,8 +1343,9 @@ function renderLookupResult(result) {
   const foundClass = result.found ? "" : " lookup-result-row--miss";
   const latency = result.latency_ms != null ? result.latency_ms : 0;
 
-  const replicas = Array.isArray(result.replica_node_ids) && result.replica_node_ids.length
-    ? result.replica_node_ids.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")
+  const lookupReplicaIds = normalizeReplicaIds(result.replica_node_ids);
+  const replicas = lookupReplicaIds.length
+    ? lookupReplicaIds.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")
     : '<span class="muted">None</span>';
 
   // ── Lookup Route pills ─────────────────────────────────────────────────────

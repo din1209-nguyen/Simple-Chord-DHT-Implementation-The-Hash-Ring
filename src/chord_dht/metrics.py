@@ -135,11 +135,8 @@ def _join_metric_node(ring: ChordRing, node_id: int, *, known_node_id: int) -> N
     # Cho node mới join thông qua node đã biết
     ring.join(numeric_id, known_node_id=known_node_id)
 
-    # Chạy giao thức ổn định để cập nhật successor/predecessor
-    ring.run_protocol(rounds=ring._default_convergence_rounds)
-
-    # Làm mới finger table sau khi topology thay đổi
-    ring.refresh_all_finger_tables()
+    # Chạy giao thức ổn định để cập nhật successor/predecessor/finger table
+    ring.run_protocol_until_stable()
 
 # Phân phối lại tài nguyên hiện có trên ring metric
 def _place_existing_resources_on_metric_ring(
@@ -465,8 +462,8 @@ def run_lookup_metrics(
     # Tạo bootstrap node tự trỏ successor/predecessor
     ring.nodes[first_id] = Node(node_id=first_id, predecessor=first_id, successor=first_id)
 
-    # Làm mới finger table cho ring chỉ có bootstrap node
-    ring.refresh_all_finger_tables()
+    # Khởi động finger table cho ring chỉ có bootstrap node
+    ring.run_protocol_until_stable()
 
     # Theo dõi số node đã dựng trong ring metric
     built_count = 1
