@@ -12,6 +12,7 @@ const els = {
   lookupOutput: document.querySelector("#lookupOutput"),
   failedNodesInput: document.querySelector("#failedNodesInput"),
   killBtn: document.querySelector("#killBtn"),
+  recoverBtn: document.querySelector("#recoverBtn"),
   addNodeBtn: document.querySelector("#addNodeBtn"),
   addResourceBtn: document.querySelector("#addResourceBtn"),
   selectedNodeActions: document.querySelector("#selectedNodeActions"),
@@ -143,6 +144,7 @@ function setBusy(button, busy, label) {
     if (button.dataset.label) {
       button.textContent = button.dataset.label;
     }
+    updateRecoveryLockedControls();
   }
 }
 
@@ -257,16 +259,61 @@ let selectedResourceId = null;
 let currentActiveNodeCount = Number(els.nodesInput.value) || 10;
 let currentActiveNodes = [];
 let currentSites = [];
+let currentFailedNodes = new Set();
+let currentFingerWarningNodes = new Set();
+let currentAffectedResourceIds = new Set();
+let currentStaleFingerTargets = new Set();
 let artifactGeneration = 0;
 let showPrimaryOnly = true;
 let showReplicaOnly = true;
+
+function hasPendingRecovery() {
+  return currentFailedNodes.size > 0;
+}
+
+function pendingRecoveryMessage() {
+  const failed = Array.from(currentFailedNodes).sort((a, b) => a - b).join(", ");
+  return failed
+    ? `Recover failed node(s) ${failed} before running this operation.`
+    : "Recover failed nodes before running this operation.";
+}
+
+function updateRecoveryLockedControls() {
+  const locked = hasPendingRecovery();
+  const message = locked ? pendingRecoveryMessage() : "";
+  [
+    els.lookupBtn,
+    els.killBtn,
+    els.addNodeBtn,
+    els.addResourceBtn,
+    els.metricsBtn,
+  ].forEach((button) => {
+    if (!button) return;
+    button.disabled = locked;
+    button.title = message;
+  });
+}
+
+function guardPendingRecovery() {
+  if (!hasPendingRecovery()) {
+    return false;
+  }
+  showToast(pendingRecoveryMessage());
+  return true;
+}
 
 // Ghi nhận chế độ single-process không dùng metadata site riêng cho từng node
 function nodeSite(nodeId) {
   const numericId = Number(nodeId);
   const site = currentSites.find((s) => Number(s.node_id) === numericId);
-  const isStopped = site ? site.active === false : false;
-  return { nodeId: numericId, status: isStopped ? "Stopped" : "Running" };
+  const status = String(site?.status || "").toLowerCase();
+  if (currentFailedNodes.has(numericId) || status === "failed") {
+    return { nodeId: numericId, status: "Failed" };
+  }
+  if (status === "retired" || (site ? site.active === false : false)) {
+    return { nodeId: numericId, status: "Retired" };
+  }
+  return { nodeId: numericId, status: "Running" };
 }
 
 // Xác định owner của resource được chọn để đánh dấu node trên vòng hiển thị
@@ -310,15 +357,20 @@ function applyResourceTableFilter() {
   const renderResourceRow = (item) => {
     const replicas = Array.isArray(item.replica_node_ids) ? item.replica_node_ids.join(", ") : "";
     const hash = item.hashed_resource_id || "";
+    const rowClasses = [
+      "resource-row",
+      item.resource_id === selectedResourceId ? "is-selected" : "",
+      currentAffectedResourceIds.has(item.resource_id) ? "resource-row--failed" : "",
+    ].filter(Boolean).join(" ");
         return `
-      <tr class="resource-row ${item.resource_id === selectedResourceId ? "is-selected" : ""}" data-resource-id="${escapeHtml(item.resource_id)}">
+      <tr class="${rowClasses}" data-resource-id="${escapeHtml(item.resource_id)}">
         <td class="col-resource-id">${escapeHtml(item.resource_id)}</td>
         <td class="col-hashed hashed-resource"><code>${escapeHtml(hash)}</code></td>
         <td class="col-key"><code>${escapeHtml(item.key)}</code></td>
         <td class="col-owner"><code>${escapeHtml(item.owner_id)}</code></td>
         <td class="col-replicas" title="${escapeHtml(replicas || "-")}"><span class="resource-replicas">${escapeHtml(replicas || "-")}</span></td>
         <td class="col-action">
-          <button type="button" class="delete-resource-btn danger" data-resource-id="${escapeHtml(item.resource_id)}" title="Delete resource">Delete</button>
+          <button type="button" class="delete-resource-btn danger" data-resource-id="${escapeHtml(item.resource_id)}" title="${hasPendingRecovery() ? escapeHtml(pendingRecoveryMessage()) : "Delete resource"}" ${hasPendingRecovery() ? "disabled" : ""}>Delete</button>
         </td>
       </tr>
     `;
@@ -364,7 +416,14 @@ function updateNodeSelection() {
   }
 
   if (els.killBtn) {
-    els.killBtn.hidden = selectedNodeId === null || nodeSite(selectedNodeId).status !== "Running";
+    els.killBtn.hidden =
+      selectedNodeId === null || nodeSite(selectedNodeId).status !== "Running" || hasPendingRecovery();
+    els.killBtn.disabled = hasPendingRecovery();
+    els.killBtn.title = hasPendingRecovery() ? pendingRecoveryMessage() : "Kill selected node";
+  }
+
+  if (els.recoverBtn) {
+    els.recoverBtn.hidden = selectedNodeId === null || nodeSite(selectedNodeId).status !== "Failed";
   }
 
   if (els.selectedNodeSummary) {
@@ -380,6 +439,7 @@ function updateNodeSelection() {
     els.resourceScopeLabel.textContent =
       selectedNodeId === null ? "All Resources" : `Resources on Node ${selectedNodeId}`;
   }
+  updateRecoveryLockedControls();
 }
 
 // Hiển thị lại toàn bộ resource khi người dùng bỏ bộ lọc theo node
@@ -408,7 +468,7 @@ function showResourcesForNode(nodeId) {
   }
   updateNodeSelection();
   applyResourceTableFilter();
-  if (nodeSite(selectedNodeId).status === "Running") {
+  if (nodeSite(selectedNodeId).status !== "Retired") {
     loadFingerPreview(selectedNodeId).catch((error) => showToast(error.message));
   } else {
     els.fingerOutput.innerHTML = fingerPlaceholder;
@@ -790,6 +850,88 @@ function clearNodeRemovalReport() {
 }
 
 // Hiển thị kết quả stop process và phục hồi dữ liệu từ replica JSON còn sống
+function renderFailureImpactReport(report) {
+  if (!els.nodeRemovalReport) {
+    return;
+  }
+  const killedNode = String(report.killed_node_id ?? report.node_id ?? "");
+  const oldPredecessor = String(report.old_predecessor ?? "none");
+  const oldSuccessor = String(report.old_successor ?? "none");
+  const activeNodes = Number(report.active_nodes ?? currentActiveNodeCount ?? 0);
+  const fingerWarningCount = Number(report.finger_warning_node_count ?? 0);
+  const staleFingerCount = Number(report.stale_finger_entry_count ?? 0);
+  const affectedCount = Number(report.affected_resource_count ?? 0);
+  const affectedSamples = Array.isArray(report.affected_resources) ? report.affected_resources.slice(0, 10) : [];
+  const sampleList = affectedSamples.length
+    ? `<div class="kill-resource-samples">${affectedSamples
+        .map((item) => `<span>${escapeHtml(item.resource_id)} (${escapeHtml(item.failure_role || "affected")})</span>`)
+        .join("")}${affectedCount > affectedSamples.length ? `<span class="kill-resource-more">... +${affectedCount - affectedSamples.length} more</span>` : ""}</div>`
+    : `<div class="kill-resource-empty">No affected resources.</div>`;
+
+  els.nodeRemovalReport.innerHTML = `
+    <div class="kill-report-header">
+      <div>
+        <h3>Failure Impact Report</h3>
+        <p>Node <strong>${killedNode}</strong> is marked as failed. No finger table or resource recovery has been applied yet.</p>
+      </div>
+      <div class="kill-report-header-actions">
+        <span>${activeNodes} active node(s)</span>
+        <button type="button" class="kill-report-toggle" aria-expanded="true">Collapse</button>
+      </div>
+    </div>
+    <div class="kill-report-body">
+      <div class="kill-summary-table-wrap">
+        <table class="kill-summary-table">
+          <thead>
+            <tr>
+              <th>Failed Node</th>
+              <th>Old Predecessor</th>
+              <th>Old Successor</th>
+              <th>Finger Warnings</th>
+              <th>Stale Entries</th>
+              <th>Affected Resources</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="stopped-node-text">${killedNode}</code></td>
+              <td><code>${oldPredecessor}</code></td>
+              <td><code>${oldSuccessor}</code></td>
+              <td><code>${fingerWarningCount}</code></td>
+              <td><code>${staleFingerCount}</code></td>
+              <td><code>${affectedCount}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ol class="kill-timeline">
+        <li class="kill-step-warning">
+          <strong>1. Node failure detected</strong>
+          <span>Node ${killedNode} is inactive and shown in red. Its old routing view is kept so the failure can be inspected before recovery.</span>
+        </li>
+        <li class="${fingerWarningCount > 0 ? "kill-step-warning" : ""}">
+          <strong>2. Finger table impact</strong>
+          <span>${fingerWarningCount} active node(s) still have ${staleFingerCount} finger entry/entries pointing to failed node ${killedNode}. These nodes are shown in orange.</span>
+        </li>
+        <li class="${affectedCount > 0 ? "kill-step-warning" : ""}">
+          <strong>3. Resource impact</strong>
+          <span>${affectedCount} resource(s) reference node ${killedNode} as owner or replica. They are shown in red until Recover is pressed.</span>
+          ${sampleList}
+        </li>
+      </ol>
+    </div>
+  `;
+  els.nodeRemovalReport.hidden = false;
+  const toggleButton = els.nodeRemovalReport.querySelector(".kill-report-toggle");
+  if (toggleButton) {
+    toggleButton.addEventListener("click", () => {
+      const collapsed = els.nodeRemovalReport.classList.toggle("is-collapsed");
+      toggleButton.textContent = collapsed ? "Expand" : "Collapse";
+      toggleButton.setAttribute("aria-expanded", String(!collapsed));
+    });
+  }
+}
+
 function renderNodeRemovalReport(report) {
   if (!els.nodeRemovalReport) {
     return;
@@ -992,8 +1134,20 @@ function renderState(state) {
   els.statusNodes.textContent = state.active_node_count;
   els.statusResources.textContent = state.resource_count;
   els.statusReplicas.textContent = state.replication_count || 0;
-  els.statusSpace.textContent = `2^${state.m || 16}`;
+  els.statusSpace.innerHTML = `<span class="pow">2<sup>${escapeHtml(state.m || 16)}</sup></span>`;
   els.failedNodesInput.value = Array.isArray(state.failed_nodes) ? state.failed_nodes.length : 0;
+  currentFailedNodes = new Set(Array.isArray(state.failed_nodes) ? state.failed_nodes.map(Number) : []);
+  currentFingerWarningNodes = new Set(
+    Array.isArray(state.finger_warning_nodes) ? state.finger_warning_nodes.map(Number) : [],
+  );
+  currentAffectedResourceIds = new Set(
+    Array.isArray(state.affected_resources) ? state.affected_resources.map((item) => String(item.resource_id)) : [],
+  );
+  currentStaleFingerTargets = new Set(
+    Array.isArray(state.stale_finger_entries)
+      ? state.stale_finger_entries.map((entry) => `${Number(entry.node_id)}:${Number(entry.index)}:${Number(entry.target_node_id)}`)
+      : [],
+  );
 
   if (els.addNodeBtn) {
     els.addNodeBtn.disabled = false;
@@ -1005,12 +1159,14 @@ function renderState(state) {
     .join("");
 
   const sortedSites = currentSites.slice().sort((a, b) => Number(a.node_id) - Number(b.node_id));
-  const failedSet = new Set(Array.isArray(state.failed_nodes) ? state.failed_nodes.map(Number) : []);
   els.nodesOutput.innerHTML = sortedSites
     .map((node) => {
       const nodeId = Number(node.node_id);
-      const isStopped = failedSet.has(nodeId) || node.active === false;
-      return `<button type="button" class="node-pill ${isStopped ? "is-stopped" : ""}" data-node-id="${escapeHtml(nodeId)}">
+      const siteState = nodeSite(nodeId).status;
+      const isFailed = siteState === "Failed";
+      const isRetired = siteState === "Retired";
+      const isFingerWarning = currentFingerWarningNodes.has(nodeId);
+      return `<button type="button" class="node-pill ${isFailed ? "is-stopped" : ""} ${isRetired ? "is-retired" : ""} ${isFingerWarning ? "is-finger-warning" : ""}" data-node-id="${escapeHtml(nodeId)}">
           <span>${escapeHtml(nodeId)}</span>
         </button>`;
     })
@@ -1024,13 +1180,16 @@ function renderState(state) {
     selectedNodeId = null;
   }
   updateNodeSelection();
+  updateRecoveryLockedControls();
 
   void syncResourcesForRingTable(state);
 
   if (selectedNodeId === null) {
     els.fingerOutput.innerHTML = fingerPlaceholder;
-  } else if (nodeSite(selectedNodeId).status === "Running") {
+  } else if (nodeSite(selectedNodeId).status !== "Retired") {
     loadFingerPreview(selectedNodeId).catch((error) => showToast(error.message));
+  } else {
+    els.fingerOutput.innerHTML = fingerPlaceholder;
   }
 }
 
@@ -1039,14 +1198,18 @@ async function loadFingerPreview(nodeId) {
   const data = await api(`/api/node/${nodeId}`);
   els.fingerOutput.innerHTML = data.node.finger_table
     .map(
-      (entry) => `
-        <tr>
+      (entry) => {
+        const staleKey = `${Number(nodeId)}:${Number(entry.index)}:${Number(entry.node_id)}`;
+        const isStale = currentStaleFingerTargets.has(staleKey);
+        return `
+        <tr class="${isStale ? "finger-row--stale" : ""}">
           <td>${escapeHtml(entry.index)}</td>
           <td>${escapeHtml(entry.start)}</td>
           <td>${escapeHtml(entry.interval_end)}</td>
           <td>${escapeHtml(entry.node_id)}</td>
         </tr>
-      `,
+      `;
+      },
     )
     .join("");
   const predecessor = data.node.predecessor || {};
@@ -1217,6 +1380,9 @@ function renderLookupResult(result) {
 
 // Gọi lookup resource/key và hiển thị owner, hop count, path và log từng hop
 async function lookupResource() {
+  if (guardPendingRecovery()) {
+    return;
+  }
   setBusy(els.lookupBtn, true, "Looking up...");
   els.lookupOutput.textContent = "Running lookup...";
   try {
@@ -1244,6 +1410,9 @@ async function lookupResource() {
 
 // Dừng một process node để kích hoạt stabilize và recovery qua các endpoint còn sống
 async function killNode() {
+  if (guardPendingRecovery()) {
+    return;
+  }
   if (selectedNodeId === null) {
     showToast("Select a node first.");
     return;
@@ -1251,7 +1420,7 @@ async function killNode() {
   const nodeToKill = selectedNodeId;
   if (
     !window.confirm(
-      `Stop node ${nodeToKill}?\n\nIt will be marked as stopped (red). Remaining nodes will stabilize and recover from replicas.`,
+      `Stop node ${nodeToKill}?\n\nIt will be marked as stopped (red). Recover must be pressed separately to repair routing and resources.`,
     )
   ) {
     return;
@@ -1264,8 +1433,7 @@ async function killNode() {
     selectedNodeId = Number(nodeToKill);
     renderState(data.state);
     updateNodeSelection();
-    renderNodeRemovalReport(data.report);
-    // Only refresh topology after kill — do NOT auto-run metrics
+    renderFailureImpactReport(data.report);
     await generateTopology(true);
     showToast(data.message);
   } catch (error) {
@@ -1277,6 +1445,33 @@ async function killNode() {
 
 
 // Làm mới snapshot và artifact sau thao tác join hoặc CRUD
+async function recoverNode() {
+  if (selectedNodeId === null) {
+    showToast("Select a failed node first.");
+    return;
+  }
+  const nodeToRecover = selectedNodeId;
+  if (!window.confirm(`Recover failed node ${nodeToRecover}?\n\nThis will repair routing and recover affected resources from replicas.`)) {
+    return;
+  }
+  setBusy(els.recoverBtn, true, "Recovering...");
+  try {
+    const data = await api("/api/recover", {
+      node_id: Number(nodeToRecover),
+    });
+    selectedNodeId = Number(nodeToRecover);
+    renderState(data.state);
+    updateNodeSelection();
+    renderNodeRemovalReport(data.report);
+    await generateTopology(true);
+    showToast(data.message);
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    setBusy(els.recoverBtn, false);
+  }
+}
+
 async function refreshAfterChange(state, { rebuildArtifacts = false } = {}) {
   renderState(state);
   if (rebuildArtifacts) {
@@ -1286,6 +1481,9 @@ async function refreshAfterChange(state, { rebuildArtifacts = false } = {}) {
 
 // Khởi chạy node mới tại một port trống rồi cho node join thông qua bootstrap
 async function addNode() {
+  if (guardPendingRecovery()) {
+    return;
+  }
   if (currentActiveNodeCount >= 100) {
     showToast("Distributed deployment is limited to 100 active sites.");
     return;
@@ -1310,6 +1508,9 @@ async function addNode() {
 
 // Ghi resource mới qua entry node để Chord định tuyến tới primary owner
 async function addResource() {
+  if (guardPendingRecovery()) {
+    return;
+  }
   openFormModal(
     "Add Resource",
     [{ id: "resourceIdField", label: "Resource ID", type: "text", placeholder: "resource-new", required: true }],
@@ -1330,6 +1531,9 @@ async function addResource() {
 
 // Đổi định danh resource bằng delete và put được định tuyến phân tán
 async function updateResource() {
+  if (guardPendingRecovery()) {
+    return;
+  }
   if (selectedResourceId === null) {
     showToast("Select a resource first.");
     return;
@@ -1362,6 +1566,9 @@ async function updateResource() {
 
 // Xóa resource tại owner và yêu cầu loại các replica liên quan qua HTTP
 async function deleteResource(button = null) {
+  if (guardPendingRecovery()) {
+    return;
+  }
   if (selectedResourceId === null) {
     showToast("Select a resource first.");
     return;
@@ -1448,6 +1655,9 @@ function attachSweepRowClickHandlers() {
 
 // Chạy benchmark đúng số node hiện tại và hiển thị bảng số liệu cùng ảnh biểu đồ matplotlib
 async function runMetrics(silent = false) {
+  if (guardPendingRecovery()) {
+    return;
+  }
   const requestGeneration = artifactGeneration;
   setBusy(els.metricsBtn, true, "Running...");
   setMetricChartsLoading("Calculating metrics...");
@@ -1554,6 +1764,9 @@ function closeTopologyModal() {
 
 // Xóa resource trực tiếp từ bảng không cần chọn trước
 async function deleteResourceFromTable(resourceId, button) {
+  if (guardPendingRecovery()) {
+    return;
+  }
   if (!resourceId) return;
   if (!window.confirm(`Delete resource ${resourceId}?`)) return;
   if (button) setBusy(button, true, "Deleting...");
@@ -1595,6 +1808,7 @@ function bindClick(el, handler) {
 bindClick(els.initializeBtn, initializeNetwork);
 bindClick(els.lookupBtn, lookupResource);
 bindClick(els.killBtn, killNode);
+bindClick(els.recoverBtn, recoverNode);
 bindClick(els.addNodeBtn, addNode);
 bindClick(els.addResourceBtn, addResource);
 bindClick(els.metricsBtn, () => runMetrics(false));

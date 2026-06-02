@@ -853,7 +853,10 @@ class ChordRing:
 
     # Vô hiệu hóa một node đang hoạt động để mô phỏng sự cố mạng hoặc node rời đi (churn)
     def kill_node(self, node_id: int) -> dict[str, Any]:
-        # Kiểm tra rào cản lỗi
+        impact_report = self.mark_node_failed(node_id)
+        return self.recover_failed_node(node_id, impact_report=impact_report)
+
+    def mark_node_failed(self, node_id: int) -> dict[str, Any]:
         if node_id not in self.nodes:
             raise ValueError(f"Node {node_id} does not exist")
         if not self.nodes[node_id].active:
@@ -861,15 +864,41 @@ class ChordRing:
         if len(self.active_node_ids) <= 1:
             raise ValueError("Cannot kill the last active node")
 
+        old_predecessor = self.nodes[node_id].predecessor
+        old_successor = self.nodes[node_id].successor
+        self.nodes[node_id].active = False
+        self.failed_nodes.add(node_id)
+
+        impact = self.failure_impact_report(node_id)
+        impact.update(
+            {
+                "killed_node_id": node_id,
+                "node_id": node_id,
+                "old_predecessor": old_predecessor,
+                "old_successor": old_successor,
+                "active_nodes": len(self.active_node_ids),
+                "message": "Node marked as failed. Recovery has not been run yet.",
+            }
+        )
+        return impact
+
+    def recover_failed_node(
+        self,
+        node_id: int,
+        *,
+        impact_report: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        # Kiểm tra rào cản lỗi
+        if node_id not in self.nodes:
+            raise ValueError(f"Node {node_id} does not exist")
+        if node_id not in self.failed_nodes or self.nodes[node_id].active:
+            raise ValueError(f"Node {node_id} is not marked as failed")
+        if len(self.active_node_ids) < 1:
+            raise ValueError("Cannot recover when no active node is available")
+
         # Lưu lại láng giềng cũ để có thông tin report
         old_predecessor = self.nodes[node_id].predecessor
         old_successor = self.nodes[node_id].successor
-
-        # Đánh dấu node đã chết trước khi vá các liên kết trực tiếp quanh nó
-        self.nodes[node_id].active = False
-
-        # Đưa ID này vào tập các node đã hỏng
-        self.failed_nodes.add(node_id)
 
         # Ngắt node chết khỏi view định tuyến của chính nó
         self.nodes[node_id].predecessor = None
@@ -892,7 +921,9 @@ class ChordRing:
 
         # Phục hồi resource từ các bản replica còn sống nếu hệ thống vẫn còn bản copy hợp lệ
         recovered_resources, lost_resources, recovery_details = self._recover_resources_after_node_failure(node_id)
+        reconciled_resources, reconciled_resource_ids = self._reconcile_resource_owners_after_recovery()
         effective_replica_count = min(self.replication_count, max(0, len(self.active_node_ids) - 1))
+        self.failed_nodes.discard(node_id)
 
         return {
             "killed_node_id": node_id,
@@ -910,6 +941,7 @@ class ChordRing:
             "recovered_resource_ids": recovery_details["recovered_resource_ids"][:10],
             "replica_repaired_resource_ids": recovery_details["replica_repaired_resource_ids"][:10],
             "lost_resource_ids": recovery_details["lost_resource_ids"][:10],
+            "ownership_repaired_resource_ids": reconciled_resource_ids[:10],
             "recovered_resource_sample_count": min(
                 len(recovery_details["recovered_resource_ids"]),
                 10,
@@ -925,8 +957,32 @@ class ChordRing:
             ),
             "lost_resource_sample_count": min(len(recovery_details["lost_resource_ids"]), 10),
             "lost_resource_total_count": len(recovery_details["lost_resource_ids"]),
+            "ownership_repaired_resources": reconciled_resources,
+            "ownership_repaired_resource_sample_count": min(len(reconciled_resource_ids), 10),
+            "ownership_repaired_resource_total_count": len(reconciled_resource_ids),
             "active_nodes": len(self.active_node_ids),
+            "impact_report": impact_report or self.failure_impact_report(node_id),
             "message": "Node killed, adjacent links repaired, and replicas recovered where available.",
+        }
+
+    def failure_impact_report(self, node_id: int | None = None) -> dict[str, Any]:
+        failed_ids = set(self.failed_nodes)
+        if node_id is not None:
+            failed_ids.add(int(node_id))
+
+        stale_entries = self._stale_finger_entries(failed_ids)
+        finger_warning_nodes = sorted({entry["node_id"] for entry in stale_entries})
+        affected_resources = self._affected_resources(failed_ids)
+
+        return {
+            "failed_nodes": sorted(failed_ids),
+            "finger_warning_nodes": finger_warning_nodes,
+            "stale_finger_entries": stale_entries,
+            "affected_resources": affected_resources,
+            "affected_resource_ids": [item["resource_id"] for item in affected_resources],
+            "finger_warning_node_count": len(finger_warning_nodes),
+            "stale_finger_entry_count": len(stale_entries),
+            "affected_resource_count": len(affected_resources),
         }
 
     # Định tuyến một key qua overlay Chord
@@ -1545,6 +1601,41 @@ class ChordRing:
             "lost_resource_ids": lost_resource_ids,
         }
 
+    def _reconcile_resource_owners_after_recovery(self) -> tuple[int, list[str]]:
+        repaired_resource_ids: list[str] = []
+
+        for resource in list(self._unique_active_local_resources().values()):
+            old_holder_ids = set(self._copy_holder_ids(resource))
+            old_holder_ids.update(self._live_resource_copy_holders(resource))
+
+            if not old_holder_ids:
+                continue
+
+            route = self._route_key(
+                resource.key,
+                operation="RecoverReconcile",
+                requested_id=resource.resource_id,
+                collect_trace=False,
+            )
+            expected_owner_id = route["owner_id"]
+            expected_replica_ids = self._replica_nodes_for_owner(expected_owner_id)
+            needs_repair = (
+                resource.owner_id != expected_owner_id
+                or resource.replica_node_ids != expected_replica_ids
+                or resource.resource_id not in self.nodes[expected_owner_id].local_resources
+            )
+
+            if not needs_repair:
+                continue
+
+            previous_holder_ids = list(dict.fromkeys(old_holder_ids))
+            resource.owner_id = expected_owner_id
+            self.resources[resource.resource_id] = resource
+            self._place_resource_copies(resource, previous_holder_ids=previous_holder_ids)
+            repaired_resource_ids.append(resource.resource_id)
+
+        return len(repaired_resource_ids), repaired_resource_ids
+
     # Sửa các dòng Finger Table đang trỏ tới node vừa chết
     def _repair_fingers_referencing(self, failed_node_id: int) -> tuple[int, int]:
         updated_tables = 0
@@ -1591,6 +1682,46 @@ class ChordRing:
         return distribution
 
     # Trích xuất và định dạng toàn bộ trạng thái chi tiết của một node cụ thể gửi ra bên ngoài
+    def _stale_finger_entries(self, failed_ids: set[int] | None = None) -> list[dict[str, int]]:
+        failed = set(self.failed_nodes if failed_ids is None else failed_ids)
+        entries: list[dict[str, int]] = []
+        if not failed:
+            return entries
+        for node_id, node in sorted(self.nodes.items()):
+            if not node.active:
+                continue
+            for entry in node.finger_table:
+                if entry.node_id in failed:
+                    entries.append(
+                        {
+                            "node_id": node_id,
+                            "index": entry.index,
+                            "target_node_id": entry.node_id,
+                        }
+                    )
+        return entries
+
+    def _affected_resources(self, failed_ids: set[int] | None = None) -> list[dict[str, Any]]:
+        failed = set(self.failed_nodes if failed_ids is None else failed_ids)
+        affected: list[dict[str, Any]] = []
+        if not failed:
+            return affected
+        for resource in sorted(self.resources.values(), key=lambda item: item.resource_id):
+            owner_failed = resource.owner_id in failed
+            replica_failed = any(replica_id in failed for replica_id in resource.replica_node_ids)
+            if not owner_failed and not replica_failed:
+                continue
+            if owner_failed and replica_failed:
+                role = "owner_and_replica"
+            elif owner_failed:
+                role = "owner"
+            else:
+                role = "replica"
+            item = resource.to_dict()
+            item["failure_role"] = role
+            affected.append(item)
+        return affected
+
     def node_details(self, node_id: int) -> dict[str, Any]:
         if node_id not in self.nodes:
             raise ValueError(f"Node {node_id} does not exist")
@@ -1600,11 +1731,17 @@ class ChordRing:
     # Gom nhóm toàn bộ số liệu thống kê (snapshot) của vòng mạng gửi cho Frontend/UI hiển thị
     def summary(self, *, sample_size: int | None = None) -> dict[str, Any]:
         active_ids = self.active_node_ids
+        retired_ids = sorted(
+            node_id
+            for node_id, node in self.nodes.items()
+            if not node.active and node_id not in self.failed_nodes
+        )
 
         # Rút trích resource từ local storage thật của các node active để hiển thị UI
         live_resources = self._unique_active_local_resources()
-        self.resources = dict(live_resources)
-        all_resources = sorted(live_resources.values(), key=lambda r: r.resource_id)
+        if not self.failed_nodes:
+            self.resources = dict(live_resources)
+        all_resources = sorted(self.resources.values(), key=lambda r: r.resource_id)
 
         # Kiểm tra có cắt mẫu (pagination/sampling) thì chỉ lấy theo sample_size
         if sample_size is None:
@@ -1613,6 +1750,7 @@ class ChordRing:
             picked = all_resources[: min(sample_size, len(all_resources))]
 
         sample_resources = [resource.to_dict() for resource in picked]
+        impact = self.failure_impact_report()
 
         # Lấy map phân bố tài nguyên
         distribution = self.resource_distribution() if active_ids else {}
@@ -1625,10 +1763,29 @@ class ChordRing:
             "replication_count": self.replication_count,
             "active_node_count": len(active_ids),
             "failed_node_count": len(self.failed_nodes),
-            "resource_count": len(live_resources),
+            "retired_node_count": len(retired_ids),
+            "resource_count": len(all_resources),
             "resource_table_row_count": len(sample_resources),
             "active_nodes": active_ids,
+            "retired_nodes": retired_ids,
+            "nodes": [
+                {
+                    "node_id": node.node_id,
+                    "active": bool(node.active),
+                    "status": (
+                        "failed"
+                        if node.node_id in self.failed_nodes
+                        else "active"
+                        if node.active
+                        else "retired"
+                    ),
+                }
+                for node in sorted(self.nodes.values(), key=lambda item: item.node_id)
+            ],
             "failed_nodes": sorted(self.failed_nodes),
+            "finger_warning_nodes": impact["finger_warning_nodes"],
+            "stale_finger_entries": impact["stale_finger_entries"],
+            "affected_resources": impact["affected_resources"],
             "sample_resources": sample_resources,
             "resource_distribution": distribution,
             "max_resources_on_node": max(distribution.values()) if distribution else 0,

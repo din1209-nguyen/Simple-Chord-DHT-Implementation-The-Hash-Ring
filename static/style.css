@@ -120,8 +120,8 @@ body {
 .status-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(54px, 1fr));
-  gap: 4px;
-  width: min(300px, 36vw);
+  gap: 8px;
+  width: min(380px, 42vw);
 }
 
 .status-item {
@@ -129,32 +129,48 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  min-height: 34px;
-  padding: 2px 5px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 1px;
+  min-height: 38px;
+  padding: 4px 8px;
+  background: #ecfdf5;
+  border: 1px solid #0f766e;
   border-radius: 6px;
   min-width: 0;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.12);
 }
 
 .status-item--compact {
-  padding: 2px 5px;
+  padding: 4px 8px;
 }
 
 .status-label {
-  font-size: 0.5rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: #064e3b;
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
 .status-value {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #5eead4;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #064e3b;
   line-height: 1.15;
+}
+
+.status-value sup,
+.finger-formula-card sup {
+  position: relative;
+  top: -0.45em;
+  display: inline-block;
+  font-size: 0.66em;
+  line-height: 1;
+  vertical-align: baseline;
+}
+
+.pow {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 /* Sắp xếp layout chính thành hai hàng với Ring State chiếm phần lớn */
@@ -859,6 +875,21 @@ button.secondary[hidden] {
   background: #dc2626;
 }
 
+.node-pill.is-retired,
+.node-pill.is-retired:hover,
+.node-pill.is-retired.is-selected {
+  border-color: #94a3b8;
+  color: #ffffff;
+  background: #94a3b8;
+}
+
+.node-pill.is-finger-warning:not(.is-stopped):not(.is-retired):not(.is-selected) {
+  border-color: #f59e0b;
+  color: #7c2d12;
+  background: #fffbeb;
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.38);
+}
+
 .node-pill.is-stopped small,
 .node-pill.is-stopped:hover small,
 .node-pill.is-stopped.is-selected small {
@@ -957,6 +988,14 @@ button.secondary[hidden] {
   border-color: #dc2626;
   color: #ffffff;
   background: #dc2626;
+}
+
+.node-pill.is-retired,
+.node-pill.is-retired:hover,
+.node-pill.is-retired.is-selected {
+  border-color: #94a3b8;
+  color: #ffffff;
+  background: #94a3b8;
 }
 
 .node-pill.is-resource-owner:not(.is-selected) {
@@ -1816,10 +1855,41 @@ button.neighbor-card:hover:not(:disabled) {
 .finger-table-wrap .col-ft-node { width: 30%; }
 
 .finger-formula {
-  margin: -2px 0 8px;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.35;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+  margin: 0 0 8px;
+}
+
+.finger-formula-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 160px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid #14b8a6;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: #115e59;
+  background: #ecfdf5;
+  white-space: nowrap;
+}
+
+.finger-formula-card--start {
+  border-color: #0f766e;
+  background: #ecfdf5;
+  color: #115e59;
+}
+
+.finger-formula-card--owner {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  color: #115e59;
 }
 
 .finger-table-wrap th {
@@ -1929,6 +1999,27 @@ button.neighbor-card:hover:not(:disabled) {
 
 .resource-row.is-selected td {
   color: #7c2d12;
+  font-weight: 700;
+}
+
+.resource-row.resource-row--failed {
+  background: #fef2f2;
+  box-shadow: inset 4px 0 0 #dc2626;
+}
+
+.resource-row.resource-row--failed td,
+.resource-row.resource-row--failed code {
+  color: #991b1b;
+}
+
+.finger-row--stale {
+  background: #fffbeb;
+  box-shadow: inset 4px 0 0 #f59e0b;
+}
+
+.finger-row--stale td,
+.finger-row--stale code {
+  color: #92400e;
   font-weight: 700;
 }
 

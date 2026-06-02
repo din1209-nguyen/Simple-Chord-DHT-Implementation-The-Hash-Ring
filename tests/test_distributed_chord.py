@@ -209,3 +209,233 @@ def test_add_node_rebalances_primary_interval_and_successor_replicas():
 
     # Kiểm tra toàn bộ mapping resource vẫn hợp lệ sau node join
     assert ring.verify_resource_mapping()
+
+
+def test_mark_node_failed_only_marks_failure_without_repairing_tables_or_resources():
+    ring = ChordRing(m=8, seed=61, replication_count=2)
+    ring.initialize_network(node_count=10, resource_count=20, seed=61, replication_count=2)
+    failed_node_id = next(iter(ring.resources.values())).owner_id
+    failed_local_resources = set(ring.nodes[failed_node_id].local_resources)
+    finger_tables_before = {
+        node_id: [entry.to_dict() for entry in node.finger_table]
+        for node_id, node in ring.nodes.items()
+    }
+
+    report = ring.mark_node_failed(failed_node_id)
+
+    assert ring.nodes[failed_node_id].active is False
+    assert failed_node_id in ring.failed_nodes
+    assert set(ring.nodes[failed_node_id].local_resources) == failed_local_resources
+    assert {
+        node_id: [entry.to_dict() for entry in node.finger_table]
+        for node_id, node in ring.nodes.items()
+    } == finger_tables_before
+    assert report["affected_resource_count"] >= 1
+    assert "recovered_resource_total_count" not in report
+
+
+def test_recover_failed_node_repairs_fingers_and_resource_mapping():
+    ring = ChordRing(m=8, seed=61, replication_count=2)
+    ring.initialize_network(node_count=10, resource_count=20, seed=61, replication_count=2)
+    failed_node_id = next(iter(ring.resources.values())).owner_id
+
+    ring.mark_node_failed(failed_node_id)
+    report = ring.recover_failed_node(failed_node_id)
+
+    assert report["updated_finger_entries"] >= 0
+    assert all(
+        entry.node_id != failed_node_id
+        for node_id in ring.active_node_ids
+        for entry in ring.nodes[node_id].finger_table
+    )
+    assert ring.verify_resource_mapping()
+
+
+def test_recover_reconciles_resource_copies_with_wrong_active_owner():
+    ring = ChordRing(m=16, seed=61, replication_count=1)
+    ring.nodes[3265] = Node(node_id=3265, active=True, predecessor=60689, successor=4280)
+    ring.nodes[4280] = Node(node_id=4280, active=True, predecessor=3265, successor=60689)
+    ring.nodes[60689] = Node(node_id=60689, active=True, predecessor=4280, successor=3265)
+    ring.nodes[199] = Node(node_id=199, active=False)
+    ring.failed_nodes.add(199)
+    ring.refresh_all_finger_tables()
+
+    resource = ResourceRecord(
+        resource_id="resource-0004",
+        hashed_resource_id="hash",
+        key=61424,
+        owner_id=4280,
+        replica_node_ids=[60689],
+    )
+    ring.resources[resource.resource_id] = resource
+    ring.nodes[4280].local_resources[resource.resource_id] = resource
+    ring.nodes[60689].local_resources[resource.resource_id] = resource
+
+    report = ring.recover_failed_node(199)
+
+    assert report["ownership_repaired_resource_total_count"] == 1
+    assert ring.resources["resource-0004"].owner_id == 3265
+    assert ring.resources["resource-0004"].replica_node_ids == [4280]
+    assert "resource-0004" in ring.nodes[3265].local_resources
+    assert ring.lookup("resource-0004", start_node_id=3265).found is True
+    assert ring.verify_resource_mapping()
+
+
+def test_kill_endpoint_only_reports_impact_and_recover_endpoint_repairs(client):
+    client.post(
+        "/api/initialize",
+        json={"nodes": 10, "resources": 12, "m": 10, "seed": 61, "replication_count": 2},
+    )
+    state_before = client.get("/api/state").get_json()["state"]
+    resource = state_before["sample_resources"][0]
+    node_id = int(resource["owner_id"])
+
+    killed = client.post("/api/kill", json={"node_id": node_id}).get_json()
+
+    assert killed["ok"] is True
+    assert node_id in killed["state"]["failed_nodes"]
+    assert "recovered_resource_total_count" not in killed["report"]
+    assert any(
+        item["resource_id"] == resource["resource_id"]
+        for item in killed["state"]["sample_resources"]
+    )
+    assert any(
+        item["resource_id"] == resource["resource_id"]
+        for item in killed["state"]["affected_resources"]
+    )
+
+    recovered = client.post("/api/recover", json={"node_id": node_id}).get_json()
+
+    assert recovered["ok"] is True
+    assert "recovered_resource_total_count" in recovered["report"]
+    assert recovered["state"]["stale_finger_entries"] == []
+    assert node_id not in recovered["state"]["failed_nodes"]
+    assert node_id in recovered["state"]["retired_nodes"]
+    assert any(
+        int(node["node_id"]) == node_id and node["status"] == "retired"
+        for node in recovered["state"]["nodes"]
+    )
+
+
+def test_pending_recovery_blocks_operations_until_recover(client):
+    import app
+
+    client.post(
+        "/api/initialize",
+        json={"nodes": 10, "resources": 12, "m": 10, "seed": 61, "replication_count": 2},
+    )
+    state_before = client.get("/api/state").get_json()["state"]
+    resource = state_before["sample_resources"][0]
+    failed_node_id = int(resource["owner_id"])
+    other_node_id = next(
+        int(node["node_id"])
+        for node in state_before["nodes"]
+        if int(node["node_id"]) != failed_node_id and node["active"]
+    )
+
+    client.post("/api/kill", json={"node_id": failed_node_id})
+    finger_tables_after_kill = {
+        node_id: [entry.to_dict() for entry in node.finger_table]
+        for node_id, node in app.ring.nodes.items()
+    }
+    local_resources_after_kill = {
+        node_id: set(node.local_resources)
+        for node_id, node in app.ring.nodes.items()
+    }
+
+    blocked_requests = [
+        client.post("/api/kill", json={"node_id": other_node_id}),
+        client.post("/api/lookup", json={"resource_id": resource["resource_id"]}),
+        client.post("/api/node", json={}),
+        client.delete(f"/api/node/{other_node_id}"),
+        client.post("/api/resource", json={"resource_id": "blocked-resource"}),
+        client.put(
+            "/api/resource",
+            json={
+                "old_resource_id": resource["resource_id"],
+                "new_resource_id": "blocked-resource-update",
+            },
+        ),
+        client.delete("/api/resource", json={"resource_id": resource["resource_id"]}),
+        client.post("/api/metrics", json={"lookups": 1, "trials": 1}),
+    ]
+
+    for response in blocked_requests:
+        body = response.get_json()
+        assert response.status_code == 409
+        assert body["ok"] is False
+        assert body["requires_recovery"] is True
+        assert failed_node_id in body["failed_nodes"]
+
+    topology = client.post("/api/topology", json={})
+    topology_body = topology.get_json()
+    assert topology.status_code == 200
+    assert topology_body["ok"] is True
+    assert topology_body["report"]["failed_node_count"] == 1
+
+    assert {
+        node_id: [entry.to_dict() for entry in node.finger_table]
+        for node_id, node in app.ring.nodes.items()
+    } == finger_tables_after_kill
+    assert {
+        node_id: set(node.local_resources)
+        for node_id, node in app.ring.nodes.items()
+    } == local_resources_after_kill
+
+    recovered = client.post("/api/recover", json={"node_id": failed_node_id}).get_json()
+    assert recovered["ok"] is True
+    assert failed_node_id not in recovered["state"]["failed_nodes"]
+    assert failed_node_id in recovered["state"]["retired_nodes"]
+
+    lookup_after_recover = client.post(
+        "/api/lookup",
+        json={"resource_id": resource["resource_id"]},
+    )
+    assert lookup_after_recover.status_code == 200
+    assert lookup_after_recover.get_json()["ok"] is True
+
+
+def test_initialize_is_allowed_while_recovery_is_pending(client):
+    client.post(
+        "/api/initialize",
+        json={"nodes": 10, "resources": 12, "m": 10, "seed": 61, "replication_count": 2},
+    )
+    state_before = client.get("/api/state").get_json()["state"]
+    failed_node_id = int(state_before["sample_resources"][0]["owner_id"])
+
+    client.post("/api/kill", json={"node_id": failed_node_id})
+    initialized = client.post(
+        "/api/initialize",
+        json={"nodes": 10, "resources": 1, "m": 10, "seed": 62, "replication_count": 1},
+    )
+
+    body = initialized.get_json()
+    assert initialized.status_code == 200
+    assert body["ok"] is True
+    assert body["state"]["failed_nodes"] == []
+
+
+def test_recover_does_not_restore_metadata_only_resource():
+    ring = ChordRing(m=16, seed=61, replication_count=1)
+    ring.nodes[3265] = Node(node_id=3265, active=True, predecessor=60689, successor=4280)
+    ring.nodes[4280] = Node(node_id=4280, active=True, predecessor=3265, successor=60689)
+    ring.nodes[60689] = Node(node_id=60689, active=True, predecessor=4280, successor=3265)
+    ring.nodes[199] = Node(node_id=199, active=False)
+    ring.failed_nodes.add(199)
+    ring.refresh_all_finger_tables()
+
+    resource = ResourceRecord(
+        resource_id="metadata-only",
+        hashed_resource_id="hash",
+        key=61424,
+        owner_id=4280,
+        replica_node_ids=[60689],
+    )
+    ring.resources[resource.resource_id] = resource
+
+    report = ring.recover_failed_node(199)
+
+    assert report["ownership_repaired_resource_total_count"] == 0
+    assert "metadata-only" not in ring.nodes[3265].local_resources
+    assert "metadata-only" not in ring.nodes[4280].local_resources
+    assert "metadata-only" not in ring.nodes[60689].local_resources

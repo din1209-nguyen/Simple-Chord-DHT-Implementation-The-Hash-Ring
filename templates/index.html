@@ -45,7 +45,7 @@
         </div>
         <div class="status-item status-item--compact">
           <span class="status-label">ID Space</span>
-          <span id="statusSpace" class="status-value">2^16</span>
+          <span id="statusSpace" class="status-value">2<sup>16</sup></span>
         </div>
       </div>
     </header>
@@ -94,6 +94,7 @@
               <button id="addNodeBtn" type="button">Join Node</button>
               <div id="selectedNodeActions" class="selected-actions" hidden>
                 <button id="killBtn" type="button" class="danger">Kill</button>
+                <button id="recoverBtn" type="button">Recover</button>
               </div>
               <span class="failed-count">Failed: <input id="failedNodesInput" type="text" readonly value="0" /></span>
             </div>
@@ -134,6 +135,10 @@
 
           <div class="state-col state-col-fingers">
             <h3>Finger Table</h3>
+            <div class="finger-formula">
+              <span class="finger-formula-card finger-formula-card--start">start(i) = (node_id + <span class="pow">2<sup>i-1</sup></span>) mod <span class="pow">2<sup>m</sup></span></span>
+              <span class="finger-formula-card finger-formula-card--owner">node = successor(start(i))</span>
+            </div>
             <div class="finger-table-wrap">
               <table class="data-table">
                 <thead>

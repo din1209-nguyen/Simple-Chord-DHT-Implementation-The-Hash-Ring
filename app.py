@@ -28,6 +28,7 @@ if str(SRC_DIR) not in sys.path:
 
 from chord_dht import (
     ChordRing,
+    FingerEntry,
     Node,
     ResourceRecord,
     build_growth_node_sizes,
@@ -74,7 +75,20 @@ def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
             "replication_count": ring.replication_count,
         },
         "nodes": [
-            {"node_id": node.node_id, "active": bool(node.active)}
+            {
+                "node_id": node.node_id,
+                "active": bool(node.active),
+                "status": (
+                    "failed"
+                    if node.node_id in ring.failed_nodes
+                    else "active"
+                    if node.active
+                    else "retired"
+                ),
+                "predecessor": node.predecessor,
+                "successor": node.successor,
+                "finger_table": [entry.to_dict() for entry in node.finger_table],
+            }
             for node in ring.nodes.values()
         ],
         "resources": [
@@ -99,21 +113,38 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
         replication_count=int(config.get("replication_count", 1)),
     )
     # Khôi phục danh sách node và trạng thái active
+    has_saved_routing = False
     for node_info in payload.get("nodes") or []:
         node_id = int(node_info["node_id"])
         ring.nodes[node_id] = ring.nodes.get(node_id) or Node(node_id=node_id)
         ring.nodes[node_id].active = bool(node_info.get("active", True))
-        # Ghi nhận node inactive vào tập failed_nodes
-        if not ring.nodes[node_id].active:
+        if "predecessor" in node_info or "successor" in node_info or "finger_table" in node_info:
+            has_saved_routing = True
+        ring.nodes[node_id].predecessor = node_info.get("predecessor")
+        ring.nodes[node_id].successor = node_info.get("successor")
+        ring.nodes[node_id].finger_table = [
+            FingerEntry(
+                index=int(entry.get("index", 0)),
+                start=int(entry.get("start", 0)),
+                interval_end=int(entry.get("interval_end", 0)),
+                node_id=int(entry.get("node_id", 0)),
+            )
+            for entry in (node_info.get("finger_table") or [])
+            if isinstance(entry, dict)
+        ]
+        status = str(node_info.get("status", "")).strip().lower()
+        # State cũ chưa có status: inactive được xem là failed để vẫn yêu cầu recover.
+        if status == "failed" or (not status and not ring.nodes[node_id].active):
             ring.failed_nodes.add(node_id)
 
     active_ids = ring.active_node_ids
     # Nối predecessor và successor cho các node active theo thứ tự vòng
-    for i, node_id in enumerate(active_ids):
-        ring.nodes[node_id].successor = active_ids[(i + 1) % len(active_ids)]
-        ring.nodes[node_id].predecessor = active_ids[(i - 1) % len(active_ids)]
+    if not has_saved_routing:
+        for i, node_id in enumerate(active_ids):
+            ring.nodes[node_id].successor = active_ids[(i + 1) % len(active_ids)]
+            ring.nodes[node_id].predecessor = active_ids[(i - 1) % len(active_ids)]
 
-    ring.stabilize()
+        ring.stabilize()
 
     # Khôi phục metadata resource và bản copy local tương ứng
     for res in payload.get("resources") or []:
@@ -142,7 +173,8 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
                 if rep_id in ring.nodes and ring.nodes[rep_id].active:
                     ring.nodes[rep_id].local_resources[rid] = record
 
-    ring.stabilize()
+    if not has_saved_routing:
+        ring.stabilize()
 
     # Trả về ring đã được ổn định sau khi khôi phục
     return ring
@@ -306,10 +338,24 @@ last_metrics_payload: dict[str, Any] | None = None
 
 
 # Trả về lỗi API theo định dạng JSON thống nhất
-def json_error(message: str, status_code: int = 400):
-    response = jsonify({"ok": False, "message": message})
+def json_error(message: str, status_code: int = 400, **extra: Any):
+    payload = {"ok": False, "message": message}
+    payload.update(extra)
+    response = jsonify(payload)
     response.status_code = status_code
     return response
+
+
+def _require_no_pending_recovery():
+    failed_nodes = sorted(int(node_id) for node_id in ring.failed_nodes)
+    if not failed_nodes:
+        return None
+    return json_error(
+        "A node is failed. Press Recover before running this operation.",
+        409,
+        requires_recovery=True,
+        failed_nodes=failed_nodes,
+    )
 
 
 # Đọc và ép kiểu trường số nguyên từ payload request
@@ -546,6 +592,9 @@ def lookup_resource():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi lookup
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Chuẩn hóa start_node_id rỗng thành None
             start = None if start_node_id in (None, "") else int(start_node_id)
@@ -593,12 +642,15 @@ def kill_node():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi kill node
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Đọc node_id bắt buộc từ payload
             node_id = parse_int_field(payload, "node_id")
 
             # Mô phỏng lỗi node và chạy recovery dữ liệu
-            report = ring.kill_node(node_id)
+            report = ring.mark_node_failed(node_id)
 
             # Persist state sau khi node bị dừng
             _save_ring_state(ring)
@@ -606,7 +658,7 @@ def kill_node():
         # Trả về report recovery và state mới cho frontend
         return jsonify({
             "ok": True,
-            "message": report.get("message", "Node killed."),
+            "message": report.get("message", "Node marked as failed."),
             "report": report,
             "state": ring.summary(sample_size=None),
         })
@@ -614,12 +666,34 @@ def kill_node():
         return json_error(str(exc))
 
 # Xóa một node khỏi ring sau khi vô hiệu hóa nếu còn active
+@app.post("/api/recover")
+def recover_node():
+    payload = request.get_json(silent=True) or {}
+    try:
+        with coordinator_lock:
+            _autoload_once()
+            node_id = parse_int_field(payload, "node_id")
+            report = ring.recover_failed_node(node_id)
+            _save_ring_state(ring)
+
+        return jsonify({
+            "ok": True,
+            "message": report.get("message", "Node recovered."),
+            "report": report,
+            "state": ring.summary(sample_size=None),
+        })
+    except Exception as exc:
+        return json_error(str(exc))
+
 @app.delete("/api/node/<int:node_id>")
 def delete_node(node_id: int):
     try:
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi xóa node
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Kiểm tra node tồn tại trước khi xóa
             if node_id not in ring.nodes:
@@ -659,6 +733,9 @@ def add_node():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi thêm node
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Đọc node_id tùy chọn từ payload
             node_id = payload.get("node_id")
@@ -695,6 +772,9 @@ def add_resource():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi thêm resource
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Put resource qua routing Chord để tìm owner
             created = ring.add_resource(resource_id)
@@ -736,6 +816,9 @@ def update_resource():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi cập nhật resource
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Cập nhật resource bằng delete và put phân tán
             updated = ring.update_resource(old_id, new_id)
@@ -774,6 +857,9 @@ def delete_resource():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi xóa resource
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Delete resource qua routing Chord tới owner hiện tại
             deleted = ring.delete_resource(resource_id)
@@ -820,6 +906,9 @@ def metrics_current_ring():
         with coordinator_lock:
             # Đảm bảo ring đã được nạp trước khi chạy metric
             _autoload_once()
+            pending_recovery = _require_no_pending_recovery()
+            if pending_recovery is not None:
+                return pending_recovery
 
             # Lấy resource thật từ local storage của các node active cho benchmark
             live_resources = list(ring._unique_active_local_resources().values())
