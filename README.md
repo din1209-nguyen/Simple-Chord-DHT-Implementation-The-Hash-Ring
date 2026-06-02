@@ -295,7 +295,22 @@ Yêu cầu:
 - pip
 - Windows PowerShell hoặc terminal tương đương
 
-Cài bằng virtual environment:
+Cách khuyến nghị trên Windows là chạy script tự tạo môi trường ảo, cài dependency và mở server:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run.ps1
+```
+
+Trên macOS/Linux:
+
+```bash
+chmod +x ./run.sh
+./run.sh
+```
+
+Script sẽ tự tạo `.venv` trong thư mục dự án nếu chưa có. Không dùng lại thư mục `venv`/`.venv` copy từ máy khác vì đường dẫn Python trong virtual environment thường phụ thuộc từng máy.
+
+Cài thủ công bằng virtual environment trên Windows:
 
 ```powershell
 py -3.10 -m venv .venv
@@ -304,7 +319,16 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
 
-Hoặc cài từ `requirements.txt`:
+Cài thủ công trên macOS/Linux:
+
+```bash
+python3 -m venv .venv
+. ./.venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+```
+
+Hoặc cài từ `requirements.txt` sau khi đã activate `.venv`:
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -312,8 +336,22 @@ python -m pip install -r requirements.txt
 
 ## Chạy Ứng Dụng
 
+Nếu dùng script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run.ps1
+```
+
+Nếu đã cài thủ công trên Windows:
+
 ```powershell
 .\.venv\Scripts\python.exe app.py
+```
+
+Nếu đã cài thủ công trên macOS/Linux:
+
+```bash
+./.venv/bin/python app.py
 ```
 
 Mặc định server chạy tại:
@@ -328,6 +366,12 @@ Có thể đổi host/port:
 $env:HOST = "0.0.0.0"
 $env:PORT = "8080"
 .\.venv\Scripts\python.exe app.py
+```
+
+Trên macOS/Linux:
+
+```bash
+HOST=0.0.0.0 PORT=8080 ./.venv/bin/python app.py
 ```
 
 ## API Chính
@@ -450,7 +494,9 @@ Chạy file test chính:
 .\.venv\Scripts\python.exe -m pytest tests/test_distributed_chord.py -v
 ```
 
-Lưu ý: nếu môi trường thiếu `matplotlib`, pytest sẽ lỗi ở bước import `chord_dht.metrics`. Cài dependency bằng `python -m pip install -e ".[dev]"` hoặc `python -m pip install -r requirements.txt`.
+Trên macOS/Linux thay `.\.venv\Scripts\python.exe` bằng `./.venv/bin/python`.
+
+Lưu ý: nếu môi trường thiếu `matplotlib`, pytest sẽ lỗi ở bước import `chord_dht.metrics`. Cài lại dependency trong đúng `.venv` của dự án bằng `python -m pip install -e ".[dev]"` hoặc `python -m pip install -r requirements.txt`.
 
 Nhóm test chính:
 

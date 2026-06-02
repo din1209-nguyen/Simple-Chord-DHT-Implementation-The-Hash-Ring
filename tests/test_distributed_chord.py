@@ -37,6 +37,8 @@ def client(tmp_path, monkeypatch):
 
     # Gắn STATE_PATH vào thư mục tạm để test không ghi đè dữ liệu thật
     monkeypatch.setattr(app, "STATE_PATH", tmp_path / "state.json")
+    monkeypatch.setattr(app, "NODE_IDS_PATH", tmp_path / "node_ids.json")
+    monkeypatch.setattr(app, "RESOURCE_IDS_PATH", tmp_path / "resource_ids.json")
 
     # Đặt lại ring để mỗi test chạy độc lập
     app.ring = app.ChordRing(m=16, seed=61, replication_count=1)
