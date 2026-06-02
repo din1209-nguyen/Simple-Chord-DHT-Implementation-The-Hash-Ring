@@ -1,6 +1,6 @@
 # Simple Chord DHT Implementation
 
-Ứng dụng web mô phỏng **Chord Distributed Hash Table (DHT)** cho đề tài **Topic 61 - Simple Chord DHT Implementation**. Dự án minh họa cách node và resource được ánh xạ vào vòng định danh, cách lookup dùng finger table, cách node join/failure ảnh hưởng tới topology, và cách replication giúp phục hồi dữ liệu khi node lỗi.
+Ứng dụng web mô phỏng **Chord Distributed Hash Table (DHT)** cho đề tài **Simple Chord DHT Implementation**. Dự án minh họa cách node và resource được ánh xạ vào vòng định danh, cách lookup dùng finger table, cách node join/failure ảnh hưởng tới topology, và cách replication giúp phục hồi dữ liệu khi node lỗi.
 
 > Đây là mô phỏng single-process phục vụ học tập và demo. Mỗi node là một object trong bộ nhớ, không phải một process/máy độc lập trong mạng P2P thật.
 
@@ -8,7 +8,7 @@
 
 | Mục | Nội dung |
 | --- | --- |
-| Chủ đề | Topic 61 - Simple Chord DHT Implementation |
+| Chủ đề | Simple Chord DHT Implementation |
 | Môn học | Cơ Sở Dữ Liệu Phân Tán |
 | Ngôn ngữ | Python, JavaScript, HTML, CSS |
 | Backend | Flask |
