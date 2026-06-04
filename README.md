@@ -26,7 +26,7 @@
 - Kill node để mô phỏng failure, hiển thị impact trước recovery.
 - Recover node failure bằng cách sửa ring, sửa finger table, promote primary từ replica sống và đặt lại replica.
 - Hiển thị topology, lookup path, resource distribution và metrics.
-- Lưu trạng thái ring vào `data/state.json` để autoload sau khi restart server.
+- Lưu trạng thái ring vào `data/state/` theo từng node để autoload sau khi restart server.
 
 ## Lý Thuyết Chord Được Mô Phỏng
 
@@ -266,7 +266,10 @@ Final Source Code/
 |-- data/
 |   |-- node_ids.json
 |   |-- resource_ids.json
-|   `-- state.json
+|   `-- state/
+|       |-- meta.json
+|       `-- nodes/
+|           `-- node_<node_id>.json
 |-- src/
 |   `-- chord_dht/
 |       |-- __init__.py
@@ -459,7 +462,8 @@ Invoke-RestMethod `
 
 | File | Mô tả |
 | --- | --- |
-| `data/state.json` | Snapshot đầy đủ của ring, nodes, resources, failed nodes và metrics gần nhất |
+| `data/state/meta.json` | Metadata runtime của ring: config, metrics gần nhất và danh sách file node |
+| `data/state/nodes/node_<node_id>.json` | State riêng của từng node, finger table và các resource node đang quản lý cục bộ |
 | `data/node_ids.json` | Danh sách node ID sinh ra khi initialize |
 | `data/resource_ids.json` | Danh sách resource ID/hash/key sinh ra khi initialize |
 

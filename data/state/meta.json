@@ -1,0 +1,2362 @@
+{
+  "schema_version": 2,
+  "saved_at": 1780560340.9460766,
+  "config": {
+    "m": 16,
+    "seed": 61,
+    "replication_count": 1
+  },
+  "node_files": [
+    {
+      "node_id": 199,
+      "path": "nodes/node_199.json"
+    },
+    {
+      "node_id": 3265,
+      "path": "nodes/node_3265.json"
+    },
+    {
+      "node_id": 4280,
+      "path": "nodes/node_4280.json"
+    },
+    {
+      "node_id": 4348,
+      "path": "nodes/node_4348.json"
+    },
+    {
+      "node_id": 4731,
+      "path": "nodes/node_4731.json"
+    },
+    {
+      "node_id": 9213,
+      "path": "nodes/node_9213.json"
+    },
+    {
+      "node_id": 11720,
+      "path": "nodes/node_11720.json"
+    },
+    {
+      "node_id": 12461,
+      "path": "nodes/node_12461.json"
+    },
+    {
+      "node_id": 12855,
+      "path": "nodes/node_12855.json"
+    },
+    {
+      "node_id": 14615,
+      "path": "nodes/node_14615.json"
+    },
+    {
+      "node_id": 14756,
+      "path": "nodes/node_14756.json"
+    },
+    {
+      "node_id": 16173,
+      "path": "nodes/node_16173.json"
+    },
+    {
+      "node_id": 17673,
+      "path": "nodes/node_17673.json"
+    },
+    {
+      "node_id": 18284,
+      "path": "nodes/node_18284.json"
+    },
+    {
+      "node_id": 18652,
+      "path": "nodes/node_18652.json"
+    },
+    {
+      "node_id": 19570,
+      "path": "nodes/node_19570.json"
+    },
+    {
+      "node_id": 20783,
+      "path": "nodes/node_20783.json"
+    },
+    {
+      "node_id": 21012,
+      "path": "nodes/node_21012.json"
+    },
+    {
+      "node_id": 24076,
+      "path": "nodes/node_24076.json"
+    },
+    {
+      "node_id": 27465,
+      "path": "nodes/node_27465.json"
+    },
+    {
+      "node_id": 30016,
+      "path": "nodes/node_30016.json"
+    },
+    {
+      "node_id": 30410,
+      "path": "nodes/node_30410.json"
+    },
+    {
+      "node_id": 30567,
+      "path": "nodes/node_30567.json"
+    },
+    {
+      "node_id": 30656,
+      "path": "nodes/node_30656.json"
+    },
+    {
+      "node_id": 32292,
+      "path": "nodes/node_32292.json"
+    },
+    {
+      "node_id": 34423,
+      "path": "nodes/node_34423.json"
+    },
+    {
+      "node_id": 37252,
+      "path": "nodes/node_37252.json"
+    },
+    {
+      "node_id": 37842,
+      "path": "nodes/node_37842.json"
+    },
+    {
+      "node_id": 38538,
+      "path": "nodes/node_38538.json"
+    },
+    {
+      "node_id": 40946,
+      "path": "nodes/node_40946.json"
+    },
+    {
+      "node_id": 41371,
+      "path": "nodes/node_41371.json"
+    },
+    {
+      "node_id": 42838,
+      "path": "nodes/node_42838.json"
+    },
+    {
+      "node_id": 42917,
+      "path": "nodes/node_42917.json"
+    },
+    {
+      "node_id": 44529,
+      "path": "nodes/node_44529.json"
+    },
+    {
+      "node_id": 45783,
+      "path": "nodes/node_45783.json"
+    },
+    {
+      "node_id": 45972,
+      "path": "nodes/node_45972.json"
+    },
+    {
+      "node_id": 47922,
+      "path": "nodes/node_47922.json"
+    },
+    {
+      "node_id": 48150,
+      "path": "nodes/node_48150.json"
+    },
+    {
+      "node_id": 49803,
+      "path": "nodes/node_49803.json"
+    },
+    {
+      "node_id": 50643,
+      "path": "nodes/node_50643.json"
+    },
+    {
+      "node_id": 51502,
+      "path": "nodes/node_51502.json"
+    },
+    {
+      "node_id": 51854,
+      "path": "nodes/node_51854.json"
+    },
+    {
+      "node_id": 52317,
+      "path": "nodes/node_52317.json"
+    },
+    {
+      "node_id": 52902,
+      "path": "nodes/node_52902.json"
+    },
+    {
+      "node_id": 54053,
+      "path": "nodes/node_54053.json"
+    },
+    {
+      "node_id": 57783,
+      "path": "nodes/node_57783.json"
+    },
+    {
+      "node_id": 57911,
+      "path": "nodes/node_57911.json"
+    },
+    {
+      "node_id": 58732,
+      "path": "nodes/node_58732.json"
+    },
+    {
+      "node_id": 58784,
+      "path": "nodes/node_58784.json"
+    },
+    {
+      "node_id": 60689,
+      "path": "nodes/node_60689.json"
+    }
+  ],
+  "metrics": {
+    "saved_at": 1780544660.6733954,
+    "trials": 10,
+    "lookups": 10,
+    "metric_seed": 1780544652209521800,
+    "active_nodes": 50,
+    "sweep_points": [
+      {
+        "nodes": 1,
+        "average_hops": 0.0,
+        "log2_nodes": 0.0,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.046,
+        "message_overhead": 0,
+        "messages_per_lookup": 0.0,
+        "max_lookup_trace": {
+          "requested_id": "resource-0862",
+          "key": "44581",
+          "owner_id": "199",
+          "start_node_id": 199,
+          "path": [
+            "199"
+          ],
+          "hops": 0,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 199, searching for key 44581 (resource-0862).",
+            "[0] Node 199 owns key 44581 directly (its ownership interval (199, 199] includes the key); routing stops here (no hop taken).",
+            "[0] MetricLookup COMPLETE: owner node = 199, total hops = 0, nodes visited = 1."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": []
+        },
+        "sample_errors": [],
+        "max_hops": 0
+      },
+      {
+        "nodes": 2,
+        "average_hops": 0.57,
+        "log2_nodes": 1.0,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.673,
+        "message_overhead": 57,
+        "messages_per_lookup": 0.57,
+        "max_lookup_trace": {
+          "requested_id": "resource-0377",
+          "key": "15510",
+          "owner_id": "199",
+          "start_node_id": 3265,
+          "path": [
+            "3265",
+            "199"
+          ],
+          "hops": 1,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 3265, searching for key 15510 (resource-0377).",
+            "[0] Node 3265 selects successor [199] because key 15510 is in its ownership interval.",
+            "[1] MetricLookup COMPLETE: owner node = 199, total hops = 1, nodes visited = 2."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 1
+      },
+      {
+        "nodes": 3,
+        "average_hops": 1.0,
+        "log2_nodes": 1.585,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.579,
+        "message_overhead": 100,
+        "messages_per_lookup": 1.0,
+        "max_lookup_trace": {
+          "requested_id": "resource-0948",
+          "key": "5676",
+          "owner_id": "199",
+          "start_node_id": 3265,
+          "path": [
+            "3265",
+            "4280",
+            "199"
+          ],
+          "hops": 2,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 3265, searching for key 5676 (resource-0948).",
+            "[0] Node 3265 selects finger #10 [start=3777] -> node 4280.",
+            "[1] Node 4280 selects successor [199] because key 5676 is in its ownership interval.",
+            "[2] MetricLookup COMPLETE: owner node = 199, total hops = 2, nodes visited = 3."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 2
+      },
+      {
+        "nodes": 4,
+        "average_hops": 1.2,
+        "log2_nodes": 2.0,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.202,
+        "message_overhead": 120,
+        "messages_per_lookup": 1.2,
+        "max_lookup_trace": {
+          "requested_id": "resource-0276",
+          "key": "48235",
+          "owner_id": "199",
+          "start_node_id": 4280,
+          "path": [
+            "4280",
+            "4348",
+            "199"
+          ],
+          "hops": 2,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4280, searching for key 48235 (resource-0276).",
+            "[0] Node 4280 selects finger #7 [start=4344] -> node 4348.",
+            "[1] Node 4348 selects successor [199] because key 48235 is in its ownership interval.",
+            "[2] MetricLookup COMPLETE: owner node = 199, total hops = 2, nodes visited = 3."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 2
+      },
+      {
+        "nodes": 5,
+        "average_hops": 1.59,
+        "log2_nodes": 2.322,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.014,
+        "message_overhead": 159,
+        "messages_per_lookup": 1.59,
+        "max_lookup_trace": {
+          "requested_id": "resource-0513",
+          "key": "23223",
+          "owner_id": "199",
+          "start_node_id": 3265,
+          "path": [
+            "3265",
+            "4348",
+            "4731",
+            "199"
+          ],
+          "hops": 3,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 3265, searching for key 23223 (resource-0513).",
+            "[0] Node 3265 selects finger #11 [start=4289] -> node 4348.",
+            "[1] Node 4348 selects finger #9 [start=4604] -> node 4731.",
+            "[2] Node 4731 selects successor [199] because key 23223 is in its ownership interval.",
+            "[3] MetricLookup COMPLETE: owner node = 199, total hops = 3, nodes visited = 4."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 3
+      },
+      {
+        "nodes": 6,
+        "average_hops": 1.61,
+        "log2_nodes": 2.585,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.915,
+        "message_overhead": 161,
+        "messages_per_lookup": 1.61,
+        "max_lookup_trace": {
+          "requested_id": "resource-0060",
+          "key": "5514",
+          "owner_id": "9213",
+          "start_node_id": 3265,
+          "path": [
+            "3265",
+            "4348",
+            "4731",
+            "9213"
+          ],
+          "hops": 3,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 3265, searching for key 5514 (resource-0060).",
+            "[0] Node 3265 selects finger #11 [start=4289] -> node 4348.",
+            "[1] Node 4348 selects finger #9 [start=4604] -> node 4731.",
+            "[2] Node 4731 selects successor [9213] because key 5514 is in its ownership interval.",
+            "[3] MetricLookup COMPLETE: owner node = 9213, total hops = 3, nodes visited = 4."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            199
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 3
+      },
+      {
+        "nodes": 7,
+        "average_hops": 1.99,
+        "log2_nodes": 2.807,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.531,
+        "message_overhead": 199,
+        "messages_per_lookup": 1.99,
+        "max_lookup_trace": {
+          "requested_id": "resource-0180",
+          "key": "45942",
+          "owner_id": "199",
+          "start_node_id": 4280,
+          "path": [
+            "4280",
+            "9213",
+            "11720",
+            "199"
+          ],
+          "hops": 3,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4280, searching for key 45942 (resource-0180).",
+            "[0] Node 4280 selects finger #13 [start=8376] -> node 9213.",
+            "[1] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[2] Node 11720 selects successor [199] because key 45942 is in its ownership interval.",
+            "[3] MetricLookup COMPLETE: owner node = 199, total hops = 3, nodes visited = 4."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 3
+      },
+      {
+        "nodes": 8,
+        "average_hops": 2.52,
+        "log2_nodes": 3.0,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.741,
+        "message_overhead": 252,
+        "messages_per_lookup": 2.52,
+        "max_lookup_trace": {
+          "requested_id": "resource-0788",
+          "key": "57607",
+          "owner_id": "199",
+          "start_node_id": 4348,
+          "path": [
+            "4348",
+            "9213",
+            "11720",
+            "12461",
+            "199"
+          ],
+          "hops": 4,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4348, searching for key 57607 (resource-0788).",
+            "[0] Node 4348 selects finger #13 [start=8444] -> node 9213.",
+            "[1] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[2] Node 11720 selects finger #10 [start=12232] -> node 12461.",
+            "[3] Node 12461 selects successor [199] because key 57607 is in its ownership interval.",
+            "[4] MetricLookup COMPLETE: owner node = 199, total hops = 4, nodes visited = 5."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 4
+      },
+      {
+        "nodes": 9,
+        "average_hops": 2.2,
+        "log2_nodes": 3.17,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.277,
+        "message_overhead": 220,
+        "messages_per_lookup": 2.2,
+        "max_lookup_trace": {
+          "requested_id": "resource-0494",
+          "key": "15387",
+          "owner_id": "199",
+          "start_node_id": 4731,
+          "path": [
+            "4731",
+            "9213",
+            "11720",
+            "12855",
+            "199"
+          ],
+          "hops": 4,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4731, searching for key 15387 (resource-0494).",
+            "[0] Node 4731 selects finger #13 [start=8827] -> node 9213.",
+            "[1] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[2] Node 11720 selects finger #11 [start=12744] -> node 12855.",
+            "[3] Node 12855 selects successor [199] because key 15387 is in its ownership interval.",
+            "[4] MetricLookup COMPLETE: owner node = 199, total hops = 4, nodes visited = 5."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 4
+      },
+      {
+        "nodes": 10,
+        "average_hops": 2.07,
+        "log2_nodes": 3.322,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.808,
+        "message_overhead": 207,
+        "messages_per_lookup": 2.07,
+        "max_lookup_trace": {
+          "requested_id": "resource-0908",
+          "key": "12574",
+          "owner_id": "12855",
+          "start_node_id": 4348,
+          "path": [
+            "4348",
+            "9213",
+            "11720",
+            "12461",
+            "12855"
+          ],
+          "hops": 4,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4348, searching for key 12574 (resource-0908).",
+            "[0] Node 4348 selects finger #13 [start=8444] -> node 9213.",
+            "[1] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[2] Node 11720 selects finger #10 [start=12232] -> node 12461.",
+            "[3] Node 12461 selects successor [12855] because key 12574 is in its ownership interval.",
+            "[4] MetricLookup COMPLETE: owner node = 12855, total hops = 4, nodes visited = 5."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            14615
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 4
+      },
+      {
+        "nodes": 11,
+        "average_hops": 2.7,
+        "log2_nodes": 3.459,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.872,
+        "message_overhead": 270,
+        "messages_per_lookup": 2.7,
+        "max_lookup_trace": {
+          "requested_id": "resource-0637",
+          "key": "25690",
+          "owner_id": "199",
+          "start_node_id": 4348,
+          "path": [
+            "4348",
+            "12855",
+            "14615",
+            "14756",
+            "199"
+          ],
+          "hops": 4,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4348, searching for key 25690 (resource-0637).",
+            "[0] Node 4348 selects finger #14 [start=12540] -> node 12855.",
+            "[1] Node 12855 selects finger #11 [start=13879] -> node 14615.",
+            "[2] Node 14615 selects finger #8 [start=14743] -> node 14756.",
+            "[3] Node 14756 selects successor [199] because key 25690 is in its ownership interval.",
+            "[4] MetricLookup COMPLETE: owner node = 199, total hops = 4, nodes visited = 5."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 4
+      },
+      {
+        "nodes": 12,
+        "average_hops": 2.37,
+        "log2_nodes": 3.585,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.079,
+        "message_overhead": 237,
+        "messages_per_lookup": 2.37,
+        "max_lookup_trace": {
+          "requested_id": "resource-0809",
+          "key": "12697",
+          "owner_id": "12855",
+          "start_node_id": 14615,
+          "path": [
+            "14615",
+            "199",
+            "9213",
+            "11720",
+            "12461",
+            "12855"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 14615, searching for key 12697 (resource-0809).",
+            "[0] Node 14615 selects finger #16 [start=47383] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[3] Node 11720 selects finger #10 [start=12232] -> node 12461.",
+            "[4] Node 12461 selects successor [12855] because key 12697 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 12855, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            14615
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 13,
+        "average_hops": 2.27,
+        "log2_nodes": 3.7,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.038,
+        "message_overhead": 227,
+        "messages_per_lookup": 2.27,
+        "max_lookup_trace": {
+          "requested_id": "resource-0017",
+          "key": "12798",
+          "owner_id": "12855",
+          "start_node_id": 16173,
+          "path": [
+            "16173",
+            "199",
+            "9213",
+            "11720",
+            "12461",
+            "12855"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 16173, searching for key 12798 (resource-0017).",
+            "[0] Node 16173 selects finger #16 [start=48941] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[3] Node 11720 selects finger #10 [start=12232] -> node 12461.",
+            "[4] Node 12461 selects successor [12855] because key 12798 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 12855, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            14615
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 14,
+        "average_hops": 2.64,
+        "log2_nodes": 3.807,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.23,
+        "message_overhead": 264,
+        "messages_per_lookup": 2.64,
+        "max_lookup_trace": {
+          "requested_id": "resource-0819",
+          "key": "15526",
+          "owner_id": "16173",
+          "start_node_id": 18284,
+          "path": [
+            "18284",
+            "199",
+            "9213",
+            "14615",
+            "14756",
+            "16173"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 18284, searching for key 15526 (resource-0819).",
+            "[0] Node 18284 selects finger #16 [start=51052] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #13 [start=13309] -> node 14615.",
+            "[3] Node 14615 selects finger #8 [start=14743] -> node 14756.",
+            "[4] Node 14756 selects successor [16173] because key 15526 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 16173, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            17673
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 15,
+        "average_hops": 3.4,
+        "log2_nodes": 3.907,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.483,
+        "message_overhead": 340,
+        "messages_per_lookup": 3.4,
+        "max_lookup_trace": {
+          "requested_id": "resource-0728",
+          "key": "51100",
+          "owner_id": "199",
+          "start_node_id": 4280,
+          "path": [
+            "4280",
+            "12855",
+            "17673",
+            "18284",
+            "18652",
+            "199"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4280, searching for key 51100 (resource-0728).",
+            "[0] Node 4280 selects finger #14 [start=12472] -> node 12855.",
+            "[1] Node 12855 selects finger #13 [start=16951] -> node 17673.",
+            "[2] Node 17673 selects finger #10 [start=18185] -> node 18284.",
+            "[3] Node 18284 selects finger #9 [start=18540] -> node 18652.",
+            "[4] Node 18652 selects successor [199] because key 51100 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 199, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 16,
+        "average_hops": 2.51,
+        "log2_nodes": 4.0,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.257,
+        "message_overhead": 251,
+        "messages_per_lookup": 2.51,
+        "max_lookup_trace": {
+          "requested_id": "resource-0967",
+          "key": "15674",
+          "owner_id": "16173",
+          "start_node_id": 17673,
+          "path": [
+            "17673",
+            "199",
+            "9213",
+            "14615",
+            "14756",
+            "16173"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 17673, searching for key 15674 (resource-0967).",
+            "[0] Node 17673 selects finger #16 [start=50441] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #13 [start=13309] -> node 14615.",
+            "[3] Node 14615 selects finger #8 [start=14743] -> node 14756.",
+            "[4] Node 14756 selects successor [16173] because key 15674 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 16173, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            17673
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 17,
+        "average_hops": 2.47,
+        "log2_nodes": 4.087,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.666,
+        "message_overhead": 247,
+        "messages_per_lookup": 2.47,
+        "max_lookup_trace": {
+          "requested_id": "resource-0433",
+          "key": "15930",
+          "owner_id": "16173",
+          "start_node_id": 18284,
+          "path": [
+            "18284",
+            "199",
+            "9213",
+            "14615",
+            "14756",
+            "16173"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 18284, searching for key 15930 (resource-0433).",
+            "[0] Node 18284 selects finger #16 [start=51052] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #13 [start=13309] -> node 14615.",
+            "[3] Node 14615 selects finger #8 [start=14743] -> node 14756.",
+            "[4] Node 14756 selects successor [16173] because key 15930 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 16173, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            17673
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 18,
+        "average_hops": 2.96,
+        "log2_nodes": 4.17,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.231,
+        "message_overhead": 296,
+        "messages_per_lookup": 2.96,
+        "max_lookup_trace": {
+          "requested_id": "resource-0129",
+          "key": "21992",
+          "owner_id": "199",
+          "start_node_id": 4731,
+          "path": [
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "199"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4731, searching for key 21992 (resource-0129).",
+            "[0] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[1] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[2] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[3] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[4] Node 21012 selects successor [199] because key 21992 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 199, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 19,
+        "average_hops": 2.53,
+        "log2_nodes": 4.248,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.119,
+        "message_overhead": 253,
+        "messages_per_lookup": 2.53,
+        "max_lookup_trace": {
+          "requested_id": "resource-0459",
+          "key": "19248",
+          "owner_id": "19570",
+          "start_node_id": 4348,
+          "path": [
+            "4348",
+            "12855",
+            "17673",
+            "18284",
+            "18652",
+            "19570"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4348, searching for key 19248 (resource-0459).",
+            "[0] Node 4348 selects finger #14 [start=12540] -> node 12855.",
+            "[1] Node 12855 selects finger #13 [start=16951] -> node 17673.",
+            "[2] Node 17673 selects finger #10 [start=18185] -> node 18284.",
+            "[3] Node 18284 selects finger #9 [start=18540] -> node 18652.",
+            "[4] Node 18652 selects successor [19570] because key 19248 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 19570, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            20783
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 20,
+        "average_hops": 2.57,
+        "log2_nodes": 4.322,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.83,
+        "message_overhead": 257,
+        "messages_per_lookup": 2.57,
+        "max_lookup_trace": {
+          "requested_id": "resource-0381",
+          "key": "15970",
+          "owner_id": "16173",
+          "start_node_id": 20783,
+          "path": [
+            "20783",
+            "199",
+            "9213",
+            "14615",
+            "14756",
+            "16173"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 20783, searching for key 15970 (resource-0381).",
+            "[0] Node 20783 selects finger #16 [start=53551] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #13 [start=13309] -> node 14615.",
+            "[3] Node 14615 selects finger #8 [start=14743] -> node 14756.",
+            "[4] Node 14756 selects successor [16173] because key 15970 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 16173, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            17673
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 21,
+        "average_hops": 2.74,
+        "log2_nodes": 4.392,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.52,
+        "message_overhead": 274,
+        "messages_per_lookup": 2.74,
+        "max_lookup_trace": {
+          "requested_id": "resource-0104",
+          "key": "13265",
+          "owner_id": "14615",
+          "start_node_id": 30016,
+          "path": [
+            "30016",
+            "199",
+            "9213",
+            "11720",
+            "12855",
+            "14615"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 30016, searching for key 13265 (resource-0104).",
+            "[0] Node 30016 selects finger #16 [start=62784] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[3] Node 11720 selects finger #11 [start=12744] -> node 12855.",
+            "[4] Node 12855 selects successor [14615] because key 13265 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 14615, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            14756
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 22,
+        "average_hops": 3.31,
+        "log2_nodes": 4.459,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.374,
+        "message_overhead": 331,
+        "messages_per_lookup": 3.31,
+        "max_lookup_trace": {
+          "requested_id": "resource-0493",
+          "key": "13712",
+          "owner_id": "14615",
+          "start_node_id": 24076,
+          "path": [
+            "24076",
+            "199",
+            "9213",
+            "11720",
+            "12855",
+            "14615"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 24076, searching for key 13712 (resource-0493).",
+            "[0] Node 24076 selects finger #16 [start=56844] -> node 199.",
+            "[1] Node 199 selects finger #14 [start=8391] -> node 9213.",
+            "[2] Node 9213 selects finger #12 [start=11261] -> node 11720.",
+            "[3] Node 11720 selects finger #11 [start=12744] -> node 12855.",
+            "[4] Node 12855 selects successor [14615] because key 13712 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 14615, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            14756
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 23,
+        "average_hops": 2.81,
+        "log2_nodes": 4.524,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.698,
+        "message_overhead": 281,
+        "messages_per_lookup": 2.81,
+        "max_lookup_trace": {
+          "requested_id": "resource-0873",
+          "key": "21979",
+          "owner_id": "24076",
+          "start_node_id": 30567,
+          "path": [
+            "30567",
+            "199",
+            "17673",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 30567, searching for key 21979 (resource-0873).",
+            "[0] Node 30567 selects finger #16 [start=63335] -> node 199.",
+            "[1] Node 199 selects finger #15 [start=16583] -> node 17673.",
+            "[2] Node 17673 selects finger #12 [start=19721] -> node 20783.",
+            "[3] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[4] Node 21012 selects successor [24076] because key 21979 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 24076, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 24,
+        "average_hops": 3.65,
+        "log2_nodes": 4.585,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.739,
+        "message_overhead": 365,
+        "messages_per_lookup": 3.65,
+        "max_lookup_trace": {
+          "requested_id": "resource-0142",
+          "key": "18796",
+          "owner_id": "19570",
+          "start_node_id": 30016,
+          "path": [
+            "30016",
+            "199",
+            "17673",
+            "18284",
+            "18652",
+            "19570"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 30016, searching for key 18796 (resource-0142).",
+            "[0] Node 30016 selects finger #16 [start=62784] -> node 199.",
+            "[1] Node 199 selects finger #15 [start=16583] -> node 17673.",
+            "[2] Node 17673 selects finger #10 [start=18185] -> node 18284.",
+            "[3] Node 18284 selects finger #9 [start=18540] -> node 18652.",
+            "[4] Node 18652 selects successor [19570] because key 18796 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 19570, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            20783
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 25,
+        "average_hops": 2.84,
+        "log2_nodes": 4.644,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.729,
+        "message_overhead": 284,
+        "messages_per_lookup": 2.84,
+        "max_lookup_trace": {
+          "requested_id": "resource-0270",
+          "key": "31365",
+          "owner_id": "32292",
+          "start_node_id": 4731,
+          "path": [
+            "4731",
+            "24076",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4731, searching for key 31365 (resource-0270).",
+            "[0] Node 4731 selects finger #15 [start=21115] -> node 24076.",
+            "[1] Node 24076 selects finger #13 [start=28172] -> node 30016.",
+            "[2] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[3] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[4] Node 30656 selects successor [32292] because key 31365 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 32292, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            199
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 26,
+        "average_hops": 3.01,
+        "log2_nodes": 4.7,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.37,
+        "message_overhead": 301,
+        "messages_per_lookup": 3.01,
+        "max_lookup_trace": {
+          "requested_id": "resource-0439",
+          "key": "21658",
+          "owner_id": "24076",
+          "start_node_id": 4731,
+          "path": [
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4731, searching for key 21658 (resource-0439).",
+            "[0] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[1] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[2] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[3] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[4] Node 21012 selects successor [24076] because key 21658 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 24076, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 27,
+        "average_hops": 2.8,
+        "log2_nodes": 4.755,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.63,
+        "message_overhead": 280,
+        "messages_per_lookup": 2.8,
+        "max_lookup_trace": {
+          "requested_id": "resource-0996",
+          "key": "24029",
+          "owner_id": "24076",
+          "start_node_id": 37252,
+          "path": [
+            "37252",
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 37252, searching for key 24029 (resource-0996).",
+            "[0] Node 37252 selects finger #16 [start=4484] -> node 4731.",
+            "[1] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[2] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[3] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[4] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[5] Node 21012 selects successor [24076] because key 24029 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 24076, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 28,
+        "average_hops": 3.2,
+        "log2_nodes": 4.807,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.171,
+        "message_overhead": 320,
+        "messages_per_lookup": 3.2,
+        "max_lookup_trace": {
+          "requested_id": "resource-0513",
+          "key": "23223",
+          "owner_id": "24076",
+          "start_node_id": 37252,
+          "path": [
+            "37252",
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 37252, searching for key 23223 (resource-0513).",
+            "[0] Node 37252 selects finger #16 [start=4484] -> node 4731.",
+            "[1] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[2] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[3] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[4] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[5] Node 21012 selects successor [24076] because key 23223 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 24076, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 29,
+        "average_hops": 3.29,
+        "log2_nodes": 4.858,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.023,
+        "message_overhead": 329,
+        "messages_per_lookup": 3.29,
+        "max_lookup_trace": {
+          "requested_id": "resource-0485",
+          "key": "21483",
+          "owner_id": "24076",
+          "start_node_id": 37252,
+          "path": [
+            "37252",
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 37252, searching for key 21483 (resource-0485).",
+            "[0] Node 37252 selects finger #16 [start=4484] -> node 4731.",
+            "[1] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[2] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[3] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[4] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[5] Node 21012 selects successor [24076] because key 21483 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 24076, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 30,
+        "average_hops": 3.05,
+        "log2_nodes": 4.907,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.16,
+        "message_overhead": 305,
+        "messages_per_lookup": 3.05,
+        "max_lookup_trace": {
+          "requested_id": "resource-0981",
+          "key": "30972",
+          "owner_id": "32292",
+          "start_node_id": 4348,
+          "path": [
+            "4348",
+            "20783",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 4348, searching for key 30972 (resource-0981).",
+            "[0] Node 4348 selects finger #15 [start=20732] -> node 20783.",
+            "[1] Node 20783 selects finger #14 [start=28975] -> node 30016.",
+            "[2] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[3] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[4] Node 30656 selects successor [32292] because key 30972 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 32292, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 31,
+        "average_hops": 3.16,
+        "log2_nodes": 4.954,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.122,
+        "message_overhead": 316,
+        "messages_per_lookup": 3.16,
+        "max_lookup_trace": {
+          "requested_id": "resource-0129",
+          "key": "21992",
+          "owner_id": "24076",
+          "start_node_id": 37252,
+          "path": [
+            "37252",
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 37252, searching for key 21992 (resource-0129).",
+            "[0] Node 37252 selects finger #16 [start=4484] -> node 4731.",
+            "[1] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[2] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[3] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[4] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[5] Node 21012 selects successor [24076] because key 21992 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 24076, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 32,
+        "average_hops": 3.35,
+        "log2_nodes": 5.0,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.723,
+        "message_overhead": 335,
+        "messages_per_lookup": 3.35,
+        "max_lookup_trace": {
+          "requested_id": "resource-0654",
+          "key": "23603",
+          "owner_id": "24076",
+          "start_node_id": 37252,
+          "path": [
+            "37252",
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 37252, searching for key 23603 (resource-0654).",
+            "[0] Node 37252 selects finger #16 [start=4484] -> node 4731.",
+            "[1] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[2] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[3] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[4] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[5] Node 21012 selects successor [24076] because key 23603 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 24076, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 33,
+        "average_hops": 3.62,
+        "log2_nodes": 5.044,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 19.16,
+        "message_overhead": 362,
+        "messages_per_lookup": 3.62,
+        "max_lookup_trace": {
+          "requested_id": "resource-0919",
+          "key": "44454",
+          "owner_id": "199",
+          "start_node_id": 18284,
+          "path": [
+            "18284",
+            "37252",
+            "41371",
+            "42838",
+            "42917",
+            "199"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 18284, searching for key 44454 (resource-0919).",
+            "[0] Node 18284 selects finger #15 [start=34668] -> node 37252.",
+            "[1] Node 37252 selects finger #13 [start=41348] -> node 41371.",
+            "[2] Node 41371 selects finger #11 [start=42395] -> node 42838.",
+            "[3] Node 42838 selects finger #7 [start=42902] -> node 42917.",
+            "[4] Node 42917 selects successor [199] because key 44454 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 199, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            3265
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 34,
+        "average_hops": 3.4,
+        "log2_nodes": 5.087,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.69,
+        "message_overhead": 340,
+        "messages_per_lookup": 3.4,
+        "max_lookup_trace": {
+          "requested_id": "resource-0881",
+          "key": "31802",
+          "owner_id": "32292",
+          "start_node_id": 34423,
+          "path": [
+            "34423",
+            "3265",
+            "20783",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 34423, searching for key 31802 (resource-0881).",
+            "[0] Node 34423 selects finger #16 [start=1655] -> node 3265.",
+            "[1] Node 3265 selects finger #15 [start=19649] -> node 20783.",
+            "[2] Node 20783 selects finger #14 [start=28975] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 31802 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 35,
+        "average_hops": 3.43,
+        "log2_nodes": 5.129,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.227,
+        "message_overhead": 343,
+        "messages_per_lookup": 3.43,
+        "max_lookup_trace": {
+          "requested_id": "resource-0094",
+          "key": "31961",
+          "owner_id": "32292",
+          "start_node_id": 45783,
+          "path": [
+            "45783",
+            "14615",
+            "24076",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 45783, searching for key 31961 (resource-0094).",
+            "[0] Node 45783 selects finger #16 [start=13015] -> node 14615.",
+            "[1] Node 14615 selects finger #14 [start=22807] -> node 24076.",
+            "[2] Node 24076 selects finger #13 [start=28172] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 31961 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 36,
+        "average_hops": 3.57,
+        "log2_nodes": 5.17,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.29,
+        "message_overhead": 357,
+        "messages_per_lookup": 3.57,
+        "max_lookup_trace": {
+          "requested_id": "resource-0943",
+          "key": "44341",
+          "owner_id": "44529",
+          "start_node_id": 45783,
+          "path": [
+            "45783",
+            "14615",
+            "32292",
+            "40946",
+            "42838",
+            "42917",
+            "44529"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 45783, searching for key 44341 (resource-0943).",
+            "[0] Node 45783 selects finger #16 [start=13015] -> node 14615.",
+            "[1] Node 14615 selects finger #15 [start=30999] -> node 32292.",
+            "[2] Node 32292 selects finger #14 [start=40484] -> node 40946.",
+            "[3] Node 40946 selects finger #11 [start=41970] -> node 42838.",
+            "[4] Node 42838 selects finger #7 [start=42902] -> node 42917.",
+            "[5] Node 42917 selects successor [44529] because key 44341 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 44529, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            45783
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 37,
+        "average_hops": 3.2,
+        "log2_nodes": 5.209,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.797,
+        "message_overhead": 320,
+        "messages_per_lookup": 3.2,
+        "max_lookup_trace": {
+          "requested_id": "resource-0473",
+          "key": "31298",
+          "owner_id": "32292",
+          "start_node_id": 38538,
+          "path": [
+            "38538",
+            "9213",
+            "27465",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 38538, searching for key 31298 (resource-0473).",
+            "[0] Node 38538 selects finger #16 [start=5770] -> node 9213.",
+            "[1] Node 9213 selects finger #15 [start=25597] -> node 27465.",
+            "[2] Node 27465 selects finger #12 [start=29513] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 31298 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 38,
+        "average_hops": 3.31,
+        "log2_nodes": 5.248,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.323,
+        "message_overhead": 331,
+        "messages_per_lookup": 3.31,
+        "max_lookup_trace": {
+          "requested_id": "resource-0767",
+          "key": "41416",
+          "owner_id": "42838",
+          "start_node_id": 12855,
+          "path": [
+            "12855",
+            "30016",
+            "38538",
+            "40946",
+            "41371",
+            "42838"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 12855, searching for key 41416 (resource-0767).",
+            "[0] Node 12855 selects finger #15 [start=29239] -> node 30016.",
+            "[1] Node 30016 selects finger #14 [start=38208] -> node 38538.",
+            "[2] Node 38538 selects finger #12 [start=40586] -> node 40946.",
+            "[3] Node 40946 selects finger #9 [start=41202] -> node 41371.",
+            "[4] Node 41371 selects successor [42838] because key 41416 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 42838, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            42917
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 39,
+        "average_hops": 3.45,
+        "log2_nodes": 5.285,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.356,
+        "message_overhead": 345,
+        "messages_per_lookup": 3.45,
+        "max_lookup_trace": {
+          "requested_id": "resource-0805",
+          "key": "21690",
+          "owner_id": "24076",
+          "start_node_id": 45972,
+          "path": [
+            "45972",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 45972, searching for key 21690 (resource-0805).",
+            "[0] Node 45972 selects finger #16 [start=13204] -> node 14615.",
+            "[1] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[2] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[3] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[4] Node 21012 selects successor [24076] because key 21690 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 24076, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 40,
+        "average_hops": 3.23,
+        "log2_nodes": 5.322,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.499,
+        "message_overhead": 323,
+        "messages_per_lookup": 3.23,
+        "max_lookup_trace": {
+          "requested_id": "resource-0131",
+          "key": "30728",
+          "owner_id": "32292",
+          "start_node_id": 48150,
+          "path": [
+            "48150",
+            "16173",
+            "27465",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 48150, searching for key 30728 (resource-0131).",
+            "[0] Node 48150 selects finger #16 [start=15382] -> node 16173.",
+            "[1] Node 16173 selects finger #14 [start=24365] -> node 27465.",
+            "[2] Node 27465 selects finger #12 [start=29513] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 30728 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 41,
+        "average_hops": 3.52,
+        "log2_nodes": 5.358,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 18.044,
+        "message_overhead": 352,
+        "messages_per_lookup": 3.52,
+        "max_lookup_trace": {
+          "requested_id": "resource-0543",
+          "key": "18844",
+          "owner_id": "19570",
+          "start_node_id": 34423,
+          "path": [
+            "34423",
+            "3265",
+            "11720",
+            "16173",
+            "18284",
+            "18652",
+            "19570"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 34423, searching for key 18844 (resource-0543).",
+            "[0] Node 34423 selects finger #16 [start=1655] -> node 3265.",
+            "[1] Node 3265 selects finger #14 [start=11457] -> node 11720.",
+            "[2] Node 11720 selects finger #13 [start=15816] -> node 16173.",
+            "[3] Node 16173 selects finger #12 [start=18221] -> node 18284.",
+            "[4] Node 18284 selects finger #9 [start=18540] -> node 18652.",
+            "[5] Node 18652 selects successor [19570] because key 18844 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 19570, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            20783
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 42,
+        "average_hops": 3.67,
+        "log2_nodes": 5.392,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.112,
+        "message_overhead": 367,
+        "messages_per_lookup": 3.67,
+        "max_lookup_trace": {
+          "requested_id": "resource-0940",
+          "key": "31453",
+          "owner_id": "32292",
+          "start_node_id": 199,
+          "path": [
+            "199",
+            "17673",
+            "27465",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 199, searching for key 31453 (resource-0940).",
+            "[0] Node 199 selects finger #15 [start=16583] -> node 17673.",
+            "[1] Node 17673 selects finger #14 [start=25865] -> node 27465.",
+            "[2] Node 27465 selects finger #12 [start=29513] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 31453 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 43,
+        "average_hops": 3.54,
+        "log2_nodes": 5.426,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.871,
+        "message_overhead": 354,
+        "messages_per_lookup": 3.54,
+        "max_lookup_trace": {
+          "requested_id": "resource-0982",
+          "key": "22066",
+          "owner_id": "24076",
+          "start_node_id": 37252,
+          "path": [
+            "37252",
+            "4731",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 37252, searching for key 22066 (resource-0982).",
+            "[0] Node 37252 selects finger #16 [start=4484] -> node 4731.",
+            "[1] Node 4731 selects finger #14 [start=12923] -> node 14615.",
+            "[2] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[3] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[4] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[5] Node 21012 selects successor [24076] because key 22066 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 24076, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 44,
+        "average_hops": 3.63,
+        "log2_nodes": 5.459,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.687,
+        "message_overhead": 363,
+        "messages_per_lookup": 3.63,
+        "max_lookup_trace": {
+          "requested_id": "resource-0914",
+          "key": "49681",
+          "owner_id": "49803",
+          "start_node_id": 52902,
+          "path": [
+            "52902",
+            "20783",
+            "37252",
+            "45783",
+            "47922",
+            "48150",
+            "49803"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 52902, searching for key 49681 (resource-0914).",
+            "[0] Node 52902 selects finger #16 [start=20134] -> node 20783.",
+            "[1] Node 20783 selects finger #15 [start=37167] -> node 37252.",
+            "[2] Node 37252 selects finger #14 [start=45444] -> node 45783.",
+            "[3] Node 45783 selects finger #12 [start=47831] -> node 47922.",
+            "[4] Node 47922 selects finger #8 [start=48050] -> node 48150.",
+            "[5] Node 48150 selects successor [49803] because key 49681 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 49803, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            50643
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 45,
+        "average_hops": 3.55,
+        "log2_nodes": 5.492,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.602,
+        "message_overhead": 355,
+        "messages_per_lookup": 3.55,
+        "max_lookup_trace": {
+          "requested_id": "resource-0119",
+          "key": "22805",
+          "owner_id": "24076",
+          "start_node_id": 45783,
+          "path": [
+            "45783",
+            "14615",
+            "19570",
+            "20783",
+            "21012",
+            "24076"
+          ],
+          "hops": 5,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 45783, searching for key 22805 (resource-0119).",
+            "[0] Node 45783 selects finger #16 [start=13015] -> node 14615.",
+            "[1] Node 14615 selects finger #13 [start=18711] -> node 19570.",
+            "[2] Node 19570 selects finger #11 [start=20594] -> node 20783.",
+            "[3] Node 20783 selects finger #8 [start=20911] -> node 21012.",
+            "[4] Node 21012 selects successor [24076] because key 22805 is in its ownership interval.",
+            "[5] MetricLookup COMPLETE: owner node = 24076, total hops = 5, nodes visited = 6."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            27465
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 5
+      },
+      {
+        "nodes": 46,
+        "average_hops": 3.39,
+        "log2_nodes": 5.524,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.381,
+        "message_overhead": 339,
+        "messages_per_lookup": 3.39,
+        "max_lookup_trace": {
+          "requested_id": "resource-0270",
+          "key": "31365",
+          "owner_id": "32292",
+          "start_node_id": 49803,
+          "path": [
+            "49803",
+            "17673",
+            "27465",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 49803, searching for key 31365 (resource-0270).",
+            "[0] Node 49803 selects finger #16 [start=17035] -> node 17673.",
+            "[1] Node 17673 selects finger #14 [start=25865] -> node 27465.",
+            "[2] Node 27465 selects finger #12 [start=29513] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 31365 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 47,
+        "average_hops": 3.47,
+        "log2_nodes": 5.555,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.169,
+        "message_overhead": 347,
+        "messages_per_lookup": 3.47,
+        "max_lookup_trace": {
+          "requested_id": "resource-0903",
+          "key": "31765",
+          "owner_id": "32292",
+          "start_node_id": 45783,
+          "path": [
+            "45783",
+            "14615",
+            "24076",
+            "30016",
+            "30567",
+            "30656",
+            "32292"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 45783, searching for key 31765 (resource-0903).",
+            "[0] Node 45783 selects finger #16 [start=13015] -> node 14615.",
+            "[1] Node 14615 selects finger #14 [start=22807] -> node 24076.",
+            "[2] Node 24076 selects finger #13 [start=28172] -> node 30016.",
+            "[3] Node 30016 selects finger #10 [start=30528] -> node 30567.",
+            "[4] Node 30567 selects finger #7 [start=30631] -> node 30656.",
+            "[5] Node 30656 selects successor [32292] because key 31765 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 32292, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            34423
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 48,
+        "average_hops": 3.55,
+        "log2_nodes": 5.585,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.18,
+        "message_overhead": 355,
+        "messages_per_lookup": 3.55,
+        "max_lookup_trace": {
+          "requested_id": "resource-0927",
+          "key": "48283",
+          "owner_id": "49803",
+          "start_node_id": 51502,
+          "path": [
+            "51502",
+            "19570",
+            "37252",
+            "45783",
+            "47922",
+            "48150",
+            "49803"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 51502, searching for key 48283 (resource-0927).",
+            "[0] Node 51502 selects finger #16 [start=18734] -> node 19570.",
+            "[1] Node 19570 selects finger #15 [start=35954] -> node 37252.",
+            "[2] Node 37252 selects finger #14 [start=45444] -> node 45783.",
+            "[3] Node 45783 selects finger #12 [start=47831] -> node 47922.",
+            "[4] Node 47922 selects finger #8 [start=48050] -> node 48150.",
+            "[5] Node 48150 selects successor [49803] because key 48283 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 49803, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            50643
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 49,
+        "average_hops": 3.62,
+        "log2_nodes": 5.615,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 16.601,
+        "message_overhead": 362,
+        "messages_per_lookup": 3.62,
+        "max_lookup_trace": {
+          "requested_id": "resource-0919",
+          "key": "44454",
+          "owner_id": "44529",
+          "start_node_id": 57783,
+          "path": [
+            "57783",
+            "27465",
+            "37252",
+            "41371",
+            "42838",
+            "42917",
+            "44529"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 57783, searching for key 44454 (resource-0919).",
+            "[0] Node 57783 selects finger #16 [start=25015] -> node 27465.",
+            "[1] Node 27465 selects finger #14 [start=35657] -> node 37252.",
+            "[2] Node 37252 selects finger #13 [start=41348] -> node 41371.",
+            "[3] Node 41371 selects finger #11 [start=42395] -> node 42838.",
+            "[4] Node 42838 selects finger #7 [start=42902] -> node 42917.",
+            "[5] Node 42917 selects successor [44529] because key 44454 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 44529, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            45783
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      },
+      {
+        "nodes": 50,
+        "average_hops": 3.47,
+        "log2_nodes": 5.644,
+        "attempted_lookups": 100,
+        "total_lookups": 100,
+        "successful_lookups": 100,
+        "failed_lookups": 0,
+        "average_latency_ms": 17.56,
+        "message_overhead": 347,
+        "messages_per_lookup": 3.47,
+        "max_lookup_trace": {
+          "requested_id": "resource-0754",
+          "key": "52852",
+          "owner_id": "52902",
+          "start_node_id": 20783,
+          "path": [
+            "20783",
+            "37252",
+            "45783",
+            "50643",
+            "51854",
+            "52317",
+            "52902"
+          ],
+          "hops": 6,
+          "logs": [
+            "[0] MetricLookup begins: starting from node 20783, searching for key 52852 (resource-0754).",
+            "[0] Node 20783 selects finger #15 [start=37167] -> node 37252.",
+            "[1] Node 37252 selects finger #14 [start=45444] -> node 45783.",
+            "[2] Node 45783 selects finger #13 [start=49879] -> node 50643.",
+            "[3] Node 50643 selects finger #11 [start=51667] -> node 51854.",
+            "[4] Node 51854 selects finger #9 [start=52110] -> node 52317.",
+            "[5] Node 52317 selects successor [52902] because key 52852 is in its ownership interval.",
+            "[6] MetricLookup COMPLETE: owner node = 52902, total hops = 6, nodes visited = 7."
+          ],
+          "found": true,
+          "direct_key": false,
+          "replica_node_ids": [
+            54053
+          ]
+        },
+        "sample_errors": [],
+        "max_hops": 6
+      }
+    ],
+    "charts": {
+      "hops": "/static/metrics/hops_chart_sweep_hops_1780544657030108100.png",
+      "latency": "/static/metrics/hops_chart_sweep_latency_1780544657030108100.png",
+      "overhead": "/static/metrics/hops_chart_sweep_overhead_1780544657030108100.png"
+    }
+  }
+}

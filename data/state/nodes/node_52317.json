@@ -1,0 +1,246 @@
+{
+  "schema_version": 2,
+  "saved_at": 1780560340.909951,
+  "node": {
+    "node_id": 52317,
+    "active": true,
+    "status": "active",
+    "predecessor": 51854,
+    "successor": 52902,
+    "finger_table": [
+      {
+        "index": 1,
+        "start": 52318,
+        "interval_end": 52319,
+        "node_id": 52902
+      },
+      {
+        "index": 2,
+        "start": 52319,
+        "interval_end": 52321,
+        "node_id": 52902
+      },
+      {
+        "index": 3,
+        "start": 52321,
+        "interval_end": 52325,
+        "node_id": 52902
+      },
+      {
+        "index": 4,
+        "start": 52325,
+        "interval_end": 52333,
+        "node_id": 52902
+      },
+      {
+        "index": 5,
+        "start": 52333,
+        "interval_end": 52349,
+        "node_id": 52902
+      },
+      {
+        "index": 6,
+        "start": 52349,
+        "interval_end": 52381,
+        "node_id": 52902
+      },
+      {
+        "index": 7,
+        "start": 52381,
+        "interval_end": 52445,
+        "node_id": 52902
+      },
+      {
+        "index": 8,
+        "start": 52445,
+        "interval_end": 52573,
+        "node_id": 52902
+      },
+      {
+        "index": 9,
+        "start": 52573,
+        "interval_end": 52829,
+        "node_id": 52902
+      },
+      {
+        "index": 10,
+        "start": 52829,
+        "interval_end": 53341,
+        "node_id": 52902
+      },
+      {
+        "index": 11,
+        "start": 53341,
+        "interval_end": 54365,
+        "node_id": 54053
+      },
+      {
+        "index": 12,
+        "start": 54365,
+        "interval_end": 56413,
+        "node_id": 57783
+      },
+      {
+        "index": 13,
+        "start": 56413,
+        "interval_end": 60509,
+        "node_id": 57783
+      },
+      {
+        "index": 14,
+        "start": 60509,
+        "interval_end": 3165,
+        "node_id": 60689
+      },
+      {
+        "index": 15,
+        "start": 3165,
+        "interval_end": 19549,
+        "node_id": 3265
+      },
+      {
+        "index": 16,
+        "start": 19549,
+        "interval_end": 52317,
+        "node_id": 19570
+      }
+    ]
+  },
+  "resources": [
+    {
+      "resource_id": "resource-0029",
+      "hashed_resource_id": "1643dc2f9a0c9741d775401c8a004955a913ca6a",
+      "key": 51818,
+      "owner_id": 51854,
+      "replica_node_ids": [
+        52317
+      ]
+    },
+    {
+      "resource_id": "resource-0046",
+      "hashed_resource_id": "7c0dcbb8f9ea34b88a97df4f0d57ef349be2cace",
+      "key": 51918,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0120",
+      "hashed_resource_id": "2ef850f3ea0d797ebcbbaa0f62196e73b944c9f7",
+      "key": 51703,
+      "owner_id": 51854,
+      "replica_node_ids": [
+        52317
+      ]
+    },
+    {
+      "resource_id": "resource-0136",
+      "hashed_resource_id": "426966e636057bd50063e14b44c63041223fcae9",
+      "key": 51945,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0158",
+      "hashed_resource_id": "cc3216a0bacc412e3590629d6d8c7e68f1c9cb82",
+      "key": 52098,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0163",
+      "hashed_resource_id": "021cee76b047b387bcff70f6a2bc0db119b2cbaa",
+      "key": 52138,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0295",
+      "hashed_resource_id": "38539ba16546127406b0cdb52279e69ed82dcac6",
+      "key": 51910,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0471",
+      "hashed_resource_id": "caef1ed225e9569ee19a644d8920d4c9e217c93a",
+      "key": 51514,
+      "owner_id": 51854,
+      "replica_node_ids": [
+        52317
+      ]
+    },
+    {
+      "resource_id": "resource-0555",
+      "hashed_resource_id": "24db34e683e2091309707ab3c52249abc9accc11",
+      "key": 52241,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0718",
+      "hashed_resource_id": "da0bfd816a2ada81e61c840a1f5c2416e7e4c99e",
+      "key": 51614,
+      "owner_id": 51854,
+      "replica_node_ids": [
+        52317
+      ]
+    },
+    {
+      "resource_id": "resource-0727",
+      "hashed_resource_id": "beea25e17483242436072b3a9ec575143bf7cac6",
+      "key": 51910,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0742",
+      "hashed_resource_id": "3f99c92e0a8957ae681d2d43c46d2a78f770caa6",
+      "key": 51878,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0751",
+      "hashed_resource_id": "4ca2f1b89c2fb3b496d67400aedb2f1dc2facb93",
+      "key": 52115,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0857",
+      "hashed_resource_id": "b1dc90e9af8c5e273d0fb7ef6b92bd32412dcb12",
+      "key": 51986,
+      "owner_id": 52317,
+      "replica_node_ids": [
+        52902
+      ]
+    },
+    {
+      "resource_id": "resource-0989",
+      "hashed_resource_id": "134f8ce81fdce5dd04daad15c358c106bb03ca81",
+      "key": 51841,
+      "owner_id": 51854,
+      "replica_node_ids": [
+        52317
+      ]
+    }
+  ]
+}

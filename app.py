@@ -67,6 +67,50 @@ METRICS_CHART_BASE = PROJECT_ROOT / "static" / "metrics" / "hops_chart"
 # Xác định đường dẫn lưu snapshot trạng thái ring
 STATE_PATH = PROJECT_ROOT / "data" / "state.json"
 
+
+# Lấy thư mục state mới từ STATE_PATH để test có thể monkeypatch một biến duy nhất
+def _state_dir() -> Path:
+    return STATE_PATH.with_suffix("")
+
+
+# Lấy đường dẫn file metadata chung của state đã tách theo node
+def _state_meta_path() -> Path:
+    return _state_dir() / "meta.json"
+
+
+# Lấy thư mục chứa các file state riêng của từng node
+def _state_nodes_dir() -> Path:
+    return _state_dir() / "nodes"
+
+
+# Ghi JSON bằng file tạm rồi replace để hạn chế đọc phải file đang ghi dở
+def _write_json_atomic(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(f"{path.suffix}.tmp-{os.getpid()}-{time.time_ns()}")
+
+    with tmp.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+
+    last_exc: OSError | None = None
+    for attempt in range(8):
+        try:
+            tmp.replace(path)
+            return
+        except PermissionError as exc:
+            last_exc = exc
+            time.sleep(0.05 * (attempt + 1))
+
+    try:
+        if tmp.exists():
+            tmp.unlink()
+    except OSError:
+        pass
+
+    if last_exc is not None:
+        raise last_exc
+
 # Chuyển trạng thái ring thành payload JSON để lưu xuống đĩa
 def _ring_state_to_json(ring: ChordRing) -> dict[str, Any]:
     # Cho phép hàm đọc cache metric cuối cùng của toàn app
@@ -217,51 +261,143 @@ def _ring_state_from_json(payload: dict[str, Any]) -> ChordRing:
     # Trả về ring đã được ổn định sau khi khôi phục
     return ring
 
-# Lưu trạng thái ring xuống state.json theo cách ghi tạm rồi thay thế
+# Chuyển một node thành payload state riêng, kèm các resource node đang giữ cục bộ
+def _node_state_to_json(node: Node, failed_nodes: set[int]) -> dict[str, Any]:
+    return {
+        "schema_version": 2,
+        "saved_at": time.time(),
+        "node": {
+            "node_id": node.node_id,
+            "active": bool(node.active),
+            "status": (
+                "failed"
+                if node.node_id in failed_nodes
+                else "active"
+                if node.active
+                else "retired"
+            ),
+            "predecessor": node.predecessor,
+            "successor": node.successor,
+            "finger_table": [entry.to_dict() for entry in node.finger_table],
+        },
+        "resources": [
+            resource.to_dict()
+            for resource in sorted(
+                node.local_resources.values(),
+                key=lambda item: item.resource_id,
+            )
+        ],
+    }
+
+
+# Tạo metadata chung cho bộ state đã tách file
+def _split_state_meta_to_json(ring: ChordRing) -> dict[str, Any]:
+    global last_metrics_payload
+
+    return {
+        "schema_version": 2,
+        "saved_at": time.time(),
+        "config": {
+            "m": ring.m,
+            "seed": ring.seed,
+            "replication_count": ring.replication_count,
+        },
+        "node_files": [
+            {
+                "node_id": int(node_id),
+                "path": f"nodes/node_{int(node_id)}.json",
+            }
+            for node_id in sorted(ring.nodes)
+        ],
+        "metrics": last_metrics_payload,
+    }
+
+
+# Gom state đã tách file về payload cũ để dùng chung logic khôi phục hiện có
+def _split_state_to_legacy_payload(meta: dict[str, Any]) -> dict[str, Any]:
+    nodes: list[dict[str, Any]] = []
+    resources_by_id: dict[str, dict[str, Any]] = {}
+
+    node_files = meta.get("node_files") or []
+    if not isinstance(node_files, list):
+        node_files = []
+
+    for item in node_files:
+        if not isinstance(item, dict):
+            continue
+
+        rel_path = str(item.get("path", "")).strip()
+        if not rel_path:
+            continue
+
+        node_path = _state_dir() / rel_path
+        if not node_path.exists():
+            continue
+
+        with node_path.open("r", encoding="utf-8") as f:
+            node_payload = json.load(f)
+
+        if not isinstance(node_payload, dict):
+            continue
+
+        node_info = node_payload.get("node")
+        if isinstance(node_info, dict):
+            node_id = int(node_info["node_id"])
+            nodes.append(node_info)
+        else:
+            node_id = int(item.get("node_id", 0))
+
+        for resource in node_payload.get("resources") or []:
+            if not isinstance(resource, dict):
+                continue
+
+            resource_id = str(resource.get("resource_id", "")).strip()
+            if not resource_id:
+                continue
+
+            current = resources_by_id.get(resource_id)
+            if current is None or int(resource.get("owner_id", -1)) == node_id:
+                resources_by_id[resource_id] = resource
+
+    return {
+        "schema_version": 1,
+        "saved_at": meta.get("saved_at"),
+        "config": meta.get("config") or {},
+        "nodes": sorted(nodes, key=lambda item: int(item.get("node_id", 0))),
+        "resources": sorted(
+            resources_by_id.values(),
+            key=lambda item: str(item.get("resource_id", "")),
+        ),
+        "metrics": meta.get("metrics"),
+    }
+
+
+# Nạp state mới đã tách file nếu có
+def _load_split_ring_state() -> ChordRing | None:
+    meta_path = _state_meta_path()
+    if not meta_path.exists():
+        return None
+
+    with meta_path.open("r", encoding="utf-8") as f:
+        meta = json.load(f)
+
+    if not isinstance(meta, dict):
+        return None
+
+    return _ring_state_from_json(_split_state_to_legacy_payload(meta))
+
+
+# Lưu trạng thái ring thành nhiều file theo node và resource node đang quản lý
 def _save_ring_state(ring: ChordRing) -> None:
-    # Tạo thư mục data nếu chưa tồn tại
-    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    nodes_dir = _state_nodes_dir()
+    nodes_dir.mkdir(parents=True, exist_ok=True)
 
-    # Tạo đường dẫn file tạm riêng cho lần ghi hiện tại
-    tmp = STATE_PATH.with_suffix(f".json.tmp-{os.getpid()}-{time.time_ns()}")
+    for node_id in sorted(ring.nodes):
+        node = ring.nodes[node_id]
+        node_path = nodes_dir / f"node_{int(node_id)}.json"
+        _write_json_atomic(node_path, _node_state_to_json(node, ring.failed_nodes))
 
-    # Ghi snapshot vào file tạm trước khi replace file chính
-    with tmp.open("w", encoding="utf-8") as f:
-        # Ghi payload ring ra JSON có thụt lề để dễ đọc khi debug
-        json.dump(_ring_state_to_json(ring), f, ensure_ascii=False, indent=2)
-
-        # Đẩy buffer Python xuống hệ điều hành
-        f.flush()
-
-        # Ép hệ điều hành ghi dữ liệu xuống đĩa trước khi replace
-        os.fsync(f.fileno())
-
-    # Lưu lỗi PermissionError cuối cùng nếu Windows tạm khóa file
-    last_exc: OSError | None = None
-
-    # Thử replace nhiều lần để tránh lỗi file đang bị Windows giữ tạm
-    for attempt in range(8):
-        try:
-            # Thay file state chính bằng file tạm theo thao tác gần như atomic
-            tmp.replace(STATE_PATH)
-            return
-        except PermissionError as exc:
-            # Ghi nhận lỗi và chờ ngắn trước khi thử lại
-            last_exc = exc
-            time.sleep(0.05 * (attempt + 1))
-
-    # Dọn file tạm nếu replace thất bại
-    try:
-        if tmp.exists():
-            # Xóa file tạm còn sót lại sau khi không thể replace
-            tmp.unlink()
-    except OSError:
-        # Bỏ qua lỗi dọn dẹp để không che mất lỗi persist chính
-        pass
-
-    # Ném lại lỗi replace cuối cùng để caller biết persist thất bại
-    if last_exc is not None:
-        raise last_exc
+    _write_json_atomic(_state_meta_path(), _split_state_meta_to_json(ring))
 
 # Xác định đường dẫn lưu danh sách node_id ban đầu
 NODE_IDS_PATH = PROJECT_ROOT / "data" / "node_ids.json"
@@ -400,8 +536,12 @@ def _save_initial_dataset_files(ring: ChordRing) -> None:
         raise RuntimeError("resource_ids.json was not written with the initialized resource count")
 
 
-# Tải trạng thái ring đã persist từ state.json
+# Tải trạng thái ring đã persist, ưu tiên state đã tách file rồi fallback state.json cũ
 def _load_ring_state() -> ChordRing | None:
+    split_state = _load_split_ring_state()
+    if split_state is not None:
+        return split_state
+
     # Bỏ qua autoload khi chưa có file state
     if not STATE_PATH.exists():
         return None

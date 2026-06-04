@@ -1,0 +1,192 @@
+{
+  "schema_version": 2,
+  "saved_at": 1780560340.823084,
+  "node": {
+    "node_id": 30567,
+    "active": true,
+    "status": "active",
+    "predecessor": 30410,
+    "successor": 30656,
+    "finger_table": [
+      {
+        "index": 1,
+        "start": 30568,
+        "interval_end": 30569,
+        "node_id": 30656
+      },
+      {
+        "index": 2,
+        "start": 30569,
+        "interval_end": 30571,
+        "node_id": 30656
+      },
+      {
+        "index": 3,
+        "start": 30571,
+        "interval_end": 30575,
+        "node_id": 30656
+      },
+      {
+        "index": 4,
+        "start": 30575,
+        "interval_end": 30583,
+        "node_id": 30656
+      },
+      {
+        "index": 5,
+        "start": 30583,
+        "interval_end": 30599,
+        "node_id": 30656
+      },
+      {
+        "index": 6,
+        "start": 30599,
+        "interval_end": 30631,
+        "node_id": 30656
+      },
+      {
+        "index": 7,
+        "start": 30631,
+        "interval_end": 30695,
+        "node_id": 30656
+      },
+      {
+        "index": 8,
+        "start": 30695,
+        "interval_end": 30823,
+        "node_id": 32292
+      },
+      {
+        "index": 9,
+        "start": 30823,
+        "interval_end": 31079,
+        "node_id": 32292
+      },
+      {
+        "index": 10,
+        "start": 31079,
+        "interval_end": 31591,
+        "node_id": 32292
+      },
+      {
+        "index": 11,
+        "start": 31591,
+        "interval_end": 32615,
+        "node_id": 32292
+      },
+      {
+        "index": 12,
+        "start": 32615,
+        "interval_end": 34663,
+        "node_id": 34423
+      },
+      {
+        "index": 13,
+        "start": 34663,
+        "interval_end": 38759,
+        "node_id": 37252
+      },
+      {
+        "index": 14,
+        "start": 38759,
+        "interval_end": 46951,
+        "node_id": 40946
+      },
+      {
+        "index": 15,
+        "start": 46951,
+        "interval_end": 63335,
+        "node_id": 47922
+      },
+      {
+        "index": 16,
+        "start": 63335,
+        "interval_end": 30567,
+        "node_id": 199
+      }
+    ]
+  },
+  "resources": [
+    {
+      "resource_id": "resource-0001",
+      "hashed_resource_id": "71e9d17c574ebc0f77aca85d72373fb885c0775a",
+      "key": 30554,
+      "owner_id": 30567,
+      "replica_node_ids": [
+        30656
+      ]
+    },
+    {
+      "resource_id": "resource-0021",
+      "hashed_resource_id": "e262a2cf02992d0dc8b500904c1e1dff6b07775b",
+      "key": 30555,
+      "owner_id": 30567,
+      "replica_node_ids": [
+        30656
+      ]
+    },
+    {
+      "resource_id": "resource-0215",
+      "hashed_resource_id": "e964616d88b12108d4f5c82a246e521d58ae771d",
+      "key": 30493,
+      "owner_id": 30567,
+      "replica_node_ids": [
+        30656
+      ]
+    },
+    {
+      "resource_id": "resource-0299",
+      "hashed_resource_id": "1fbf47cf184a517cddaa6a2d792c6580218775e4",
+      "key": 30180,
+      "owner_id": 30410,
+      "replica_node_ids": [
+        30567
+      ]
+    },
+    {
+      "resource_id": "resource-0348",
+      "hashed_resource_id": "7b74c9c8757c9d6d703bd0186dca88113a68755b",
+      "key": 30043,
+      "owner_id": 30410,
+      "replica_node_ids": [
+        30567
+      ]
+    },
+    {
+      "resource_id": "resource-0364",
+      "hashed_resource_id": "0e7dce0bdd2c2d9a8b355dc1b021f2df1ba1770c",
+      "key": 30476,
+      "owner_id": 30567,
+      "replica_node_ids": [
+        30656
+      ]
+    },
+    {
+      "resource_id": "resource-0464",
+      "hashed_resource_id": "bb2a475664eb3b326bce5a4a58b3989f5d66769d",
+      "key": 30365,
+      "owner_id": 30410,
+      "replica_node_ids": [
+        30567
+      ]
+    },
+    {
+      "resource_id": "resource-0655",
+      "hashed_resource_id": "5cf3c428129e9260d5faa83bd7fe64ef63327765",
+      "key": 30565,
+      "owner_id": 30567,
+      "replica_node_ids": [
+        30656
+      ]
+    },
+    {
+      "resource_id": "resource-0901",
+      "hashed_resource_id": "534d7628f6a7f94306d85fe049529a206ccb75fc",
+      "key": 30204,
+      "owner_id": 30410,
+      "replica_node_ids": [
+        30567
+      ]
+    }
+  ]
+}

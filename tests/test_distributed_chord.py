@@ -1,4 +1,4 @@
-# Nạp json để phân tích nội dung state.json
+# Nạp json để phân tích nội dung state đã persist
 import json
 
 # Nạp Path để thao tác đường dẫn test
@@ -49,8 +49,8 @@ def client(tmp_path, monkeypatch):
     # Trả về test_client để gửi request
     yield app.app.test_client()
 
-# Kiểm thử endpoint initialize có ghi state.json đúng schema
-def test_initialize_persists_state_json(client, tmp_path):
+# Kiểm thử endpoint initialize có ghi state đã tách file đúng schema
+def test_initialize_persists_split_state_json(client, tmp_path):
     # Gửi request khởi tạo ring
     resp = client.post(
         "/api/initialize",
@@ -72,22 +72,30 @@ def test_initialize_persists_state_json(client, tmp_path):
     # Kiểm tra cờ ok
     assert body["ok"] is True
 
-    # Tạo đường dẫn state.json trong thư mục tạm
-    state_path = tmp_path / "state.json"
+    # Tạo đường dẫn state/meta.json trong thư mục tạm
+    state_path = tmp_path / "state" / "meta.json"
 
-    # Kiểm tra file state.json được tạo
+    # Kiểm tra file meta state được tạo
     assert state_path.exists()
 
-    # Đọc nội dung file state.json
+    # Đọc nội dung file meta state
     payload = json.loads(state_path.read_text(encoding="utf-8"))
 
     # Kiểm tra schema_version khớp với kỳ vọng
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
 
     # Kiểm tra m được persist đúng
     assert int(payload["config"]["m"]) == 10
 
-# Kiểm thử endpoint state tự autoload từ state.json
+    assert len(payload["node_files"]) == 10
+    first_node_file = tmp_path / "state" / payload["node_files"][0]["path"]
+    assert first_node_file.exists()
+
+    node_payload = json.loads(first_node_file.read_text(encoding="utf-8"))
+    assert "node" in node_payload
+    assert "resources" in node_payload
+
+# Kiểm thử endpoint state tự autoload từ state đã persist
 def test_state_endpoint_autoloads_json(client, tmp_path):
     # Nạp app để thao tác trạng thái in-memory
     import app
@@ -101,7 +109,7 @@ def test_state_endpoint_autoloads_json(client, tmp_path):
     # Đặt lại ring trong bộ nhớ để bắt buộc autoload từ file
     app.ring = app.ChordRing(m=16, seed=61, replication_count=1)
 
-    # Đặt lại cờ autoload để lần gọi sau sẽ load state.json
+    # Đặt lại cờ autoload để lần gọi sau sẽ load state từ đĩa
     app.ring_startup_completed = False
 
     # Gọi endpoint state
@@ -142,7 +150,7 @@ def test_lookup_returns_trace(client):
     # Kiểm tra path là list
     assert isinstance(body["result"]["path"], list)
 
-# Kiểm thử CRUD resource cập nhật state.json
+# Kiểm thử CRUD resource cập nhật state đã tách file
 def test_resource_crud_updates_json(client, tmp_path):
     # Gọi initialize với resource_count bằng 0
     client.post(
@@ -162,14 +170,23 @@ def test_resource_crud_updates_json(client, tmp_path):
     # Kiểm tra xóa thành công
     assert deleted["ok"] is True
 
-    # Đọc file state.json để xác nhận persist
-    state_path = tmp_path / "state.json"
+    # Đọc file meta state để xác nhận persist
+    state_path = tmp_path / "state" / "meta.json"
 
-    # Phân tích payload state.json
+    # Phân tích payload meta state
     payload = json.loads(state_path.read_text(encoding="utf-8"))
 
+    persisted_resource_ids = set()
+    for item in payload["node_files"]:
+        node_path = tmp_path / "state" / item["path"]
+        node_payload = json.loads(node_path.read_text(encoding="utf-8"))
+        persisted_resource_ids.update(
+            resource["resource_id"]
+            for resource in node_payload.get("resources", [])
+        )
+
     # Kiểm tra resource đã bị xóa khỏi danh sách persist
-    assert "student-score" not in payload.get("resources", [])
+    assert "student-score" not in persisted_resource_ids
 
 # Kiểm thử node join chỉ chuyển primary trong khoảng node mới nhận và cập nhật replica kế cận
 def test_add_node_rebalances_primary_interval_and_successor_replicas():
